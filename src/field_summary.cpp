@@ -85,7 +85,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int xmin = t.info.t_xmin;
 		field_type &field = t.field;
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd reduction(+:press) reduction(+:ke) reduction(+:ie) reduction(+:mass) reduction(+:vol)
 		for (int idx = (0); idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
 			const int j = xmin + 1 + idx % (xmax - xmin + 1);
 			const int k = ymin + 1 + idx / (xmax - xmin + 1);

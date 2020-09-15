@@ -57,7 +57,7 @@ void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
 		// DO k=y_min-depth,y_max+y_inc+depth
 
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
@@ -98,7 +98,7 @@ void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
 
 
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
@@ -135,7 +135,7 @@ void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
 	}
 
 		// DO k=y_min-depth,y_max+y_inc+depth
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
@@ -176,7 +176,7 @@ void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
 	}
 
 		// DO k=y_min-depth,y_max+y_inc+depth
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
@@ -214,7 +214,7 @@ void clover_pack_message_top(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
 			top_snd[index] = field(j, y_max + 1 - k);
@@ -254,7 +254,7 @@ void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
 		// DO j=x_min-depth,x_max+x_inc+depth
 
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
 			field(j, y_max + y_inc + k) = top_rcv[index];
@@ -294,7 +294,7 @@ void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
 			bottom_snd[index] = field(j, y_min + y_inc - 1 + k);
@@ -329,7 +329,7 @@ void clover_unpack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
 			field(j, y_min - k) = bottom_rcv[index];

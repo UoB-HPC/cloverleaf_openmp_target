@@ -61,7 +61,7 @@ void advec_cell_kernel(
 		if (sweep_number == 1) {
 
 
-			_Pragma("kernel2d")
+			#pragma omp parallel for simd collapse(2)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					pre_vol(i, j) = volume(i, j) + (vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j));
@@ -73,7 +73,7 @@ void advec_cell_kernel(
 		} else {
 
 
-			_Pragma("kernel2d")
+			#pragma omp parallel for simd collapse(2)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					pre_vol(i, j) = volume(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
@@ -85,7 +85,7 @@ void advec_cell_kernel(
 
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max+2
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2 + 2); i++)
 				({
@@ -145,7 +145,7 @@ void advec_cell_kernel(
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
 				double pre_mass_s = density1(i, j) * pre_vol(i, j);
@@ -165,7 +165,7 @@ void advec_cell_kernel(
 		if (sweep_number == 1) {
 
 
-			_Pragma("kernel2d")
+			#pragma omp parallel for simd collapse(2)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					pre_vol(i, j) = volume(i, j) + (vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j));
@@ -177,7 +177,7 @@ void advec_cell_kernel(
 		} else {
 
 
-			_Pragma("kernel2d")
+			#pragma omp parallel for simd collapse(2)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					pre_vol(i, j) = volume(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
@@ -191,7 +191,7 @@ void advec_cell_kernel(
 
 		// DO k=y_min,y_max+2
 		//   DO j=x_min,x_max
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++)
 				({
@@ -248,7 +248,7 @@ void advec_cell_kernel(
 
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
 				double pre_mass_s = density1(i, j) * pre_vol(i, j);

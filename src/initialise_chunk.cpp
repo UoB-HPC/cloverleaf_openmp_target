@@ -56,14 +56,14 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
-	_Pragma("kernel1d")
+	#pragma omp parallel for simd
 	for (int j = (0); j < (xrange); j++) {
 		field.vertexx[j] = xmin + dx * (j - 1 - x_min);
 		field.vertexdx[j] = dx;
 	}
 
 
-	_Pragma("kernel1d")
+	#pragma omp parallel for simd
 	for (int k = (0); k < (yrange); k++) {
 		field.vertexy[k] = ymin + dy * (k - 1 - y_min);
 		field.vertexdy[k] = dy;
@@ -73,21 +73,21 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	const int xrange1 = (x_max + 2) - (x_min - 2) + 1;
 	const int yrange1 = (y_max + 2) - (y_min - 2) + 1;
 
-	_Pragma("kernel1d")
+	#pragma omp parallel for simd
 	for (int j = (0); j < (xrange1); j++) {
 		field.cellx[j] = 0.5 * (field.vertexx[j] + field.vertexx[j + 1]);
 		field.celldx[j] = dx;
 	}
 
 
-	_Pragma("kernel1d")
+	#pragma omp parallel for simd
 	for (int k = (0); k < (yrange1); k++) {
 		field.celly[k] = 0.5 * (field.vertexy[k] + field.vertexy[k + 1]);
 		field.celldy[k] = dy;
 	}
 
 
-	_Pragma("kernel2d")
+	#pragma omp parallel for simd collapse(2)
 	for (int j = (0); j < (yrange1); j++) {
 		for (int i = (0); i < (xrange1); i++) {
 			field.volume(i, j) = dx * dy;

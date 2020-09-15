@@ -52,7 +52,7 @@ void accelerate_kernel(
 //for(int j = )
 
 
-	_Pragma("kernel2d")
+	#pragma omp parallel for simd collapse(2)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 			double stepbymass_s = halfdt / ((density0(i - 1, j - 1) * volume(i - 1, j - 1) +

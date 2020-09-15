@@ -34,17 +34,17 @@ namespace clover {
 
 		explicit Buffer1D(size_t size) : data(size) {}
 
-		T operator[](size_t i) const { return data[i]; }
-		T &operator[](size_t i) { return data[i]; }
+		constexpr inline T operator[](size_t i) const { return data[i]; }
+		constexpr inline T &operator[](size_t i) { return data[i]; }
 
-		T *actual() { return data.data(); }
+		constexpr inline T *actual() { return data.data(); }
 
-		[[nodiscard]] size_t size() const { return data.size(); }
+		[[nodiscard]] constexpr inline size_t size() const { return data.size(); }
 
-		friend std::ostream &operator<<(std::ostream &os, const Buffer1D<T> &buffer) {
-			os << "Buffer1D(size: " << buffer.size << ")";
-			return os;
-		}
+//		friend std::ostream &operator<<(std::ostream &os, const Buffer1D<T> &buffer) {
+//			os << "Buffer1D(size: " << buffer.size << ")";
+//			return os;
+//		}
 
 	};
 
@@ -56,16 +56,15 @@ namespace clover {
 
 		Buffer2D(size_t sizeX, size_t sizeY) : sizeX(sizeX), sizeY(sizeY), data(sizeX * sizeY) {}
 
-		T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
-		T const &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
-
+		constexpr inline T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
+		constexpr inline T const &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
 
 		T *actual() { return data.data(); }
 
-		friend std::ostream &operator<<(std::ostream &os, const Buffer2D<T> &buffer) {
-			os << "Buffer2D(sizeX: " << buffer.sizeX << " sizeY: " << buffer.sizeY << ")";
-			return os;
-		}
+//		friend std::ostream &operator<<(std::ostream &os, const Buffer2D<T> &buffer) {
+//			os << "Buffer2D(sizeX: " << buffer.sizeX << " sizeY: " << buffer.sizeY << ")";
+//			return os;
+//		}
 
 
 	};

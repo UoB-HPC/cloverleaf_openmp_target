@@ -38,7 +38,7 @@ void viscosity_kernel(int x_min, int x_max, int y_min, int y_max,
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	_Pragma("kernel2d")
+	#pragma omp parallel for simd collapse(2)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			double ugrad = (xvel0(i + 1, j + 0) + xvel0(i + 1, j + 1)) - (xvel0(i, j) + xvel0(i + 0, j + 1));

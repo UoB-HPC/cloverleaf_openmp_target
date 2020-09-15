@@ -35,7 +35,7 @@ void revert_kernel(int x_min, int x_max, int y_min, int y_max,
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	_Pragma("kernel2d")
+	#pragma omp parallel for simd collapse(2)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			density1(i, j) = density0(i, j);

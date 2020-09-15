@@ -100,7 +100,7 @@ void build_field(global_variables &globals) {
 
 
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (0); j < (yrange + 1); j++) {
 			for (int i = (0); i < (xrange + 1); i++) {
 				field.work_array1(i, j) = 0.0;
@@ -118,7 +118,7 @@ void build_field(global_variables &globals) {
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (0); j < (yrange); j++) {
 			for (int i = (0); i < (xrange); i++) {
 				field.density0(i, j) = 0.0;
@@ -133,7 +133,7 @@ void build_field(global_variables &globals) {
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (0); j < (yrange); j++) {
 			for (int i = (0); i < (xrange); i++) {
 				field.vol_flux_x(i, j) = 0.0;
@@ -143,7 +143,7 @@ void build_field(global_variables &globals) {
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (0); j < (yrange + 1); j++) {
 			for (int i = (0); i < (xrange); i++) {
 				field.vol_flux_y(i, j) = 0.0;
@@ -153,28 +153,28 @@ void build_field(global_variables &globals) {
 		}
 
 		// (t_xmin-2:t_xmax+2) inclusive
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int id = (0); id < (xrange); id++) {
 			field.cellx[id] = 0.0;
 			field.celldx[id] = 0.0;
 		}
 
 		// (t_ymin-2:t_ymax+2) inclusive
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int id = (0); id < (yrange); id++) {
 			field.celly[id] = 0.0;
 			field.celldy[id] = 0.0;
 		}
 
 		// (t_xmin-2:t_xmax+3) inclusive
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int id = (0); id < (xrange + 1); id++) {
 			field.vertexx[id] = 0.0;
 			field.vertexdx[id] = 0.0;
 		}
 
 		// (t_ymin-2:t_ymax+3) inclusive
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int id = (0); id < (yrange + 1); id++) {
 			field.vertexy[id] = 0.0;
 			field.vertexdy[id] = 0.0;

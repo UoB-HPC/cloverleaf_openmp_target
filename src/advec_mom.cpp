@@ -58,7 +58,7 @@ void advec_mom_kernel(
 	if (mom_sweep == 1) { // x 1
 
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol(i, j) = volume(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
@@ -68,7 +68,7 @@ void advec_mom_kernel(
 	} else if (mom_sweep == 2) { // y 1
 
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol(i, j) = volume(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
@@ -78,7 +78,7 @@ void advec_mom_kernel(
 	} else if (mom_sweep == 3) { // x 2
 
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol(i, j) = volume(i, j);
@@ -88,7 +88,7 @@ void advec_mom_kernel(
 	} else if (mom_sweep == 4) { // y 2
 
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol(i, j) = volume(i, j);
@@ -104,7 +104,7 @@ void advec_mom_kernel(
 
 
 
-			_Pragma("kernel2d")
+			#pragma omp parallel for simd collapse(2)
 			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					node_flux(i, j) = 0.25 * (mass_flux_x(i + 0, j - 1) + mass_flux_x(i, j) +
@@ -116,7 +116,7 @@ void advec_mom_kernel(
 			//   DO j=x_min-1,x_max+2
 
 
-			_Pragma("kernel2d")
+			#pragma omp parallel for simd collapse(2)
 			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 				for (int i = (x_min - 1 + 1); i < (x_max + 2 + 2); i++) {
 					node_mass_post(i, j) = 0.25 * (density1(i + 0, j - 1) *
@@ -136,7 +136,7 @@ void advec_mom_kernel(
 
 
 
-				_Pragma("kernel2d")
+				#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min - 1 + 1); i < (x_max + 1 + 2); i++)
 				({
@@ -176,7 +176,7 @@ void advec_mom_kernel(
 
 
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 				vel1(i, j) = (vel1(i, j) * node_mass_pre(i, j) + mom_flux(i - 1, j + 0) - mom_flux(i, j)) / node_mass_post(i, j);
@@ -189,7 +189,7 @@ void advec_mom_kernel(
 
 
 
-			_Pragma("kernel2d")
+			#pragma omp parallel for simd collapse(2)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 					node_flux(i, j) = 0.25 * (mass_flux_y(i - 1, j + 0) + mass_flux_y(i, j) +
@@ -201,7 +201,7 @@ void advec_mom_kernel(
 			// DO k=y_min-1,y_max+2
 			//   DO j=x_min,x_max+1
 
-			_Pragma("kernel2d")
+			#pragma omp parallel for simd collapse(2)
 			for (int j = (y_min - 1 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 					node_mass_post(i, j) = 0.25 * (density1(i + 0, j - 1) *
@@ -220,7 +220,7 @@ void advec_mom_kernel(
 			// DO k=y_min-1,y_max+1
 			//   DO j=x_min,x_max+1
 
-				_Pragma("kernel2d")
+				#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min - 1 + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++)
 				({
@@ -261,7 +261,7 @@ void advec_mom_kernel(
 
 
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 				vel1(i, j) = (vel1(i, j) * node_mass_pre(i, j) + mom_flux(i + 0, j - 1) - mom_flux(i, j)) / node_mass_post(i, j);

@@ -77,7 +77,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 
 
 	// State 1 is always the background state
-	_Pragma("kernel2d")
+	#pragma omp parallel for simd collapse(2)
 	for (int j = (0); j < (yrange); j++) {
 		for (int i = (0); i < (xrange); i++) {
 			field.energy0(i, j) = state_energy[0];
@@ -89,7 +89,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 
 
 	for (int state = 1; state < globals.config.number_of_states; ++state) {
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (0); j < (yrange); j++) {
 			for (int i = (0); i < (xrange); i++) {
 				double x_cent = state_xmin[state];

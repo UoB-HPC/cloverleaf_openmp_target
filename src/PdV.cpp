@@ -59,7 +59,7 @@ void PdV_kernel(
 
 	if (predict) {
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
 				double left_flux = (xarea(i, j) * (xvel0(i, j) +
@@ -90,7 +90,7 @@ void PdV_kernel(
 
 	} else {
 
-		_Pragma("kernel2d")
+		#pragma omp parallel for simd collapse(2)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
 				double left_flux = (xarea(i, j) * (xvel0(i, j) +

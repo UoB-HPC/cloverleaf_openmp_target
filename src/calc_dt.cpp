@@ -70,7 +70,7 @@ void calc_dt_kernel(
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
 
-	_Pragma("kernel2d")
+	#pragma omp parallel for simd collapse(2) reduction(min:dt_min_val)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			double dsx = celldx[i];

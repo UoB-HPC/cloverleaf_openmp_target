@@ -58,7 +58,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_density0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				density0(x_min - j, k) = left_density0(left_xmax + 1 - j, k);
@@ -70,7 +70,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_density1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				density1(x_min - j, k) = left_density1(left_xmax + 1 - j, k);
@@ -82,7 +82,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_energy0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				energy0(x_min - j, k) = left_energy0(left_xmax + 1 - j, k);
@@ -94,7 +94,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_energy1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				energy1(x_min - j, k) = left_energy1(left_xmax + 1 - j, k);
@@ -106,7 +106,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_pressure] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				pressure(x_min - j, k) = left_pressure(left_xmax + 1 - j, k);
@@ -118,7 +118,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_viscosity] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				viscosity(x_min - j, k) = left_viscosity(left_xmax + 1 - j, k);
@@ -130,7 +130,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_soundspeed] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				soundspeed(x_min - j, k) = left_soundspeed(left_xmax + 1 - j, k);
@@ -142,7 +142,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_xvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				xvel0(x_min - j, k) = left_xvel0(left_xmax + 1 - j, k);
@@ -154,7 +154,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_xvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				xvel1(x_min - j, k) = left_xvel1(left_xmax + 1 - j, k);
@@ -166,7 +166,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_yvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				yvel0(x_min - j, k) = left_yvel0(left_xmax + 1 - j, k);
@@ -178,7 +178,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_yvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				yvel1(x_min - j, k) = left_yvel1(left_xmax + 1 - j, k);
@@ -190,7 +190,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_vol_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				vol_flux_x(x_min - j, k) = left_vol_flux_x(left_xmax + 1 - j, k);
@@ -202,7 +202,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_mass_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				mass_flux_x(x_min - j, k) = left_mass_flux_x(left_xmax + 1 - j, k);
@@ -214,7 +214,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_vol_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				vol_flux_y(x_min - j, k) = left_vol_flux_y(left_xmax + 1 - j, k);
@@ -226,7 +226,7 @@ void update_tile_halo_l_kernel(
 	if (fields[field_mass_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				mass_flux_y(x_min - j, k) = left_mass_flux_y(left_xmax + 1 - j, k);
@@ -266,7 +266,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_density0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				density0(x_max + 2 + j, k) = right_density0(right_xmin - 1 + 2 + j, k);
@@ -278,7 +278,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_density1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				density1(x_max + 2 + j, k) = right_density1(right_xmin - 1 + 2 + j, k);
@@ -290,7 +290,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_energy0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				energy0(x_max + 2 + j, k) = right_energy0(right_xmin - 1 + 2 + j, k);
@@ -302,7 +302,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_energy1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				energy1(x_max + 2 + j, k) = right_energy1(right_xmin - 1 + 2 + j, k);
@@ -314,7 +314,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_pressure] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				pressure(x_max + 2 + j, k) = right_pressure(right_xmin - 1 + 2 + j, k);
@@ -326,7 +326,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_viscosity] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				viscosity(x_max + 2 + j, k) = right_viscosity(right_xmin - 1 + 2 + j, k);
@@ -338,7 +338,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_soundspeed] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				soundspeed(x_max + 2 + j, k) = right_soundspeed(right_xmin - 1 + 2 + j, k);
@@ -350,7 +350,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_xvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				xvel0(x_max + 1 + 2 + j, k) = right_xvel0(right_xmin + 1 - 1 + 2 + j, k);
@@ -362,7 +362,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_xvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				xvel1(x_max + 1 + 2 + j, k) = right_xvel1(right_xmin + 1 - 1 + 2 + j, k);
@@ -374,7 +374,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_yvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				yvel0(x_max + 1 + 2 + j, k) = right_yvel0(right_xmin + 1 - 1 + 2 + j, k);
@@ -386,7 +386,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_yvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				yvel1(x_max + 1 + 2 + j, k) = right_yvel1(right_xmin + 1 - 1 + 2 + j, k);
@@ -398,7 +398,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_vol_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				vol_flux_x(x_max + 1 + 2 + j, k) = right_vol_flux_x(right_xmin + 1 - 1 + 2 + j, k);
@@ -410,7 +410,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_mass_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				mass_flux_x(x_max + 1 + 2 + j, k) = right_mass_flux_x(right_xmin + 1 - 1 + 2 + j, k);
@@ -422,7 +422,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_vol_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				vol_flux_y(x_max + 2 + j, k) = right_vol_flux_y(right_xmin - 1 + 2 + j, k);
@@ -434,7 +434,7 @@ void update_tile_halo_r_kernel(
 	if (fields[field_mass_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		_Pragma("kernel1d")
+		#pragma omp parallel for simd
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
 				mass_flux_y(x_max + 2 + j, k) = right_mass_flux_y(right_xmin - 1 + 2 + j, k);
@@ -477,7 +477,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				density0(j, y_max + 2 + k) = top_density0(j, top_ymin - 1 + 2 + k);
 			}
@@ -489,7 +489,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				density1(j, y_max + 2 + k) = top_density1(j, top_ymin - 1 + 2 + k);
 			}
@@ -501,7 +501,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				energy0(j, y_max + 2 + k) = top_energy0(j, top_ymin - 1 + 2 + k);
 			}
@@ -513,7 +513,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				energy1(j, y_max + 2 + k) = top_energy1(j, top_ymin - 1 + 2 + k);
 			}
@@ -525,7 +525,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				pressure(j, y_max + 2 + k) = top_pressure(j, top_ymin - 1 + 2 + k);
 			}
@@ -537,7 +537,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				viscosity(j, y_max + 2 + k) = top_viscosity(j, top_ymin - 1 + 2 + k);
 			}
@@ -549,7 +549,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				soundspeed(j, y_max + 2 + k) = top_soundspeed(j, top_ymin - 1 + 2 + k);
 			}
@@ -561,7 +561,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				xvel0(j, y_max + 1 + 2 + k) = top_xvel0(j, top_ymin + 1 - 1 + 2 + k);
 			}
@@ -573,7 +573,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				xvel1(j, y_max + 1 + 2 + k) = top_xvel1(j, top_ymin + 1 - 1 + 2 + k);
 			}
@@ -585,7 +585,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				yvel0(j, y_max + 1 + 2 + k) = top_yvel0(j, top_ymin + 1 - 1 + 2 + k);
 			}
@@ -597,7 +597,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				yvel1(j, y_max + 1 + 2 + k) = top_yvel1(j, top_ymin + 1 - 1 + 2 + k);
 			}
@@ -609,7 +609,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				vol_flux_x(j, y_max + 2 + k) = top_vol_flux_x(j, top_ymin - 1 + 2 + k);
 			}
@@ -621,7 +621,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				mass_flux_x(j, y_max + 2 + k) = top_mass_flux_x(j, top_ymin - 1 + 2 + k);
 			}
@@ -633,7 +633,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				vol_flux_y(j, y_max + 1 + 2 + k) = top_vol_flux_y(j, top_ymin + 1 - 1 + 2 + k);
 			}
@@ -645,7 +645,7 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				mass_flux_y(j, y_max + 1 + 2 + k) = top_mass_flux_y(j, top_ymin + 1 - 1 + 2 + k);
 			}
@@ -686,7 +686,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				density0(j, y_min - k) = bottom_density0(j, bottom_ymax + 1 - k);
 			}
@@ -698,7 +698,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				density1(j, y_min - k) = bottom_density1(j, bottom_ymax + 1 - k);
 			}
@@ -710,7 +710,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				energy0(j, y_min - k) = bottom_energy0(j, bottom_ymax + 1 - k);
 			}
@@ -722,7 +722,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				energy1(j, y_min - k) = bottom_energy1(j, bottom_ymax + 1 - k);
 			}
@@ -734,7 +734,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				pressure(j, y_min - k) = bottom_pressure(j, bottom_ymax + 1 - k);
 			}
@@ -746,7 +746,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				viscosity(j, y_min - k) = bottom_viscosity(j, bottom_ymax + 1 - k);
 			}
@@ -758,7 +758,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				soundspeed(j, y_min - k) = bottom_soundspeed(j, bottom_ymax + 1 - k);
 			}
@@ -770,7 +770,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				xvel0(j, y_min - k) = bottom_xvel0(j, bottom_ymax + 1 - k);
 			}
@@ -782,7 +782,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				xvel1(j, y_min - k) = bottom_xvel1(j, bottom_ymax + 1 - k);
 			}
@@ -794,7 +794,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				yvel0(j, y_min - k) = bottom_yvel0(j, bottom_ymax + 1 - k);
 			}
@@ -806,7 +806,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				yvel1(j, y_min - k) = bottom_yvel1(j, bottom_ymax + 1 - k);
 			}
@@ -818,7 +818,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				vol_flux_x(j, y_min - k) = bottom_vol_flux_x(j, bottom_ymax + 1 - k);
 			}
@@ -830,7 +830,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				mass_flux_x(j, y_min - k) = bottom_mass_flux_x(j, bottom_ymax + 1 - k);
 			}
@@ -842,7 +842,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				vol_flux_y(j, y_min - k) = bottom_vol_flux_y(j, bottom_ymax + 1 - k);
 			}
@@ -854,7 +854,7 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			_Pragma("kernel1d")
+			#pragma omp parallel for simd
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				mass_flux_y(j, y_min - k) = bottom_mass_flux_y(j, bottom_ymax + 1 - k);
 			}

@@ -43,7 +43,7 @@ void flux_calc_kernel(
 	//   DO j=x_min,x_max+1
 // Note that the loops calculate one extra flux than required, but this
 	// allows loop fusion that improves performance
-	_Pragma("kernel2d")
+	#pragma omp parallel for simd collapse(2)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 			vol_flux_x(i, j) = 0.25 * dt * xarea(i, j) * (xvel0(i, j) + xvel0(i + 0, j + 1) + xvel1(i, j) + xvel1(i + 0, j + 1));
