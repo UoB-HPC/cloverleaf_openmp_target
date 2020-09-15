@@ -49,38 +49,42 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	const int y_min = globals.chunk.tiles[tile].info.t_ymin;
 	const int y_max = globals.chunk.tiles[tile].info.t_ymax;
 
-	const size_t xrange = (x_max + 3) - (x_min - 2) + 1;
-	const size_t yrange = (y_max + 3) - (y_min - 2) + 1;
+	const int xrange = (x_max + 3) - (x_min - 2) + 1;
+	const int yrange = (y_max + 3) - (y_min - 2) + 1;
 
 	// Take a reference to the lowest structure, as Kokkos device cannot necessarily chase through the structure.
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
-	clover::par_ranged1(Range1d{0u, xrange}, [&](size_t j) {
-		field.vertexx[j] = xmin + dx * (static_cast<int>(j ) - 1 - x_min);
+	_Pragma("kernel1d")
+	for (int j = (0); j < (xrange); j++) {
+		field.vertexx[j] = xmin + dx * (static_cast<int>(j) - 1 - x_min);
 		field.vertexdx[j] = dx;
-	});
+	}
 
 
-	clover::par_ranged1(Range1d{0u, yrange}, [&](size_t k) {
-		field.vertexy[k] = ymin + dy * (static_cast<int>(k ) - 1 - y_min);
+	_Pragma("kernel1d")
+	for (int k = (0); k < (yrange); k++) {
+		field.vertexy[k] = ymin + dy * (static_cast<int>(k) - 1 - y_min);
 		field.vertexdy[k] = dy;
-	});
+	}
 
 
-	const size_t xrange1 = (x_max + 2) - (x_min - 2) + 1;
-	const size_t yrange1 = (y_max + 2) - (y_min - 2) + 1;
+	const int xrange1 = (x_max + 2) - (x_min - 2) + 1;
+	const int yrange1 = (y_max + 2) - (y_min - 2) + 1;
 
-	clover::par_ranged1(Range1d{0u, xrange1}, [&](size_t j) {
+	_Pragma("kernel1d")
+	for (int j = (0); j < (xrange1); j++) {
 		field.cellx[j] = 0.5 * (field.vertexx[j] + field.vertexx[j + 1]);
 		field.celldx[j] = dx;
-	});
+	}
 
 
-	clover::par_ranged1(Range1d{0u, yrange1}, [&](size_t k) {
+	_Pragma("kernel1d")
+	for (int k = (0); k < (yrange1); k++) {
 		field.celly[k] = 0.5 * (field.vertexy[k] + field.vertexy[k + 1]);
 		field.celldy[k] = dy;
-	});
+	}
 
 
 	clover::par_ranged2(Range2d{0u, 0u, xrange1, yrange1}, [&](const size_t i, const size_t j) {

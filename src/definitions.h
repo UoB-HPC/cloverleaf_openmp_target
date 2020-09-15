@@ -64,9 +64,9 @@ static inline void record(const std::string &name, const std::function<void(std:
 // formats and then dumps content of 1d double buffer to stream
 static inline void
 show(std::ostream &out, const std::string &name, clover::Buffer1D<double> &buffer) {
-	out << name << "(" << 1 << ") [" << buffer.size << "]" << std::endl;
+	out << name << "(" << 1 << ") [" << buffer.size() << "]" << std::endl;
 	out << "\t";
-	for (size_t i = 0; i < buffer.size; ++i) {
+	for (size_t i = 0; i < buffer.size(); ++i) {
 		out << buffer[i] << ", ";
 	}
 	out << std::endl;

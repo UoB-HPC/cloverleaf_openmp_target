@@ -85,29 +85,24 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int xmin = t.info.t_xmin;
 		field_type &field = t.field;
 
-		clover::par_ranged1(Range1d{0, (ymax - ymin + 1) * (xmax - xmin + 1)}, [&](size_t idx) {
-
+		_Pragma("kernel1d")
+		for (int idx = (0); idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
 			const size_t j = xmin + 1 + idx % (xmax - xmin + 1);
 			const size_t k = ymin + 1 + idx / (xmax - xmin + 1);
-
-
 			double vsqrd = 0.0;
 			for (size_t kv = k; kv <= k + 1; ++kv) {
 				for (size_t jv = j; jv <= j + 1; ++jv) {
-					vsqrd += 0.25 * (
-							field.xvel0(jv, kv) * field.xvel0(jv, kv) +
-							field.yvel0(jv, kv) * field.yvel0(jv, kv));
+					vsqrd += 0.25 * (field.xvel0(jv, kv) * field.xvel0(jv, kv) + field.yvel0(jv, kv) * field.yvel0(jv, kv));
 				}
 			}
 			double cell_vol = field.volume(j, k);
 			double cell_mass = cell_vol * field.density0(j, k);
-
 			vol += cell_vol;
 			mass += cell_mass;
 			ie += cell_mass * field.energy0(j, k);
 			ke += cell_mass * 0.5 * vsqrd;
 			press += cell_vol * field.pressure(j, k);
-		});
+		}
 
 
 	}

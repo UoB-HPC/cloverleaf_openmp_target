@@ -28,38 +28,19 @@
 namespace clover {
 
 
-	struct Range1d {
-		const size_t from, to;
-		template<typename A, typename B>
-		Range1d(A from, B to) : from(from), to(to) {
-			assert(from < to);
-			assert(to - from > 0);
-		}
-		friend std::ostream &operator<<(std::ostream &os, const Range1d &d) {
-			os << "Range1d{"
-			   << " X[" << d.from << "->" << d.to << " (" << (d.to - d.from) << ")]"
-			   << "}";
-			return os;
-		}
-	};
-
 	struct Range2d {
 		const size_t fromX, toX;
 		const size_t fromY, toY;
-		const size_t sizeX, sizeY;
 		template<typename A, typename B, typename C, typename D>
 		Range2d(A fromX, B fromY, C toX, D toY) :
-				fromX(fromX), toX(toX), fromY(fromY), toY(toY),
-				sizeX(toX - fromX), sizeY(toY - fromY) {
+				fromX(fromX), toX(toX), fromY(fromY), toY(toY) {
 			assert(fromX < toX);
 			assert(fromY < toY);
-			assert(sizeX != 0);
-			assert(sizeY != 0);
 		}
 		friend std::ostream &operator<<(std::ostream &os, const Range2d &d) {
 			os << "Range2d{"
-			   << " X[" << d.fromX << "->" << d.toX << " (" << d.sizeX << ")]"
-			   << " Y[" << d.fromY << "->" << d.toY << " (" << d.sizeY << ")]"
+			   << " X[" << d.fromX << "->" << d.toX << "]"
+			   << " Y[" << d.fromY << "->" << d.toY << "]"
 			   << "}";
 			return os;
 		}
@@ -69,15 +50,16 @@ namespace clover {
 	template<typename T>
 	struct Buffer1D {
 
-		const size_t size;
 		std::vector<T> data;
 
-		explicit Buffer1D(size_t size) : size(size), data(size) {}
+		explicit Buffer1D(size_t size) : data(size) {}
 
 		T operator[](size_t i) const { return data[i]; }
 		T &operator[](size_t i) { return data[i]; }
 
 		T *actual() { return data.data(); }
+
+		[[nodiscard]] size_t size() const { return data.size(); }
 
 		friend std::ostream &operator<<(std::ostream &os, const Buffer1D<T> &buffer) {
 			os << "Buffer1D(size: " << buffer.size << ")";
@@ -109,14 +91,13 @@ namespace clover {
 	};
 
 
-	template<typename F>
-	static constexpr void par_ranged1(const Range1d &range, const F &functor) {
-		{
-			for (size_t i = range.from; i < range.to; i++) {
-				functor(i);
-			}
-		}
-	}
+	#define par_ranged2m(fromX, fromY, toX, toY, f)  \
+        for (int j = (fromY); j < (toY); j++) { \
+            for (int i = (fromX); i < (toX); i++) { \
+                f \
+            } \
+        } \
+
 
 	template<typename F>
 	static constexpr void par_ranged2(const Range2d &range, const F &functor) {

@@ -34,8 +34,8 @@ void build_field(global_variables &globals) {
 
 		tile_type &t = globals.chunk.tiles[tile];
 
-		const size_t xrange = (t.info.t_xmax + 2) - (t.info.t_xmin - 2) + 1;
-		const size_t yrange = (t.info.t_ymax + 2) - (t.info.t_ymin - 2) + 1;
+		const int xrange = (t.info.t_xmax + 2) - (t.info.t_xmin - 2) + 1;
+		const int yrange = (t.info.t_ymax + 2) - (t.info.t_ymin - 2) + 1;
 
 		// (t_xmin-2:t_xmax+2, t_ymin-2:t_ymax+2)
 
@@ -142,28 +142,32 @@ void build_field(global_variables &globals) {
 		});
 
 		// (t_xmin-2:t_xmax+2) inclusive
-		clover::par_ranged1(Range1d{0u, xrange}, ([&](size_t id) {
+		_Pragma("kernel1d")
+		for (int id = (0); id < (xrange); id++) {
 			field.cellx[id] = 0.0;
 			field.celldx[id] = 0.0;
-		}));
+		}
 
 		// (t_ymin-2:t_ymax+2) inclusive
-		clover::par_ranged1(Range1d{0u, yrange}, ([&](size_t id) {
+		_Pragma("kernel1d")
+		for (int id = (0); id < (yrange); id++) {
 			field.celly[id] = 0.0;
 			field.celldy[id] = 0.0;
-		}));
+		}
 
 		// (t_xmin-2:t_xmax+3) inclusive
-		clover::par_ranged1(Range1d{0u, xrange + 1}, ([&](size_t id) {
+		_Pragma("kernel1d")
+		for (int id = (0); id < (xrange + 1); id++) {
 			field.vertexx[id] = 0.0;
 			field.vertexdx[id] = 0.0;
-		}));
+		}
 
 		// (t_ymin-2:t_ymax+3) inclusive
-		clover::par_ranged1(Range1d{0u, yrange + 1}, ([&](size_t id) {
+		_Pragma("kernel1d")
+		for (int id = (0); id < (yrange + 1); id++) {
 			field.vertexy[id] = 0.0;
 			field.vertexdy[id] = 0.0;
-		}));
+		}
 
 
 	}
