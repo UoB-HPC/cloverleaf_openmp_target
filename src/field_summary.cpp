@@ -18,11 +18,11 @@
  */
 
 
+#include <cmath>
 #include "field_summary.h"
 #include "timer.h"
 #include "ideal_gas.h"
-#include "sycl_utils.hpp"
-#include "sycl_reduction.hpp"
+#include "utils.hpp"
 
 #include <iomanip>
 
@@ -41,21 +41,6 @@ extern std::ostream g_out;
 //  Note the reference solution is the value returned from an Intel compiler with
 //  ieee options set on a single core crun.
 
-
-struct captures {
-	clover::Accessor<double, 2, R>::Type volume;
-	clover::Accessor<double, 2, R>::Type density0;
-	clover::Accessor<double, 2, R>::Type energy0;
-	clover::Accessor<double, 2, R>::Type pressure;
-	clover::Accessor<double, 2, R>::Type xvel0;
-	clover::Accessor<double, 2, R>::Type yvel0;
-};
-
-struct value_type {
-	double vol = 0.0, mass = 0.0, ie = 0.0, ke = 0.0, press = 0.0;
-};
-
-typedef clover::local_reducer<value_type, value_type, captures> ctx;
 
 void field_summary(global_variables &globals, parallel_ &parallel) {
 
@@ -98,61 +83,25 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int ymin = t.info.t_ymin;
 		int xmax = t.info.t_xmax;
 		int xmin = t.info.t_xmin;
-		clover::Range1d policy(0, (ymax - ymin + 1) * (xmax - xmin + 1));
+		field_type &field = t.field;
 
-		clover::Buffer<value_type, 1> result(range<1>(policy.size));
-
-		clover::par_reduce_1d<class field_summary, value_type>(
-				globals.queue, policy,
-				[=](handler &h, size_t &size) mutable {
-					return ctx(h, size,
-					           {t.field.volume.access<R>(h),
-					            t.field.density0.access<R>(h),
-					            t.field.energy0.access<R>(h),
-					            t.field.pressure.access<R>(h),
-					            t.field.xvel0.access<R>(h),
-					            t.field.yvel0.access<R>(h)},
-					           result.buffer);
-				},
-				[](const ctx &ctx, id<1> lidx) { ctx.local[lidx] = {}; },
-				[ymin, xmax, xmin](const ctx &ctx, id<1> lidx, id<1> idx) {
-
-					const size_t j = xmin + 1 + idx[0] % (xmax - xmin + 1);
-					const size_t k = ymin + 1 + idx[0] / (xmax - xmin + 1);
-
-
-					double vsqrd = 0.0;
-					for (size_t kv = k; kv <= k + 1; ++kv) {
-						for (size_t jv = j; jv <= j + 1; ++jv) {
-							vsqrd += 0.25 * (
-									ctx.actual.xvel0[jv][kv] * ctx.actual.xvel0[jv][kv] +
-									ctx.actual.yvel0[jv][kv] * ctx.actual.yvel0[jv][kv]);
-						}
-					}
-					double cell_vol = ctx.actual.volume[j][k];
-					double cell_mass = cell_vol * ctx.actual.density0[j][k];
-
-					ctx.local[lidx].vol += cell_vol;
-					ctx.local[lidx].mass += cell_mass;
-					ctx.local[lidx].ie += cell_mass * ctx.actual.energy0[j][k];
-					ctx.local[lidx].ke += cell_mass * 0.5 * vsqrd;
-					ctx.local[lidx].press += cell_vol * ctx.actual.pressure[j][k];
-				},
-				[](const ctx &ctx, id<1> idx, id<1> idy) {
-					ctx.local[idx].vol += ctx.local[idy].vol;
-					ctx.local[idx].mass += ctx.local[idy].mass;
-					ctx.local[idx].ie += ctx.local[idy].ie;
-					ctx.local[idx].ke += ctx.local[idy].ke;
-					ctx.local[idx].press += ctx.local[idy].press;
-				},
-				[](const ctx &ctx, size_t group, id<1> idx) { ctx.result[group] = ctx.local[idx]; });
-
-		{
-			vol = result.access<R>()[0].vol;
-			mass = result.access<R>()[0].mass;
-			ie = result.access<R>()[0].ie;
-			ke = result.access<R>()[0].ke;
-			press = result.access<R>()[0].press;
+		_Pragma("kernel1d")
+		for (int idx = (0); idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
+			const int j = xmin + 1 + idx % (xmax - xmin + 1);
+			const int k = ymin + 1 + idx / (xmax - xmin + 1);
+			double vsqrd = 0.0;
+			for (int kv = k; kv <= k + 1; ++kv) {
+				for (int jv = j; jv <= j + 1; ++jv) {
+					vsqrd += 0.25 * (field.xvel0(jv, kv) * field.xvel0(jv, kv) + field.yvel0(jv, kv) * field.yvel0(jv, kv));
+				}
+			}
+			double cell_vol = field.volume(j, k);
+			double cell_mass = cell_vol * field.density0(j, k);
+			vol += cell_vol;
+			mass += cell_mass;
+			ie += cell_mass * field.energy0(j, k);
+			ke += cell_mass * 0.5 * vsqrd;
+			press += cell_vol * field.pressure(j, k);
 		}
 
 
@@ -186,16 +135,17 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		if (parallel.boss) {
 			if (globals.config.test_problem >= 1) {
 				if (globals.config.test_problem == 1)
-					qa_diff = sycl::fabs((100.0 * (ke / 1.82280367310258)) - 100.0);
+					qa_diff = std::fabs((100.0 * (ke / 1.82280367310258)) - 100.0);
 				if (globals.config.test_problem == 2)
-					qa_diff = sycl::fabs((100.0 * (ke / 1.19316898756307)) - 100.0);
+					qa_diff = std::fabs((100.0 * (ke / 1.19316898756307)) - 100.0);
 				if (globals.config.test_problem == 3)
-					qa_diff = sycl::fabs((100.0 * (ke / 2.58984003503994)) - 100.0);
+					qa_diff = std::fabs((100.0 * (ke / 2.58984003503994)) - 100.0);
 				if (globals.config.test_problem == 4)
-					qa_diff = sycl::fabs((100.0 * (ke / 0.307475452287895)) - 100.0);
+					qa_diff = std::fabs((100.0 * (ke / 0.307475452287895)) - 100.0);
 				if (globals.config.test_problem == 5)
-					qa_diff = sycl::fabs((100.0 * (ke / 4.85350315783719)) - 100.0);
-				std::cout << "Test problem " << globals.config.test_problem << " is within " << qa_diff
+					qa_diff = std::fabs((100.0 * (ke / 4.85350315783719)) - 100.0);
+				std::cout << "Test problem " << globals.config.test_problem << " is within "
+				          << qa_diff
 				          << "% of the expected solution" << std::endl;
 				g_out << "Test problem " << globals.config.test_problem << " is within " << qa_diff
 				      << "% of the expected solution" << std::endl;

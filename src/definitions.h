@@ -22,15 +22,14 @@
 
 #define DEBUG false
 
-#define CL_TARGET_OPENCL_VERSION 220
 
-#include <CL/sycl.hpp>
 #include <iostream>
 #include <utility>
 #include <fstream>
 #include <iostream>
 #include <chrono>
-#include "sycl_utils.hpp"
+#include <functional>
+#include "utils.hpp"
 
 
 #define g_ibig 640000
@@ -39,24 +38,7 @@
 #define NUM_FIELDS 15
 
 
-#define PP_CAT(a, b) PP_CAT_I(a, b)
-#define PP_CAT_I(a, b) PP_CAT_II(~, a ## b)
-#define PP_CAT_II(p, res) res
 
-#define APPEND_LN(base) PP_CAT(base, __LINE__) // appends line number to the given base name
-
-using namespace cl;
-
-using sycl::accessor;
-using sycl::queue;
-using sycl::buffer;
-using sycl::range;
-using sycl::handler;
-using sycl::id;
-
-constexpr sycl::access::mode R = sycl::access::mode::read;
-constexpr sycl::access::mode W = sycl::access::mode::write;
-constexpr sycl::access::mode RW = sycl::access::mode::read_write;
 
 typedef std::chrono::time_point<std::chrono::system_clock> timepoint;
 
@@ -80,25 +62,24 @@ static inline void record(const std::string &name, const std::function<void(std:
 }
 
 // formats and then dumps content of 1d double buffer to stream
-static inline void show(std::ostream &out, const std::string &name, clover::Buffer<double, 1> &buffer) {
-	auto view = buffer.template access<R>();
-	const range<1> &range = view.get_range();
-	out << name << "(" << 1 << ") [" << range[0] << "]" << std::endl;
+static inline void
+show(std::ostream &out, const std::string &name, clover::Buffer1D<double> &buffer) {
+	out << name << "(" << 1 << ") [" << buffer.size() << "]" << std::endl;
 	out << "\t";
-	for (size_t i = 0; i < range[0]; ++i) {
-		out << view[i] << ", ";
+	for (size_t i = 0; i < buffer.size(); ++i) {
+		out << buffer[i] << ", ";
 	}
 	out << std::endl;
 }
 // formats and then dumps content of 2d double buffer to stream
-static inline void show(std::ostream &out, const std::string &name, clover::Buffer<double, 2> &buffer) {
-	auto view = buffer.access<R>();
-	const range<2> &range = view.get_range();
-	out << name << "(" << 2 << ") [" << range[0] << "x" << range[1] << "]" << std::endl;
-	for (size_t i = 0; i < range[0]; ++i) {
+static inline void
+show(std::ostream &out, const std::string &name, clover::Buffer2D<double> &buffer) {
+	out << name << "(" << 2 << ") [" << buffer.sizeX << "x" << buffer.sizeY << "]"
+	    << std::endl;
+	for (size_t i = 0; i < buffer.sizeX; ++i) {
 		out << "\t";
-		for (size_t j = 0; j < range[1]; ++j) {
-			out << view[i][j] << ", ";
+		for (size_t j = 0; j < buffer.sizeY; ++j) {
+			out << buffer(i, j) << ", ";
 		}
 		out << std::endl;
 	}
@@ -199,74 +180,74 @@ struct profiler_type {
 
 struct field_type {
 
-	clover::Buffer<double, 2> density0;
-	clover::Buffer<double, 2> density1;
-	clover::Buffer<double, 2> energy0;
-	clover::Buffer<double, 2> energy1;
-	clover::Buffer<double, 2> pressure;
-	clover::Buffer<double, 2> viscosity;
-	clover::Buffer<double, 2> soundspeed;
-	clover::Buffer<double, 2> xvel0, xvel1;
-	clover::Buffer<double, 2> yvel0, yvel1;
-	clover::Buffer<double, 2> vol_flux_x, mass_flux_x;
-	clover::Buffer<double, 2> vol_flux_y, mass_flux_y;
+	clover::Buffer2D<double> density0;
+	clover::Buffer2D<double> density1;
+	clover::Buffer2D<double> energy0;
+	clover::Buffer2D<double> energy1;
+	clover::Buffer2D<double> pressure;
+	clover::Buffer2D<double> viscosity;
+	clover::Buffer2D<double> soundspeed;
+	clover::Buffer2D<double> xvel0, xvel1;
+	clover::Buffer2D<double> yvel0, yvel1;
+	clover::Buffer2D<double> vol_flux_x, mass_flux_x;
+	clover::Buffer2D<double> vol_flux_y, mass_flux_y;
 
-	clover::Buffer<double, 2> work_array1; // node_flux, stepbymass, volume_change, pre_vol
-	clover::Buffer<double, 2> work_array2; // node_mass_post, post_vol
-	clover::Buffer<double, 2> work_array3; // node_mass_pre,pre_mass
-	clover::Buffer<double, 2> work_array4; // advec_vel, post_mass
-	clover::Buffer<double, 2> work_array5; // mom_flux, advec_vol
-	clover::Buffer<double, 2> work_array6; // pre_vol, post_ener
-	clover::Buffer<double, 2> work_array7; // post_vol, ener_flux
+	clover::Buffer2D<double> work_array1; // node_flux, stepbymass, volume_change, pre_vol
+	clover::Buffer2D<double> work_array2; // node_mass_post, post_vol
+	clover::Buffer2D<double> work_array3; // node_mass_pre,pre_mass
+	clover::Buffer2D<double> work_array4; // advec_vel, post_mass
+	clover::Buffer2D<double> work_array5; // mom_flux, advec_vol
+	clover::Buffer2D<double> work_array6; // pre_vol, post_ener
+	clover::Buffer2D<double> work_array7; // post_vol, ener_flux
 
-	clover::Buffer<double, 1> cellx;
-	clover::Buffer<double, 1> celldx;
-	clover::Buffer<double, 1> celly;
-	clover::Buffer<double, 1> celldy;
-	clover::Buffer<double, 1> vertexx;
-	clover::Buffer<double, 1> vertexdx;
-	clover::Buffer<double, 1> vertexy;
-	clover::Buffer<double, 1> vertexdy;
+	clover::Buffer1D<double> cellx;
+	clover::Buffer1D<double> celldx;
+	clover::Buffer1D<double> celly;
+	clover::Buffer1D<double> celldy;
+	clover::Buffer1D<double> vertexx;
+	clover::Buffer1D<double> vertexdx;
+	clover::Buffer1D<double> vertexy;
+	clover::Buffer1D<double> vertexdy;
 
-	clover::Buffer<double, 2> volume;
-	clover::Buffer<double, 2> xarea;
-	clover::Buffer<double, 2> yarea;
+	clover::Buffer2D<double> volume;
+	clover::Buffer2D<double> xarea;
+	clover::Buffer2D<double> yarea;
 
 
 	explicit field_type(const size_t xrange, const size_t yrange) :
-			density0(range<2>(xrange, yrange)),
-			density1(range<2>(xrange, yrange)),
-			energy0(range<2>(xrange, yrange)),
-			energy1(range<2>(xrange, yrange)),
-			pressure(range<2>(xrange, yrange)),
-			viscosity(range<2>(xrange, yrange)),
-			soundspeed(range<2>(xrange, yrange)),
-			xvel0(range<2>(xrange + 1, yrange + 1)),
-			xvel1(range<2>(xrange + 1, yrange + 1)),
-			yvel0(range<2>(xrange + 1, yrange + 1)),
-			yvel1(range<2>(xrange + 1, yrange + 1)),
-			vol_flux_x(range<2>(xrange + 1, yrange)),
-			mass_flux_x(range<2>(xrange + 1, yrange)),
-			vol_flux_y(range<2>(xrange, yrange + 1)),
-			mass_flux_y(range<2>(xrange, yrange + 1)),
-			work_array1(range<2>(xrange + 1, yrange + 1)),
-			work_array2(range<2>(xrange + 1, yrange + 1)),
-			work_array3(range<2>(xrange + 1, yrange + 1)),
-			work_array4(range<2>(xrange + 1, yrange + 1)),
-			work_array5(range<2>(xrange + 1, yrange + 1)),
-			work_array6(range<2>(xrange + 1, yrange + 1)),
-			work_array7(range<2>(xrange + 1, yrange + 1)),
-			cellx(range<1>(xrange)),
-			celldx(range<1>(xrange)),
-			celly(range<1>(yrange)),
-			celldy(range<1>(yrange)),
-			vertexx(range<1>(xrange + 1)),
-			vertexdx(range<1>(xrange + 1)),
-			vertexy(range<1>(yrange + 1)),
-			vertexdy(range<1>(yrange + 1)),
-			volume(range<2>(xrange, yrange)),
-			xarea(range<2>(xrange + 1, yrange)),
-			yarea(range<2>(xrange, yrange + 1)) {}
+			density0(xrange, yrange),
+			density1(xrange, yrange),
+			energy0(xrange, yrange),
+			energy1(xrange, yrange),
+			pressure(xrange, yrange),
+			viscosity(xrange, yrange),
+			soundspeed(xrange, yrange),
+			xvel0(xrange + 1, yrange + 1),
+			xvel1(xrange + 1, yrange + 1),
+			yvel0(xrange + 1, yrange + 1),
+			yvel1(xrange + 1, yrange + 1),
+			vol_flux_x(xrange + 1, yrange),
+			mass_flux_x(xrange + 1, yrange),
+			vol_flux_y(xrange, yrange + 1),
+			mass_flux_y(xrange, yrange + 1),
+			work_array1(xrange + 1, yrange + 1),
+			work_array2(xrange + 1, yrange + 1),
+			work_array3(xrange + 1, yrange + 1),
+			work_array4(xrange + 1, yrange + 1),
+			work_array5(xrange + 1, yrange + 1),
+			work_array6(xrange + 1, yrange + 1),
+			work_array7(xrange + 1, yrange + 1),
+			cellx(xrange),
+			celldx(xrange),
+			celly(yrange),
+			celldy(yrange),
+			vertexx(xrange + 1),
+			vertexdx(xrange + 1),
+			vertexy(yrange + 1),
+			vertexdy(yrange + 1),
+			volume(xrange, yrange),
+			xarea(xrange + 1, yrange),
+			yarea(xrange, yrange + 1) {}
 
 
 };
@@ -299,8 +280,8 @@ struct chunk_type {
 	// MPI Buffers in device memory
 
 	// MPI Buffers in host memory - to be created with Kokkos::create_mirror_view() and Kokkos::deep_copy()
-//	std::vector<double > hm_left_rcv_buffer, hm_right_rcv_buffer, hm_bottom_rcv_buffer, hm_top_rcv_buffer;
-//	std::vector<double > hm_left_snd_buffer, hm_right_snd_buffer, hm_bottom_snd_buffer, hm_top_snd_buffer;
+//	std::vector<double > hm_left_rcv, hm_right_rcv, hm_bottom_rcv, hm_top_rcv;
+//	std::vector<double > hm_left_snd, hm_right_snd, hm_bottom_snd, hm_top_snd;
 	const std::array<int, 4> chunk_neighbours; // Chunks, not tasks, so we can overload in the future
 
 	const int task; // MPI task
@@ -312,8 +293,8 @@ struct chunk_type {
 	const int left, right, bottom, top;
 	const int left_boundary, right_boundary, bottom_boundary, top_boundary;
 
-	clover::Buffer<double, 1> left_rcv_buffer, right_rcv_buffer, bottom_rcv_buffer, top_rcv_buffer;
-	clover::Buffer<double, 1> left_snd_buffer, right_snd_buffer, bottom_snd_buffer, top_snd_buffer;
+	clover::Buffer1D<double> left_rcv, right_rcv, bottom_rcv, top_rcv;
+	clover::Buffer1D<double> left_snd, right_snd, bottom_snd, top_snd;
 
 	std::vector<tile_type> tiles;
 
@@ -321,23 +302,23 @@ struct chunk_type {
 	           const int task,
 	           const int xMin, const int yMin, const int xMax, const int yMax,
 	           const int left, const int right, const int bottom, const int top,
-	           const int leftBoundary, const int rightBoundary, const int bottomBoundary, const int topBoundary,
-	           const int tiles_per_chunk
-	)
+	           const int leftBoundary, const int rightBoundary, const int bottomBoundary,
+	           const int topBoundary,
+	           const int tiles_per_chunk)
 			: chunk_neighbours(chunkNeighbours),
 			  task(task),
 			  x_min(xMin), y_min(yMin), x_max(xMax), y_max(yMax),
 			  left(left), right(right), bottom(bottom), top(top),
 			  left_boundary(leftBoundary), right_boundary(rightBoundary),
 			  bottom_boundary(bottomBoundary), top_boundary(topBoundary),
-			  left_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
-			  right_rcv_buffer(range<1>(10 * 2 * (yMax + 5))),
-			  bottom_rcv_buffer(range<1>(10 * 2 * (xMax + 5))),
-			  top_rcv_buffer(range<1>(10 * 2 * (xMax + 5))),
-			  left_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
-			  right_snd_buffer(range<1>(10 * 2 * (yMax + 5))),
-			  bottom_snd_buffer(range<1>(10 * 2 * (xMax + 5))),
-			  top_snd_buffer(range<1>(10 * 2 * (xMax + 5))) {}
+			  left_rcv(10 * 2 * (yMax + 5)),
+			  right_rcv(10 * 2 * (yMax + 5)),
+			  bottom_rcv(10 * 2 * (xMax + 5)),
+			  top_rcv(10 * 2 * (xMax + 5)),
+			  left_snd(10 * 2 * (yMax + 5)),
+			  right_snd(10 * 2 * (yMax + 5)),
+			  bottom_snd(10 * 2 * (xMax + 5)),
+			  top_snd(10 * 2 * (xMax + 5)) {}
 
 
 };
@@ -386,7 +367,7 @@ struct global_variables {
 
 	const global_config config;
 
-	cl::sycl::queue queue;
+	const size_t omp_device;
 	chunk_type chunk;
 
 	int error_condition;
@@ -410,9 +391,9 @@ struct global_variables {
 
 	explicit global_variables(
 			const global_config &config,
-			cl::sycl::queue queue,
+			size_t omp_device,
 			chunk_type chunk) :
-			config(config), queue(std::move(queue)), chunk(std::move(chunk)),
+			config(config), omp_device(omp_device), chunk(std::move(chunk)),
 			dt(config.dtinit),
 			dtold(config.dtinit),
 			profiler_on(config.profiler_on) {}
@@ -439,6 +420,22 @@ struct global_variables {
 			out << "jdt" << '=' << jdt << std::endl;
 			out << "kdt" << '=' << kdt << std::endl;
 
+			for (size_t i = 0; i < config.states.size(); ++i) {
+				out << "\tStates[" << i << "]" << std::endl;
+				auto &t = config.states[i];
+				out << "\t\tdefined=" << t.defined << std::endl;
+				out << "\t\tdensity=" << t.density << std::endl;
+				out << "\t\tenergy=" << t.energy << std::endl;
+				out << "\t\txvel=" << t.xvel << std::endl;
+				out << "\t\tyvel=" << t.yvel << std::endl;
+				out << "\t\tgeometry=" << t.geometry << std::endl;
+				out << "\t\txmin=" << t.xmin << std::endl;
+				out << "\t\tymin=" << t.ymin << std::endl;
+				out << "\t\txmax=" << t.xmax << std::endl;
+				out << "\t\tymax=" << t.ymax << std::endl;
+				out << "\t\tradius=" << t.radius << std::endl;
+			}
+
 
 			for (size_t i = 0; i < chunk.tiles.size(); ++i) {
 				auto fs = chunk.tiles[i].field;
@@ -447,7 +444,8 @@ struct global_variables {
 				tile_info &info = chunk.tiles[i].info;
 				for (int l = 0; l < 4; ++l) {
 					out << "info.tile_neighbours[i]" << '=' << info.tile_neighbours[i] << std::endl;
-					out << "info.external_tile_mask[i]" << '=' << info.external_tile_mask[i] << std::endl;
+					out << "info.external_tile_mask[i]" << '=' << info.external_tile_mask[i]
+					    << std::endl;
 				}
 
 				out << "info.t_xmin" << '=' << info.t_xmin << std::endl;
@@ -476,7 +474,8 @@ struct global_variables {
 				show(out, "mass_flux_x", fs.mass_flux_x);
 				show(out, "mass_flux_y", fs.mass_flux_y);
 
-				show(out, "work_array1", fs.work_array1); // node_flux, stepbymass, volume_change, pre_vol
+				show(out, "work_array1",
+				     fs.work_array1); // node_flux, stepbymass, volume_change, pre_vol
 				show(out, "work_array2", fs.work_array2); // node_mass_post, post_vol
 				show(out, "work_array3", fs.work_array3); // node_mass_pre,pre_mass
 				show(out, "work_array4", fs.work_array4); // advec_vel, post_mass

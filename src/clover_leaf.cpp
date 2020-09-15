@@ -47,6 +47,8 @@
 #include "hydro.h"
 #include "initialise.h"
 #include "version.h"
+#include <omp.h>
+#include <memory>
 
 // Output file handler
 std::ostream g_out(nullptr);
@@ -80,7 +82,6 @@ int main(int argc, char *argv[]) {
 
 	// Finilise programming models
 //	Kokkos::finalize();
-	config->queue.wait_and_throw();
 	MPI_Finalize();
 
 	std::cout << "Done" << std::endl;

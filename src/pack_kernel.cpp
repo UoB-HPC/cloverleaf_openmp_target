@@ -22,12 +22,13 @@
 //  @author Wayne Gaudin
 //  @details Packs/unpacks mpi send and receive buffers
 
-#include "pack_kernel.h"
-#include "sycl_utils.hpp"
 
-void clover_pack_message_left(queue &q, int x_min, int x_max, int y_min, int y_max,
-                              clover::Buffer<double, 2> &field_buffer,
-                              clover::Buffer<double, 1> &left_snd_buffer_buffer,
+#include "pack_kernel.h"
+#include "utils.hpp"
+
+void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
+                              clover::Buffer2D<double> &field,
+                              clover::Buffer1D<double> &left_snd,
                               int cell_data, int vertex_data, int x_face_data, int y_face_data,
                               int depth, int field_type, int buffer_offset) {
 
@@ -53,26 +54,24 @@ void clover_pack_message_left(queue &q, int x_min, int x_max, int y_min, int y_m
 		y_inc = 1;
 	}
 
-	// DO k=y_min-depth,y_max+y_inc+depth
+		// DO k=y_min-depth,y_max+y_inc+depth
 
-	clover::execute(q, [&](handler &h) {
-		auto field = field_buffer.access<R>(h);
-		auto left_snd_buffer = left_snd_buffer_buffer.access<W>(h);
-		clover::par_ranged<class APPEND_LN(clover_pack_message_left)>(
-				h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
-					for (int j = 0; j < depth; ++j) {
-						size_t index = buffer_offset + j + (k.get(0) + depth - 1) * depth;
-						left_snd_buffer[index] = field[x_min + x_inc - 1 + j][k.get(0)];
-					}
-				});
-	});
+
+			_Pragma("kernel1d")
+	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
+		for (int j = 0; j < depth; ++j) {
+			int index = buffer_offset + j + (k + depth - 1) * depth;
+			left_snd[index] = field(x_min + x_inc - 1 + j, k);
+		}
+	}
+
 
 }
 
 
-void clover_unpack_message_left(queue &q, int x_min, int x_max, int y_min, int y_max,
-                                clover::Buffer<double, 2> &field_buffer,
-                                clover::Buffer<double, 1> &left_rcv_buffer_buffer,
+void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
+                                clover::Buffer2D<double> &field,
+                                clover::Buffer1D<double> &left_rcv,
                                 int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                 int depth, int field_type, int buffer_offset) {
 
@@ -82,38 +81,38 @@ void clover_unpack_message_left(queue &q, int x_min, int x_max, int y_min, int y
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
-          y_inc = 0;
+		y_inc = 0;
 	}
 	if (field_type == vertex_data) {
-          y_inc = 1;
+		y_inc = 1;
 	}
 	if (field_type == x_face_data) {
-          y_inc = 0;
+		y_inc = 0;
 	}
 	if (field_type == y_face_data) {
-          y_inc = 1;
+		y_inc = 1;
 	}
 
-	// DO k=y_min-depth,y_max+y_inc+depth
+		// DO k=y_min-depth,y_max+y_inc+depth
 
-	clover::execute(q, [&](handler &h) {
-		auto field = field_buffer.access<W>(h);
-		auto left_rcv_buffer = left_rcv_buffer_buffer.access<R>(h);
-		clover::par_ranged<class APPEND_LN(clover_unpack_message_left)>(
-				h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
-					for (int j = 0; j < depth; ++j) {
-						size_t index = buffer_offset + j + (k.get(0) + depth - 1) * depth;
-						field[x_min - j][k.get(0)] = left_rcv_buffer[index];
-					}
-				});
-	});
+
+
+
+			_Pragma("kernel1d")
+	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
+		for (int j = 0; j < depth; ++j) {
+			int index = buffer_offset + j + (k + depth - 1) * depth;
+			field(x_min - j, k) = left_rcv[index];
+		}
+	}
+
 
 }
 
 
-void clover_pack_message_right(queue &q, int x_min, int x_max, int y_min, int y_max,
-                               clover::Buffer<double, 2> &field_buffer,
-                               clover::Buffer<double, 1> &right_snd_buffer_buffer,
+void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
+                               clover::Buffer2D<double> &field,
+                               clover::Buffer1D<double> &right_snd,
                                int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                int depth, int field_type, int buffer_offset) {
 
@@ -123,37 +122,34 @@ void clover_pack_message_right(queue &q, int x_min, int x_max, int y_min, int y_
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
-          y_inc = 0;
+		y_inc = 0;
 	}
 	if (field_type == vertex_data) {
-          y_inc = 1;
+		y_inc = 1;
 	}
 	if (field_type == x_face_data) {
-          y_inc = 0;
+		y_inc = 0;
 	}
 	if (field_type == y_face_data) {
-          y_inc = 1;
+		y_inc = 1;
 	}
 
-	// DO k=y_min-depth,y_max+y_inc+depth
-	clover::execute(q, [&](handler &h) {
-		auto field = field_buffer.access<R>(h);
-		auto right_snd_buffer = right_snd_buffer_buffer.access<W>(h);
-		clover::par_ranged<class APPEND_LN(clover_pack_message_right)>(
-				h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
-					for (int j = 0; j < depth; ++j) {
-						size_t index = buffer_offset + j + (k.get(0) + depth - 1) * depth;
-						right_snd_buffer[index] = field[x_min + 1 + j][k.get(0)];
-					}
-				});
-	});
+		// DO k=y_min-depth,y_max+y_inc+depth
+			_Pragma("kernel1d")
+	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
+		for (int j = 0; j < depth; ++j) {
+			int index = buffer_offset + j + (k + depth - 1) * depth;
+			right_snd[index] = field(x_min + 1 + j, k);
+		}
+	}
+
 
 }
 
 
-void clover_unpack_message_right(queue &q, int x_min, int x_max, int y_min, int y_max,
-                                 clover::Buffer<double, 2> &field_buffer,
-                                 clover::Buffer<double, 1> &right_rcv_buffer_buffer,
+void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
+                                 clover::Buffer2D<double> &field,
+                                 clover::Buffer1D<double> &right_rcv,
                                  int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                  int depth, int field_type, int buffer_offset) {
 
@@ -179,25 +175,21 @@ void clover_unpack_message_right(queue &q, int x_min, int x_max, int y_min, int 
 		y_inc = 1;
 	}
 
-	// DO k=y_min-depth,y_max+y_inc+depth
+		// DO k=y_min-depth,y_max+y_inc+depth
+			_Pragma("kernel1d")
+	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
+		for (int j = 0; j < depth; ++j) {
+			int index = buffer_offset + j + (k + depth - 1) * depth;
+			right_rcv[index] = field(x_max + x_inc + j, k);
+		}
+	}
 
-	clover::execute(q, [&](handler &h) {
-		auto field = field_buffer.access<R>(h);
-		auto right_rcv_buffer = right_rcv_buffer_buffer.access<W>(h);
-		clover::par_ranged<class APPEND_LN(clover_pack_message_left)>(
-				h, {y_min - depth + 1, y_max + y_inc + depth + 2}, [=](id<1> k) {
-					for (int j = 0; j < depth; ++j) {
-						size_t index = buffer_offset + j + (k.get(0) + depth - 1) * depth;
-						right_rcv_buffer[index] = field[x_max + x_inc + j][k.get(0)];
-					}
-				});
-	});
 
 }
 
-void clover_pack_message_top(queue &q, int x_min, int x_max, int y_min, int y_max,
-                             clover::Buffer<double, 2> &field_buffer,
-                             clover::Buffer<double, 1> &top_snd_buffer_buffer,
+void clover_pack_message_top(int x_min, int x_max, int y_min, int y_max,
+                             clover::Buffer2D<double> &field,
+                             clover::Buffer1D<double> &top_snd,
                              int cell_data, int vertex_data, int x_face_data, int y_face_data,
                              int depth, int field_type, int buffer_offset) {
 
@@ -208,34 +200,31 @@ void clover_pack_message_top(queue &q, int x_min, int x_max, int y_min, int y_ma
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
 		x_inc = 0;
-        }
+	}
 	if (field_type == vertex_data) {
 		x_inc = 1;
-        }
+	}
 	if (field_type == x_face_data) {
 		x_inc = 1;
-        }
+	}
 	if (field_type == y_face_data) {
 		x_inc = 0;
-        }
+	}
 
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
-		clover::execute(q, [&](handler &h) {
-			auto field = field_buffer.access<R>(h);
-			auto top_snd_buffer = top_snd_buffer_buffer.access<W>(h);
-			clover::par_ranged<class APPEND_LN(clover_pack_message_top)>(
-					h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
-						size_t index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
-						top_snd_buffer[index] = field[j.get(0)][y_max + 1 - k];
-					});
-		});
+
+		_Pragma("kernel1d")
+		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
+			int index = buffer_offset + k + (j + depth - 1) * depth;
+			top_snd[index] = field(j, y_max + 1 - k);
+		}
 	}
 }
 
-void clover_unpack_message_top(queue &q, int x_min, int x_max, int y_min, int y_max,
-                               clover::Buffer<double, 2> &field_buffer,
-                               clover::Buffer<double, 1> &top_rcv_buffer_buffer,
+void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
+                               clover::Buffer2D<double> &field,
+                               clover::Buffer1D<double> &top_rcv,
                                int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                int depth, int field_type, int buffer_offset) {
 
@@ -264,22 +253,19 @@ void clover_unpack_message_top(queue &q, int x_min, int x_max, int y_min, int y_
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		clover::execute(q, [&](handler &h) {
-			auto field = field_buffer.access<W>(h);
-			auto top_rcv_buffer = top_rcv_buffer_buffer.access<R>(h);
-			clover::par_ranged<class APPEND_LN(clover_unpack_message_top)>(
-					h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
-						size_t index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
-						field[j.get(0)][y_max + y_inc + k] = top_rcv_buffer[index];
-					});
-		});
+
+		_Pragma("kernel1d")
+		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
+			int index = buffer_offset + k + (j + depth - 1) * depth;
+			field(j, y_max + y_inc + k) = top_rcv[index];
+		}
 	}
 }
 
 
-void clover_pack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y_max,
-                                clover::Buffer<double, 2> &field_buffer,
-                                clover::Buffer<double, 1> &bottom_snd_buffer_buffer,
+void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
+                                clover::Buffer2D<double> &field,
+                                clover::Buffer1D<double> &bottom_snd,
                                 int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                 int depth, int field_type, int buffer_offset) {
 
@@ -308,27 +294,23 @@ void clover_pack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		clover::execute(q, [&](handler &h) {
-			auto field = field_buffer.access<R>(h);
-			auto bottom_snd_buffer = bottom_snd_buffer_buffer.access<W>(h);
-			clover::par_ranged<class APPEND_LN(clover_pack_message_bottom)>(
-					h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
-						size_t index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
-						bottom_snd_buffer[index] = field[j.get(0)][y_min + y_inc - 1 + k];
-					});
-		});
+		_Pragma("kernel1d")
+		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
+			int index = buffer_offset + k + (j + depth - 1) * depth;
+			bottom_snd[index] = field(j, y_min + y_inc - 1 + k);
+		}
 	}
 }
 
-void clover_unpack_message_bottom(queue &q, int x_min, int x_max, int y_min, int y_max,
-                                  clover::Buffer<double, 2> &field_buffer,
-                                  clover::Buffer<double, 1> &bottom_rcv_buffer_buffer,
+void clover_unpack_message_bottom(int x_min, int x_max, int y_min, int y_max,
+                                  clover::Buffer2D<double> &field,
+                                  clover::Buffer1D<double> &bottom_rcv,
                                   int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                   int depth, int field_type, int buffer_offset) {
 
 	// Unpack
 
-	int x_inc ;
+	int x_inc;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
@@ -346,14 +328,11 @@ void clover_unpack_message_bottom(queue &q, int x_min, int x_max, int y_min, int
 
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
-		clover::execute(q, [&](handler &h) {
-			auto field = field_buffer.access<W>(h);
-			auto bottom_rcv_buffer = bottom_rcv_buffer_buffer.access<R>(h);
-			clover::par_ranged<class APPEND_LN(clover_unpack_message_top)>(
-					h, {x_min - depth + 1, x_max + x_inc + depth + 2}, [=](id<1> j) {
-						size_t index = buffer_offset + k + (j.get(0) + depth - 1) * depth;
-						field[j.get(0)][y_min - k] = bottom_rcv_buffer[index];
-					});
-		});
+
+		_Pragma("kernel1d")
+		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
+			int index = buffer_offset + k + (j + depth - 1) * depth;
+			field(j, y_min - k) = bottom_rcv[index];
+		}
 	}
 }
