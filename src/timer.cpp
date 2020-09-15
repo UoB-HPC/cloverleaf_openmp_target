@@ -30,7 +30,7 @@
 #include <stdlib.h>
 
 double timer() {
-	struct timeval t;
+	struct timeval t{};
 	gettimeofday(&t, (struct timezone *) NULL);
 	return t.tv_sec + t.tv_usec * 1.0E-6;
 }

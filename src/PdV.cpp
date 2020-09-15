@@ -18,6 +18,7 @@
  */
 
 
+#include <cmath>
 #include "PdV.h"
 #include "timer.h"
 #include "comms.h"
@@ -25,7 +26,7 @@
 #include "ideal_gas.h"
 #include "update_halo.h"
 #include "revert.h"
-#include "sycl_utils.hpp"
+#include "utils.hpp"
 
 //  @brief Fortran PdV kernel.
 //  @author Wayne Gaudin
@@ -34,24 +35,23 @@
 //  level of the velocity data depends on whether it is invoked as the
 //  predictor or corrector.
 void PdV_kernel(
-		handler &h,
 		bool predict,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		clover::Accessor<double, 2, RW>::Type xarea,
-		clover::Accessor<double, 2, RW>::Type yarea,
-		clover::Accessor<double, 2, RW>::Type volume,
-		clover::Accessor<double, 2, RW>::Type density0,
-		clover::Accessor<double, 2, RW>::Type density1,
-		clover::Accessor<double, 2, RW>::Type energy0,
-		clover::Accessor<double, 2, RW>::Type energy1,
-		clover::Accessor<double, 2, RW>::Type pressure,
-		clover::Accessor<double, 2, RW>::Type viscosity,
-		clover::Accessor<double, 2, RW>::Type xvel0,
-		clover::Accessor<double, 2, RW>::Type xvel1,
-		clover::Accessor<double, 2, RW>::Type yvel0,
-		clover::Accessor<double, 2, RW>::Type yvel1,
-		clover::Accessor<double, 2, RW>::Type volume_change) {
+		clover::Buffer2D<double> &xarea,
+		clover::Buffer2D<double> &yarea,
+		clover::Buffer2D<double> &volume,
+		clover::Buffer2D<double> &density0,
+		clover::Buffer2D<double> &density1,
+		clover::Buffer2D<double> &energy0,
+		clover::Buffer2D<double> &energy1,
+		clover::Buffer2D<double> &pressure,
+		clover::Buffer2D<double> &viscosity,
+		clover::Buffer2D<double> &xvel0,
+		clover::Buffer2D<double> &xvel1,
+		clover::Buffer2D<double> &yvel0,
+		clover::Buffer2D<double> &yvel1,
+		clover::Buffer2D<double> &volume_change) {
 
 
 	// DO k=y_min,y_max
@@ -60,81 +60,98 @@ void PdV_kernel(
 
 	if (predict) {
 
-		clover::par_ranged<class PdV_predict_true>(h, policy, [=](id<2> idx) {
+		clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
 
 
-			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[clover::offset(idx, 0, 1)]
-			                                  + xvel0[idx] + xvel0[clover::offset(idx, 0, 1)])) * 0.25 * dt * 0.5;
+			double left_flux = (xarea(i, j) * (xvel0(i, j) + xvel0(i + 0, j + 1)
+			                                   + xvel0(i, j) + xvel0(i + 0, j + 1))) *
+			                   0.25 * dt * 0.5;
 
-			double right_flux = (xarea[clover::offset(idx, 1, 0)] * (xvel0[clover::offset(idx, 1, 0)] + xvel0[clover::offset(idx, 1, 1)]
-			                                                 + xvel0[clover::offset(idx, 1, 0)] + xvel0[clover::offset(idx, 1, 1)])) *
+			double right_flux = (xarea(i + 1, j + 0) *
+			                     (xvel0(i + 1, j + 0) +
+			                      xvel0(i + 1, j + 1)
+			                      + xvel0(i + 1, j + 0) +
+			                      xvel0(i + 1, j + 1))) *
 			                    0.25 * dt * 0.5;
 
-			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[clover::offset(idx, 1, 0)]
-			                                    + yvel0[idx] + yvel0[clover::offset(idx, 1, 0)])) * 0.25 * dt *
+			double bottom_flux = (yarea(i, j) * (yvel0(i, j) + yvel0(i + 1, j + 0)
+			                                     + yvel0(i, j) + yvel0(i + 1, j + 0))) *
+			                     0.25 * dt *
 			                     0.5;
 
-			double top_flux = (yarea[clover::offset(idx, 0, 1)] * (yvel0[clover::offset(idx, 0, 1)] + yvel0[clover::offset(idx, 1, 1)]
-			                                               + yvel0[clover::offset(idx, 0, 1)] + yvel0[clover::offset(idx, 1, 1)])) *
+			double top_flux = (yarea(i + 0, j + 1) *
+			                   (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)
+			                    + yvel0(i + 0, j + 1) +
+			                    yvel0(i + 1, j + 1))) *
 			                  0.25 *
 			                  dt * 0.5;
 
 			double total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-			double volume_change_s = volume[idx] / (volume[idx] + total_flux);
+			double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
 
 			double min_cell_volume =
-					sycl::fmin(sycl::fmin(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
-					                      volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
+					std::fmin(std::fmin(
+							volume(i, j) + right_flux - left_flux + top_flux - bottom_flux,
+							volume(i, j) + right_flux - left_flux),
+					          volume(i, j) + top_flux - bottom_flux);
 
-			double recip_volume = 1.0 / volume[idx];
+			double recip_volume = 1.0 / volume(i, j);
 
 			double energy_change =
-					(pressure[idx] / density0[idx] + viscosity[idx] / density0[idx]) *
+					(pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) *
 					total_flux * recip_volume;
 
-			energy1[idx] = energy0[idx] - energy_change;
+			energy1(i, j) = energy0(i, j) - energy_change;
 
-			density1[idx] = density0[idx] * volume_change_s;
+			density1(i, j) = density0(i, j) * volume_change_s;
 
 		});
 
 	} else {
 
-		clover::par_ranged<class PdV_predict_false>(h, policy, [=](id<2> idx) {
+		clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
 
-			double left_flux = (xarea[idx] * (xvel0[idx] + xvel0[clover::offset(idx, 0, 1)]
-			                                  + xvel1[idx] + xvel1[clover::offset(idx, 0, 1)])) * 0.25 * dt;
+			double left_flux = (xarea(i, j) * (xvel0(i, j) + xvel0(i + 0, j + 1)
+			                                   + xvel1(i, j) + xvel1(i + 0, j + 1))) *
+			                   0.25 * dt;
 
-			double right_flux = (xarea[clover::offset(idx, 1, 0)] * (xvel0[clover::offset(idx, 1, 0)] + xvel0[clover::offset(idx, 1, 1)]
-			                                                 + xvel1[clover::offset(idx, 1, 0)] + xvel1[clover::offset(idx, 1, 1)])) *
+			double right_flux = (xarea(i + 1, j + 0) *
+			                     (xvel0(i + 1, j + 0) +
+			                      xvel0(i + 1, j + 1)
+			                      + xvel1(i + 1, j + 0) +
+			                      xvel1(i + 1, j + 1))) *
 			                    0.25 * dt;
 
-			double bottom_flux = (yarea[idx] * (yvel0[idx] + yvel0[clover::offset(idx, 1, 0)]
-			                                    + yvel1[idx] + yvel1[clover::offset(idx, 1, 0)])) * 0.25 * dt;
+			double bottom_flux = (yarea(i, j) * (yvel0(i, j) + yvel0(i + 1, j + 0)
+			                                     + yvel1(i, j) + yvel1(i + 1, j + 0))) *
+			                     0.25 * dt;
 
-			double top_flux = (yarea[clover::offset(idx, 0, 1)] * (yvel0[clover::offset(idx, 0, 1)] + yvel0[clover::offset(idx, 1, 1)]
-			                                               + yvel1[clover::offset(idx, 0, 1)] + yvel1[clover::offset(idx, 1, 1)])) *
-			                  0.25 *
-			                  dt;
+			double top_flux = (yarea(i + 0, j + 1) *
+			                   (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)
+			                    + yvel1(i + 0, j + 1) +
+			                    yvel1(i + 1, j + 1))) *
+			                  0.25 * dt;
 
 			double total_flux = right_flux - left_flux + top_flux - bottom_flux;
 
-			double volume_change_s = volume[idx] / (volume[idx] + total_flux);
+			double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
 
 			double min_cell_volume =
-					sycl::fmin(sycl::fmin(volume[idx] + right_flux - left_flux + top_flux - bottom_flux,
-					                      volume[idx] + right_flux - left_flux), volume[idx] + top_flux - bottom_flux);
+					std::fmin(std::fmin(
+							volume(i, j) + right_flux - left_flux + top_flux - bottom_flux,
+							volume(i, j) + right_flux - left_flux),
+					          volume(i, j) + top_flux - bottom_flux);
 
-			double recip_volume = 1.0 / volume[idx];
+			double recip_volume = 1.0 / volume(i, j);
 
 			double energy_change =
-					(pressure[idx] / density0[idx] + viscosity[idx] / density0[idx]) *
+					(pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) *
 					total_flux * recip_volume;
 
-			energy1[idx] = energy0[idx] - energy_change;
+			energy1(i, j) = energy0(i, j) - energy_change;
 
-			density1[idx] = density0[idx] * volume_change_s;
+			density1(i, j) = density0(i, j) * volume_change_s;
 
 		});
 	}
@@ -152,34 +169,29 @@ void PdV(global_variables &globals, bool predict) {
 
 	globals.error_condition = 0;
 
-	clover::execute(globals.queue, [&](handler &h) {
-		for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
-			tile_type &t = globals.chunk.tiles[tile];
-			PdV_kernel(
-					h,
-					predict,
-					t.info.t_xmin,
-					t.info.t_xmax,
-					t.info.t_ymin,
-					t.info.t_ymax,
-					globals.dt,
-					t.field.xarea.access<RW>(h),
-					t.field.yarea.access<RW>(h),
-					t.field.volume.access<RW>(h),
-					t.field.density0.access<RW>(h),
-					t.field.density1.access<RW>(h),
-					t.field.energy0.access<RW>(h),
-					t.field.energy1.access<RW>(h),
-					t.field.pressure.access<RW>(h),
-					t.field.viscosity.access<RW>(h),
-					t.field.xvel0.access<RW>(h),
-					t.field.xvel1.access<RW>(h),
-					t.field.yvel0.access<RW>(h),
-					t.field.yvel1.access<RW>(h),
-					t.field.work_array1.access<RW>(h));
-
-		}
-	});
+	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
+		tile_type &t = globals.chunk.tiles[tile];
+		PdV_kernel(predict,
+		           t.info.t_xmin,
+		           t.info.t_xmax,
+		           t.info.t_ymin,
+		           t.info.t_ymax,
+		           globals.dt,
+		           t.field.xarea,
+		           t.field.yarea,
+		           t.field.volume,
+		           t.field.density0,
+		           t.field.density1,
+		           t.field.energy0,
+		           t.field.energy1,
+		           t.field.pressure,
+		           t.field.viscosity,
+		           t.field.xvel0,
+		           t.field.xvel1,
+		           t.field.yvel0,
+		           t.field.yvel1,
+		           t.field.work_array1);
+	}
 
 
 	clover_check_error(globals.error_condition);
@@ -198,7 +210,7 @@ void PdV(global_variables &globals, bool predict) {
 		if (globals.profiler_on) globals.profiler.ideal_gas += timer() - kernel_time;
 
 		int fields[NUM_FIELDS];
-		for (int & field : fields) field = 0;
+		for (int &field : fields) field = 0;
 		fields[field_pressure] = 1;
 		update_halo(globals, fields, 1);
 	}

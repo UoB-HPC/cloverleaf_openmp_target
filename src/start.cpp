@@ -43,7 +43,7 @@ extern std::ostream g_out;
 
 std::unique_ptr<global_variables> start(parallel_ &parallel,
                                         const global_config &config,
-                                        const cl::sycl::device &device) {
+                                        size_t omp_device) {
 
 	if (parallel.boss) {
 		g_out << "Setting up initial geometry" << std::endl
@@ -65,20 +65,8 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 	int y_cells = top - bottom + 1;
 
 
-	auto handler = [](const cl::sycl::exception_list &exceptions) {
-		for (std::exception_ptr const &e : exceptions) {
-			try {
-				std::rethrow_exception(e);
-			} catch (cl::sycl::exception const &e) {
-				std::cout << "[SYCL] Async exception:\n"
-				          << e.what() << std::endl;
-			}
-		}
-	};
-
-
 	global_variables globals(config,
-	                         cl::sycl::queue(device, handler, {}),
+	                         omp_device,
 	                         chunk_type(
 			                         chunkNeighbours,
 			                         parallel.task, 1, 1, x_cells, y_cells,
@@ -99,10 +87,11 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 
 	// Line 92 start.f90
 	build_field(globals);
+	if (DEBUG) std::cout << "Field initialised" << std::endl;
 
 	clover_barrier(globals);
 
-	clover_allocate_buffers(globals, parallel); // FIXME remove; basically no-op, moved to ctor
+	clover_allocates(globals, parallel); // FIXME remove; basically no-op, moved to ctor
 
 	if (parallel.boss) {
 		g_out << "Generating chunks" << std::endl;
@@ -115,6 +104,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 
 
 	clover_barrier(globals);
+	if (DEBUG) globals.dump("dump_0_after_generate_chunk.txt");
 
 	// Do no profile the start up costs otherwise the total times will not add up
 	// at the end
@@ -124,6 +114,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 	for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 		ideal_gas(globals, tile, false);
 	}
+	if (DEBUG) globals.dump("dump_0_after_ideal_gas.txt");
 
 	// Prime all halo data for the first step
 	// TODO replace with std::array
@@ -142,6 +133,8 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 	fields[field_yvel1] = 1;
 
 	update_halo(globals, fields, 2);
+	if (DEBUG)globals.dump("dump_0_after_update_halo.txt");
+
 
 	if (parallel.boss) {
 		g_out << std::endl

@@ -20,6 +20,7 @@
 #ifndef INITIALISE_H
 #define INITIALISE_H
 
+#include <memory>
 #include "comms.h"
 #include "definitions.h"
 

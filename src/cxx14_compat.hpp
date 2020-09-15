@@ -18,8 +18,8 @@
  */
 
 
-#ifndef CLOVERLEAF_SYCL_CXX14_COMPAT_HPP
-#define CLOVERLEAF_SYCL_CXX14_COMPAT_HPP
+#ifndef CXX14_COMPAT_HPP
+#define CXX14_COMPAT_HPP
 
 #include <memory>
 
@@ -31,4 +31,4 @@ std::unique_ptr<T> make_unique(Args &&... args) {
 	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-#endif //CLOVERLEAF_SYCL_CXX14_COMPAT_HPP
+#endif //CXX14_COMPAT_HPP

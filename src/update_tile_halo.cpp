@@ -39,7 +39,6 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 		if (t_up != external_tile) {
 			tile_type &tup = globals.chunk.tiles[t_up];
 			update_tile_halo_t_kernel(
-					globals.queue,
 					tt.info.t_xmin,
 					tt.info.t_xmax,
 					tt.info.t_ymin,
@@ -86,7 +85,6 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 		if (t_down != external_tile) {
 			tile_type &tdown = globals.chunk.tiles[t_down];
 			update_tile_halo_b_kernel(
-					globals.queue,
 					tt.info.t_xmin,
 					tt.info.t_xmax,
 					tt.info.t_ymin,
@@ -141,7 +139,6 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 		if (t_left != external_tile) {
 			tile_type &tleft = globals.chunk.tiles[t_left];
 			update_tile_halo_l_kernel(
-					globals.queue,
 					tt.info.t_xmin,
 					tt.info.t_xmax,
 					tt.info.t_ymin,
@@ -187,7 +184,6 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 		if (t_right != external_tile) {
 			tile_type &tright = globals.chunk.tiles[t_right];
 			update_tile_halo_r_kernel(
-					globals.queue,
 					tt.info.t_xmin,
 					tt.info.t_xmax,
 					tt.info.t_ymin,

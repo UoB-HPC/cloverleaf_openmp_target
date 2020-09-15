@@ -33,55 +33,22 @@
 
 #include <fstream>
 #include <iomanip>
+#include <omp.h>
 
 extern std::ostream g_out;
 std::ofstream of;
 
 
 struct RunConfig {
-	std::optional<std::string> file;
-	std::optional<cl::sycl::device> device;
+	std::string file;
+	size_t deviceIdx;
 };
 
-std::string deviceName(sycl::info::device_type type) {
-	//@formatter:off
-	switch (type){
-		case sycl::info::device_type::cpu: return "cpu";
-		case sycl::info::device_type::gpu: return "gpu";
-		case sycl::info::device_type::accelerator: return "accelerator";
-		case sycl::info::device_type::custom: return "custom";
-		case sycl::info::device_type::automatic: return "automatic";
-		case sycl::info::device_type::host: return "host";
-		case sycl::info::device_type::all: return "all";
-		default: return "(unknown: " + std::to_string(static_cast<unsigned int >(type))+ ")";
+
+void printSimple(size_t num_devices) {
+	for (size_t j = 0; j < num_devices; ++j) {
+		std::cout << std::setw(3) << j << ". OMP target device #" << j << std::endl;
 	}
-	//@formatter:on
-}
-
-// dumps device info to stdout
-void printDetailed(const cl::sycl::device &device, size_t index) {
-	auto exts = device.get_info<cl::sycl::info::device::extensions>();
-	std::ostringstream extensions;
-	std::copy(exts.begin(), exts.end(), std::ostream_iterator<std::string>(extensions, ","));
-
-	auto type = device.get_info<cl::sycl::info::device::device_type>();
-	cl::sycl::platform platform = device.get_platform();
-	std::cout << " + Device        : " << device.get_info<cl::sycl::info::device::name>() << "\n";
-	std::cout << "   - Index      : " << index << "\n";
-	std::cout << "   - Type       : " << deviceName(type) << "\n";
-	std::cout << "   - Vendor     : " << device.get_info<cl::sycl::info::device::vendor>()<< "\n";
-	std::cout << "   - Extensions : " << extensions.str() << "\n";
-	std::cout << "   + Platform   : " << platform.get_info<cl::sycl::info::platform::name>()<< "\n";
-	std::cout << "      - Vendor  : " << platform.get_info<cl::sycl::info::platform::vendor>()<< "\n";
-	std::cout << "      - Version : " << platform.get_info<cl::sycl::info::platform::version>()<< "\n";
-	std::cout << "      - Profile : " << platform.get_info<cl::sycl::info::platform::profile>()<< "\n";
-}
-
-void printSimple(const cl::sycl::device &device, size_t index) {
-	std::cout << std::setw(3) << index << ". "
-	          << device.get_info<cl::sycl::info::device::name>()
-	          << "(" << deviceName(device.get_info<cl::sycl::info::device::device_type>()) << ")"
-	          << std::endl;
 }
 
 void printHelp(const std::string &name) {
@@ -90,13 +57,13 @@ void printHelp(const std::string &name) {
 	          << "Options:\n"
 	          << "  -h  --help               Print the message\n"
 	          << "      --list               List available devices\n"
-	          << "      --list-detailed      List available devices and capabilities\n"
+	          << "      --no-target          Use OMP fallback\n"
 	          << "      --device <INDEX>     Select device at INDEX from output of --list\n"
 	          << "      --file               Custom clover.in file (defaults to clover.in if unspecified)\n"
 	          << std::endl;
 }
 
-RunConfig parseArgs(const std::vector<cl::sycl::device> &devices,
+RunConfig parseArgs(const size_t num_devices,
                     const std::vector<std::string> &args) {
 
 	const auto readParam = [&args](size_t current, const std::string &emptyMessage, auto map) {
@@ -109,27 +76,26 @@ RunConfig parseArgs(const std::vector<cl::sycl::device> &devices,
 		}
 	};
 
-	auto config = RunConfig{};
+	auto config = RunConfig{"clover.in", 0};
 	for (size_t i = 0; i < args.size(); ++i) {
 		const auto arg = args[i];
 
 		if (arg == "--help" || arg == "-h") {
 			printHelp(args[0]);
 			std::exit(EXIT_SUCCESS);
-		} else if (arg == "--list-detailed") {
-			for (size_t j = 0; j < devices.size(); ++j) printDetailed(devices[j], j);
-			std::exit(EXIT_SUCCESS);
 		} else if (arg == "--list") {
-			for (size_t j = 0; j < devices.size(); ++j) printSimple(devices[j], j);
+			printSimple(num_devices);
 			std::exit(EXIT_SUCCESS);
+		} else if (arg == "--no-target") {
+			config.deviceIdx = -1;
 		} else if (arg == "--device") {
-			readParam(i, "--device specified but no size was given", [&config](const auto &param) {
-				try { config.device = cl::sycl::device::get_devices().at(std::stoul(param)); }
-				catch (const std::exception &e) {
-					std::cerr << "failed to parse/select device index `" << param << "`:"
-					          << e.what() << std::endl;
+			readParam(i, "--device specified but no index was given", [&](const auto &param) {
+				auto selected = std::stoul(param);
+				if (selected < 0 || selected >= num_devices) {
+					std::cerr << "bad device index `" << param << "`" << std::endl;
 					std::exit(EXIT_FAILURE);
 				}
+				config.deviceIdx = selected;
 			});
 		} else if (arg == "--file") {
 			readParam(i, "--file specified but no file was given", [&config](const auto &param) {
@@ -167,25 +133,23 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 	clover_barrier();
 
-	const auto &devices = cl::sycl::device::get_devices();
-	if (devices.empty()) {
-		std::cerr << "No SYCL devices available" << std::endl;
-		std::exit(EXIT_FAILURE);
+//
+//	int x = 1;
+//	#pragma omp target map(tofrom: x)
+//	x = x + 1;
+
+	auto num_devices = omp_get_num_devices();
+	if (num_devices == 0) {
+		std::cout << "No OMP target devices available" << std::endl;
+	} else {
+		std::cout << "Detected OMP devices:" << std::endl;
+		printSimple(num_devices);
 	}
 
-	auto runConfig = parseArgs(devices, args);
-	auto file = runConfig.file.value_or("clover.in");
-	auto selectedDevice = runConfig.device.value_or(devices[0]);
-
-	std::cout << "Detected SYCL devices:" << std::endl;
-	for (size_t i = 0; i < devices.size(); ++i) printSimple(devices[i], i);
-
-	std::cout << "Using SYCL device: "
-	          << selectedDevice.get_info<cl::sycl::info::device::name>()
-	          << "("
-	          << deviceName(selectedDevice.get_info<cl::sycl::info::device::device_type>())
-	          << ")"
-	          << std::endl;
+	auto runConfig = parseArgs(num_devices, args);
+	auto file = runConfig.file;
+	auto selectedDevice = runConfig.deviceIdx;
+	std::cout << "Using OMP device: " << selectedDevice << std::endl;
 
 	std::ifstream g_in;
 	if (parallel.boss) {
