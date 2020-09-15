@@ -58,14 +58,14 @@ void initialise_chunk(const int tile, global_variables &globals) {
 
 	_Pragma("kernel1d")
 	for (int j = (0); j < (xrange); j++) {
-		field.vertexx[j] = xmin + dx * (static_cast<int>(j) - 1 - x_min);
+		field.vertexx[j] = xmin + dx * (j - 1 - x_min);
 		field.vertexdx[j] = dx;
 	}
 
 
 	_Pragma("kernel1d")
 	for (int k = (0); k < (yrange); k++) {
-		field.vertexy[k] = ymin + dy * (static_cast<int>(k) - 1 - y_min);
+		field.vertexy[k] = ymin + dy * (k - 1 - y_min);
 		field.vertexdy[k] = dy;
 	}
 
@@ -87,11 +87,14 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	}
 
 
-	clover::par_ranged2(Range2d{0u, 0u, xrange1, yrange1}, [&](const size_t i, const size_t j) {
-		field.volume(i, j) = dx * dy;
-		field.xarea(i, j) = field.celldy[j];
-		field.yarea(i, j) = field.celldx[i];
-	});
+	_Pragma("kernel2d")
+	for (int j = (0); j < (yrange1); j++) {
+		for (int i = (0); i < (xrange1); i++) {
+			field.volume(i, j) = dx * dy;
+			field.xarea(i, j) = field.celldy[j];
+			field.yarea(i, j) = field.celldx[i];
+		}
+	}
 
 
 }

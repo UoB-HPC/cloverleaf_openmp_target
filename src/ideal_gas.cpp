@@ -47,14 +47,17 @@ void ideal_gas_kernel(
 
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [&](const size_t i, const size_t j) {
-		double v = 1.0 / density(i, j);
-		pressure(i, j) = (1.4 - 1.0) * density(i, j) * energy(i, j);
-		double pressurebyenergy = (1.4 - 1.0) * density(i, j);
-		double pressurebyvolume = -density(i, j) * pressure(i, j);
-		double sound_speed_squared = v * v * (pressure(i, j) * pressurebyenergy - pressurebyvolume);
-		soundspeed(i, j) = std::sqrt(sound_speed_squared);
-	});
+	_Pragma("kernel2d")
+	for (int j = (y_min + 1); j < (y_max + 2); j++) {
+		for (int i = (x_min + 1); i < (x_max + 2); i++) {
+			double v = 1.0 / density(i, j);
+			pressure(i, j) = (1.4 - 1.0) * density(i, j) * energy(i, j);
+			double pressurebyenergy = (1.4 - 1.0) * density(i, j);
+			double pressurebyvolume = -density(i, j) * pressure(i, j);
+			double sound_speed_squared = v * v * (pressure(i, j) * pressurebyenergy - pressurebyvolume);
+			soundspeed(i, j) = std::sqrt(sound_speed_squared);
+		}
+	};
 
 }
 

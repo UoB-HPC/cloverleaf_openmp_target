@@ -55,42 +55,46 @@ void advec_mom_kernel(
 	// DO k=y_min-2,y_max+2
 	//   DO j=x_min-2,x_max+2
 
-	clover::Range2d policy(x_min - 2 + 1, y_min - 2 + 1, x_max + 2 + 2, y_max + 2 + 2);
-
 	if (mom_sweep == 1) { // x 1
 
 
-		clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-			post_vol(i, j) =
-					volume(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
-			pre_vol(i, j) =
-					post_vol(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+				post_vol(i, j) = volume(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
+				pre_vol(i, j) = post_vol(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
+			}
+		}
 	} else if (mom_sweep == 2) { // y 1
 
 
-		clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-			post_vol(i, j) =
-					volume(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
-			pre_vol(i, j) =
-					post_vol(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+				post_vol(i, j) = volume(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
+				pre_vol(i, j) = post_vol(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
+			}
+		}
 	} else if (mom_sweep == 3) { // x 2
 
 
-		clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-			post_vol(i, j) = volume(i, j);
-			pre_vol(i, j) =
-					post_vol(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+				post_vol(i, j) = volume(i, j);
+				pre_vol(i, j) = post_vol(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
+			}
+		}
 	} else if (mom_sweep == 4) { // y 2
 
 
-		clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-			post_vol(i, j) = volume(i, j);
-			pre_vol(i, j) =
-					post_vol(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+				post_vol(i, j) = volume(i, j);
+				pre_vol(i, j) = post_vol(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
+			}
+		}
 	}
 
 	if (direction == 1) {
@@ -100,90 +104,84 @@ void advec_mom_kernel(
 
 
 
-			clover::par_ranged2(Range2d{x_min - 2 + 1, y_min + 1, x_max + 2 + 2, y_max + 1 + 2}, [&](const size_t i, const size_t j) {
-				// Find staggered mesh mass fluxes, nodal masses and volumes.
-				node_flux(i, j) = 0.25 * (mass_flux_x(i + 0, j - 1) +
-				                          mass_flux_x(i, j)
-				                          + mass_flux_x(i + 1, j - 1) +
-				                          mass_flux_x(i + 1, j + 0));
-			});
+			_Pragma("kernel2d")
+			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
+				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+					node_flux(i, j) = 0.25 * (mass_flux_x(i + 0, j - 1) + mass_flux_x(i, j) +
+					                          mass_flux_x(i + 1, j - 1) + mass_flux_x(i + 1, j + 0));
+				}
+			}
 
 			// DO k=y_min,y_max+1
 			//   DO j=x_min-1,x_max+2
 
 
-
-			clover::par_ranged2(Range2d{x_min - 1 + 1, y_min + 1, x_max + 2 + 2, y_max + 1 + 2}, [&](const size_t i, const size_t j) {
-				// Staggered cell mass post advection
-				node_mass_post(i, j) = 0.25 * (density1(i + 0, j - 1) *
-				                               post_vol(i + 0, j - 1)
-				                               + density1(i, j) * post_vol(i, j)
-				                               + density1(i - 1, j - 1) *
-				                                 post_vol(i - 1, j - 1)
-				                               +
-				                               density1(i - 1, j + 0) *
-				                               post_vol(i - 1, j + 0));
-				node_mass_pre(i, j) =
-						node_mass_post(i, j) - node_flux(i - 1, j + 0) +
-						node_flux(i, j);
-			});
+			_Pragma("kernel2d")
+			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
+				for (int i = (x_min - 1 + 1); i < (x_max + 2 + 2); i++) {
+					node_mass_post(i, j) = 0.25 * (density1(i + 0, j - 1) *
+					                               post_vol(i + 0, j - 1) +
+					                               density1(i, j) *
+					                               post_vol(i, j) +
+					                               density1(i - 1, j - 1) *
+					                               post_vol(i - 1, j - 1) +
+					                               density1(i - 1, j + 0) * post_vol(i - 1, j + 0));
+					node_mass_pre(i, j) = node_mass_post(i, j) - node_flux(i - 1, j + 0) + node_flux(i, j);
+				}
+			}
 		}
 
-		// DO k=y_min,y_max+1
-		//  DO j=x_min-1,x_max+1
+			// DO k=y_min,y_max+1
+			//  DO j=x_min-1,x_max+1
 
 
 
-		clover::par_ranged2(Range2d{x_min - 1 + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [&](const size_t x, const size_t y) {
-
-			int upwind, donor, downwind, dif;
-			double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
-
-			const int j = x;
-			const int k = y;
-
-			if (node_flux(x, y) < 0.0) {
-				upwind = j + 2;
-				donor = j + 1;
-				downwind = j;
-				dif = donor;
-			} else {
-				upwind = j - 1;
-				donor = j;
-				downwind = j + 1;
-				dif = upwind;
-			}
-
-			sigma = std::fabs(node_flux(x, y)) / (node_mass_pre(donor, k));
-			width = celldx[j];
-			vdiffuw = vel1(donor, k) - vel1(upwind, k);
-			vdiffdw = vel1(downwind, k) - vel1(donor, k);
-			limiter = 0.0;
-			if (vdiffuw * vdiffdw > 0.0) {
-				auw = std::fabs(vdiffuw);
-				adw = std::fabs(vdiffdw);
-				wind = 1.0;
-				if (vdiffdw <= 0.0) wind = -1.0;
-				limiter = wind * std::fmin(std::fmin(
-						width * ((2.0 - sigma) * adw / width +
-						         (1.0 + sigma) * auw / celldx[dif]) / 6.0,
-						auw), adw);
-			}
-			advec_vel_s = vel1(donor, k) + (1.0 - sigma) * limiter;
-			mom_flux(x, y) = advec_vel_s * node_flux(x, y);
-		});
+				_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
+			for (int i = (x_min - 1 + 1); i < (x_max + 1 + 2); i++)
+				({
+					int upwind, donor, downwind, dif;
+					double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
+					if (node_flux(i, j) < 0.0) {
+						upwind = i + 2;
+						donor = i + 1;
+						downwind = i;
+						dif = donor;
+					} else {
+						upwind = i - 1;
+						donor = i;
+						downwind = i + 1;
+						dif = upwind;
+					}
+					sigma = std::fabs(node_flux(i, j)) / (node_mass_pre(donor, j));
+					width = celldx[i];
+					vdiffuw = vel1(donor, j) - vel1(upwind, j);
+					vdiffdw = vel1(downwind, j) - vel1(donor, j);
+					limiter = 0.0;
+					if (vdiffuw * vdiffdw > 0.0) {
+						auw = std::fabs(vdiffuw);
+						adw = std::fabs(vdiffdw);
+						wind = 1.0;
+						if (vdiffdw <= 0.0)wind = -1.0;
+						limiter = wind * std::fmin(std::fmin(
+								width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / celldx[dif]) / 6.0, auw), adw);
+					}
+					advec_vel_s = vel1(donor, j) + (1.0 - sigma) * limiter;
+					mom_flux(i, j) = advec_vel_s * node_flux(i, j);
+				});
+		}
 
 		// DO k=y_min,y_max+1
 		//   DO j=x_min,x_max+1
 
 
 
-		clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [&](const size_t i, const size_t j) {
-			vel1(i, j) = (vel1(i, j) * node_mass_pre(i, j) +
-			              mom_flux(i - 1, j + 0) -
-			              mom_flux(i, j)) /
-			             node_mass_post(i, j);
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
+				vel1(i, j) = (vel1(i, j) * node_mass_pre(i, j) + mom_flux(i - 1, j + 0) - mom_flux(i, j)) / node_mass_post(i, j);
+			}
+		}
 	} else if (direction == 2) {
 		if (which_vel == 1) {
 			// DO k=y_min-2,y_max+2
@@ -191,76 +189,71 @@ void advec_mom_kernel(
 
 
 
-			clover::par_ranged2(Range2d{x_min + 1, y_min - 2 + 1, x_max + 1 + 2, y_max + 2 + 2}, [&](const size_t i, const size_t j) {
-				// Find staggered mesh mass fluxes and nodal masses and volumes.
-				node_flux(i, j) = 0.25 * (mass_flux_y(i - 1, j + 0) +
-				                          mass_flux_y(i, j)
-				                          + mass_flux_y(i - 1, j + 1) +
-				                          mass_flux_y(i + 0, j + 1));
-			});
+			_Pragma("kernel2d")
+			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
+					node_flux(i, j) = 0.25 * (mass_flux_y(i - 1, j + 0) + mass_flux_y(i, j) +
+					                          mass_flux_y(i - 1, j + 1) + mass_flux_y(i + 0, j + 1));
+				}
+			}
 
 
 			// DO k=y_min-1,y_max+2
 			//   DO j=x_min,x_max+1
 
-			clover::par_ranged2(Range2d{x_min + 1, y_min - 1 + 1, x_max + 1 + 2, y_max + 2 + 2}, [&](const size_t i, const size_t j) {
-				node_mass_post(i, j) = 0.25 * (density1(i + 0, j - 1) *
-				                               post_vol(i + 0, j - 1)
-				                               + density1(i, j) * post_vol(i, j)
-				                               + density1(i - 1, j - 1) *
-				                                 post_vol(i - 1, j - 1)
-				                               +
-				                               density1(i - 1, j + 0) *
-				                               post_vol(i - 1, j + 0));
-				node_mass_pre(i, j) =
-						node_mass_post(i, j) - node_flux(i + 0, j - 1) +
-						node_flux(i, j);
-			});
+			_Pragma("kernel2d")
+			for (int j = (y_min - 1 + 1); j < (y_max + 2 + 2); j++) {
+				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
+					node_mass_post(i, j) = 0.25 * (density1(i + 0, j - 1) *
+					                               post_vol(i + 0, j - 1) +
+					                               density1(i, j) *
+					                               post_vol(i, j) +
+					                               density1(i - 1, j - 1) *
+					                               post_vol(i - 1, j - 1) +
+					                               density1(i - 1, j + 0) *
+					                               post_vol(i - 1, j + 0));
+					node_mass_pre(i, j) = node_mass_post(i, j) - node_flux(i + 0, j - 1) + node_flux(i, j);
+				}
+			}
 		}
 
-		// DO k=y_min-1,y_max+1
-		//   DO j=x_min,x_max+1
+			// DO k=y_min-1,y_max+1
+			//   DO j=x_min,x_max+1
 
-
-		clover::par_ranged2(Range2d{x_min + 1, y_min - 1 + 1, x_max + 1 + 2, y_max + 1 + 2}, [&](const size_t x, const size_t y) {
-
-			int upwind, donor, downwind, dif;
-			double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
-
-			const int j = x;
-			const int k = y;
-
-			if (node_flux(x, y) < 0.0) {
-				upwind = k + 2;
-				donor = k + 1;
-				downwind = k;
-				dif = donor;
-			} else {
-				upwind = k - 1;
-				donor = k;
-				downwind = k + 1;
-				dif = upwind;
-			}
-
-
-			sigma = std::fabs(node_flux(x, y)) / (node_mass_pre(j, donor));
-			width = celldy[k];
-			vdiffuw = vel1(j, donor) - vel1(j, upwind);
-			vdiffdw = vel1(j, downwind) - vel1(j, donor);
-			limiter = 0.0;
-			if (vdiffuw * vdiffdw > 0.0) {
-				auw = std::fabs(vdiffuw);
-				adw = std::fabs(vdiffdw);
-				wind = 1.0;
-				if (vdiffdw <= 0.0) wind = -1.0;
-				limiter = wind * std::fmin(std::fmin(
-						width * ((2.0 - sigma) * adw / width +
-						         (1.0 + sigma) * auw / celldy[dif]) / 6.0,
-						auw), adw);
-			}
-			advec_vel_s = vel1(j, donor) + (1.0 - sigma) * limiter;
-			mom_flux(x, y) = advec_vel_s * node_flux(x, y);
-		});
+				_Pragma("kernel2d")
+		for (int j = (y_min - 1 + 1); j < (y_max + 1 + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++)
+				({
+					int upwind, donor, downwind, dif;
+					double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
+					if (node_flux(i, j) < 0.0) {
+						upwind = j + 2;
+						donor = j + 1;
+						downwind = j;
+						dif = donor;
+					} else {
+						upwind = j - 1;
+						donor = j;
+						downwind = j + 1;
+						dif = upwind;
+					}
+					sigma = std::fabs(node_flux(i, j)) / (node_mass_pre(i, donor));
+					width = celldy[j];
+					vdiffuw = vel1(i, donor) - vel1(i, upwind);
+					vdiffdw = vel1(i, downwind) - vel1(i, donor);
+					limiter = 0.0;
+					if (vdiffuw * vdiffdw > 0.0) {
+						auw = std::fabs(vdiffuw);
+						adw = std::fabs(vdiffdw);
+						wind = 1.0;
+						if (vdiffdw <= 0.0)wind = -1.0;
+						limiter = wind * std::fmin(std::fmin(
+								width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / celldy[dif]) / 6.0, auw), adw);
+					}
+					advec_vel_s = vel1(i, donor) + (1.0 - sigma) * limiter;
+					mom_flux(i, j) = advec_vel_s * node_flux(i, j);
+				});
+		}
 
 
 		// DO k=y_min,y_max+1
@@ -268,11 +261,12 @@ void advec_mom_kernel(
 
 
 
-		clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [&](const size_t i, const size_t j) {
-			vel1(i, j) = (vel1(i, j) * node_mass_pre(i, j) +
-			              mom_flux(i + 0, j - 1) - mom_flux(i, j)) /
-			             node_mass_post(i, j);
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
+				vel1(i, j) = (vel1(i, j) * node_mass_pre(i, j) + mom_flux(i + 0, j - 1) - mom_flux(i, j)) / node_mass_post(i, j);
+			}
+		}
 	}
 }
 

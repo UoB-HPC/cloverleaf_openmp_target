@@ -27,26 +27,6 @@
 
 namespace clover {
 
-
-	struct Range2d {
-		const size_t fromX, toX;
-		const size_t fromY, toY;
-		template<typename A, typename B, typename C, typename D>
-		Range2d(A fromX, B fromY, C toX, D toY) :
-				fromX(fromX), toX(toX), fromY(fromY), toY(toY) {
-			assert(fromX < toX);
-			assert(fromY < toY);
-		}
-		friend std::ostream &operator<<(std::ostream &os, const Range2d &d) {
-			os << "Range2d{"
-			   << " X[" << d.fromX << "->" << d.toX << "]"
-			   << " Y[" << d.fromY << "->" << d.toY << "]"
-			   << "}";
-			return os;
-		}
-	};
-
-
 	template<typename T>
 	struct Buffer1D {
 
@@ -89,26 +69,6 @@ namespace clover {
 
 
 	};
-
-
-	#define par_ranged2m(fromX, fromY, toX, toY, f)  \
-        for (int j = (fromY); j < (toY); j++) { \
-            for (int i = (fromX); i < (toX); i++) { \
-                f \
-            } \
-        } \
-
-
-	template<typename F>
-	static constexpr void par_ranged2(const Range2d &range, const F &functor) {
-		{
-			for (size_t j = range.fromY; j < range.toY; j++) {
-				for (size_t i = range.fromX; i < range.toX; i++) {
-					functor(i, j);
-				}
-			}
-		}
-	}
 
 
 }

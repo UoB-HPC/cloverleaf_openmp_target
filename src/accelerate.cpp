@@ -24,17 +24,6 @@
 #include "utils.hpp"
 
 
-//#define par_ranged2m(rg, f) \
-//{"KERNEL2D_START";                        \
-//                           \
-//    Range2d range = rg;                    \
-//    for (size_t j = range.fromY; j < range.toY; j++) {        \
-//        for (size_t i = range.fromX; i < range.toX; i++)  {"KERNEL2D_A";f"KERNEL2D_B";}                           \
-//    }                                                      \
-//"KERNEL2D_END";}
-
-
-
 // @brief Fortran acceleration kernel
 // @author Wayne Gaudin
 // @details The pressure and viscosity gradients are used to update the 
@@ -63,34 +52,30 @@ void accelerate_kernel(
 //for(int j = )
 
 
-	clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [&](const size_t i, const size_t j) {
-
-		double stepbymass_s = halfdt / ((density0(i - 1, j - 1) * volume(i - 1, j - 1)
-		                                 + density0(i - 1, j + 0) * volume(i - 1, j + 0)
-		                                 + density0(i, j) * volume(i, j)
-		                                 + density0(i + 0, j - 1) * volume(i + 0, j - 1))
-		                                * 0.25);
-
-		xvel1(i, j) = xvel0(i, j) - stepbymass_s *
-		                            (xarea(i, j) * (pressure(i, j) - pressure(i - 1, j + 0)) +
-		                             xarea(i + 0, j - 1) *
-		                             (pressure(i + 0, j - 1) - pressure(i - 1, j - 1)));
-		yvel1(i, j) = yvel0(i, j) - stepbymass_s *
-		                            (yarea(i, j) * (pressure(i, j) - pressure(i + 0, j - 1)) +
-		                             yarea(i - 1, j + 0) *
-		                             (pressure(i - 1, j + 0) - pressure(i - 1, j - 1)));
-		xvel1(i, j) = xvel1(i, j) - stepbymass_s *
-		                            (xarea(i, j) * (viscosity(i, j) - viscosity(i - 1, j + 0)) +
-		                             xarea(i + 0, j - 1) *
-		                             (viscosity(i + 0, j - 1) -
-		                              viscosity(i - 1, j - 1)));
-		yvel1(i, j) = yvel1(i, j) - stepbymass_s *
-		                            (yarea(i, j) * (viscosity(i, j) - viscosity(i + 0, j - 1)) +
-		                             yarea(i - 1, j + 0) *
-		                             (viscosity(i - 1, j + 0) -
-		                              viscosity(i - 1, j - 1)));
-
-	});
+	_Pragma("kernel2d")
+	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
+		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
+			double stepbymass_s = halfdt / ((density0(i - 1, j - 1) * volume(i - 1, j - 1) +
+			                                 density0(i - 1, j + 0) * volume(i - 1, j + 0) + density0(i, j) * volume(i, j) +
+			                                 density0(i + 0, j - 1) * volume(i + 0, j - 1)) * 0.25);
+			xvel1(i, j) = xvel0(i, j) -
+			              stepbymass_s * (xarea(i, j) * (pressure(i, j) - pressure(i - 1, j + 0)) +
+			                              xarea(i + 0, j - 1) * (pressure(i + 0, j - 1) - pressure(i - 1, j - 1)));
+			yvel1(i, j) = yvel0(i, j) -
+			              stepbymass_s * (yarea(i, j) *
+			                              (pressure(i, j) - pressure(i + 0, j - 1)) +
+			                              yarea(i - 1, j + 0) * (pressure(i - 1, j + 0) - pressure(i - 1, j - 1)));
+			xvel1(i, j) = xvel1(i, j) -
+			              stepbymass_s * (xarea(i, j) *
+			                              (viscosity(i, j) -
+			                               viscosity(i - 1, j + 0)) +
+			                              xarea(i + 0, j - 1) * (viscosity(i + 0, j - 1) - viscosity(i - 1, j - 1)));
+			yvel1(i, j) = yvel1(i, j) -
+			              stepbymass_s * (yarea(i, j) *
+			                              (viscosity(i, j) - viscosity(i + 0, j - 1)) +
+			                              yarea(i - 1, j + 0) * (viscosity(i - 1, j + 0) - viscosity(i - 1, j - 1)));
+		}
+	}
 }
 
 

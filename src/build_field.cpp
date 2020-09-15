@@ -100,46 +100,57 @@ void build_field(global_variables &globals) {
 
 
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
-		clover::par_ranged2(Range2d{0u, 0u, xrange + 1, yrange + 1}, [&](const size_t i, const size_t j) {
-			field.work_array1(i, j) = 0.0;
-			field.work_array2(i, j) = 0.0;
-			field.work_array3(i, j) = 0.0;
-			field.work_array4(i, j) = 0.0;
-			field.work_array5(i, j) = 0.0;
-			field.work_array6(i, j) = 0.0;
-			field.work_array7(i, j) = 0.0;
-
-			field.xvel0(i, j) = 0.0;
-			field.xvel1(i, j) = 0.0;
-			field.yvel0(i, j) = 0.0;
-			field.yvel1(i, j) = 0.0;
-		});
+		_Pragma("kernel2d")
+		for (int j = (0); j < (yrange + 1); j++) {
+			for (int i = (0); i < (xrange + 1); i++) {
+				field.work_array1(i, j) = 0.0;
+				field.work_array2(i, j) = 0.0;
+				field.work_array3(i, j) = 0.0;
+				field.work_array4(i, j) = 0.0;
+				field.work_array5(i, j) = 0.0;
+				field.work_array6(i, j) = 0.0;
+				field.work_array7(i, j) = 0.0;
+				field.xvel0(i, j) = 0.0;
+				field.xvel1(i, j) = 0.0;
+				field.yvel0(i, j) = 0.0;
+				field.yvel1(i, j) = 0.0;
+			}
+		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-		clover::par_ranged2(Range2d{0u, 0u, xrange, yrange}, ([&](const size_t i, const size_t j) {
-			field.density0(i, j) = 0.0;
-			field.density1(i, j) = 0.0;
-			field.energy0(i, j) = 0.0;
-			field.energy1(i, j) = 0.0;
-			field.pressure(i, j) = 0.0;
-			field.viscosity(i, j) = 0.0;
-			field.soundspeed(i, j) = 0.0;
-			field.volume(i, j) = 0.0;
-		}));
+		_Pragma("kernel2d")
+		for (int j = (0); j < (yrange); j++) {
+			for (int i = (0); i < (xrange); i++) {
+				field.density0(i, j) = 0.0;
+				field.density1(i, j) = 0.0;
+				field.energy0(i, j) = 0.0;
+				field.energy1(i, j) = 0.0;
+				field.pressure(i, j) = 0.0;
+				field.viscosity(i, j) = 0.0;
+				field.soundspeed(i, j) = 0.0;
+				field.volume(i, j) = 0.0;
+			}
+		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-		clover::par_ranged2(Range2d{0u, 0u, xrange, yrange}, [&](const size_t i, const size_t j) {
-			field.vol_flux_x(i, j) = 0.0;
-			field.mass_flux_x(i, j) = 0.0;
-			field.xarea(i, j) = 0.0;
-		});
+		_Pragma("kernel2d")
+		for (int j = (0); j < (yrange); j++) {
+			for (int i = (0); i < (xrange); i++) {
+				field.vol_flux_x(i, j) = 0.0;
+				field.mass_flux_x(i, j) = 0.0;
+				field.xarea(i, j) = 0.0;
+			}
+		}
 
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-		clover::par_ranged2(Range2d{0u, 0u, xrange, yrange + 1}, [&](const size_t i, const size_t j) {
-			field.vol_flux_y(i, j) = 0.0;
-			field.mass_flux_y(i, j) = 0.0;
-			field.yarea(i, j) = 0.0;
-		});
+		_Pragma("kernel2d")
+		for (int j = (0); j < (yrange + 1); j++) {
+			for (int i = (0); i < (xrange); i++) {
+				field.vol_flux_y(i, j) = 0.0;
+				field.mass_flux_y(i, j) = 0.0;
+				field.yarea(i, j) = 0.0;
+			}
+		}
 
 		// (t_xmin-2:t_xmax+2) inclusive
 		_Pragma("kernel1d")

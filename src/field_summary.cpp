@@ -87,11 +87,11 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 
 		_Pragma("kernel1d")
 		for (int idx = (0); idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
-			const size_t j = xmin + 1 + idx % (xmax - xmin + 1);
-			const size_t k = ymin + 1 + idx / (xmax - xmin + 1);
+			const int j = xmin + 1 + idx % (xmax - xmin + 1);
+			const int k = ymin + 1 + idx / (xmax - xmin + 1);
 			double vsqrd = 0.0;
-			for (size_t kv = k; kv <= k + 1; ++kv) {
-				for (size_t jv = j; jv <= j + 1; ++jv) {
+			for (int kv = k; kv <= k + 1; ++kv) {
+				for (int jv = j; jv <= j + 1; ++jv) {
 					vsqrd += 0.25 * (field.xvel0(jv, kv) * field.xvel0(jv, kv) + field.yvel0(jv, kv) * field.yvel0(jv, kv));
 				}
 			}

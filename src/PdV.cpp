@@ -56,104 +56,69 @@ void PdV_kernel(
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	clover::Range2d policy(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
 
 	if (predict) {
 
-		clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-
-
-			double left_flux = (xarea(i, j) * (xvel0(i, j) + xvel0(i + 0, j + 1)
-			                                   + xvel0(i, j) + xvel0(i + 0, j + 1))) *
-			                   0.25 * dt * 0.5;
-
-			double right_flux = (xarea(i + 1, j + 0) *
-			                     (xvel0(i + 1, j + 0) +
-			                      xvel0(i + 1, j + 1)
-			                      + xvel0(i + 1, j + 0) +
-			                      xvel0(i + 1, j + 1))) *
-			                    0.25 * dt * 0.5;
-
-			double bottom_flux = (yarea(i, j) * (yvel0(i, j) + yvel0(i + 1, j + 0)
-			                                     + yvel0(i, j) + yvel0(i + 1, j + 0))) *
-			                     0.25 * dt *
-			                     0.5;
-
-			double top_flux = (yarea(i + 0, j + 1) *
-			                   (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)
-			                    + yvel0(i + 0, j + 1) +
-			                    yvel0(i + 1, j + 1))) *
-			                  0.25 *
-			                  dt * 0.5;
-
-			double total_flux = right_flux - left_flux + top_flux - bottom_flux;
-
-			double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
-
-			double min_cell_volume =
-					std::fmin(std::fmin(
-							volume(i, j) + right_flux - left_flux + top_flux - bottom_flux,
-							volume(i, j) + right_flux - left_flux),
-					          volume(i, j) + top_flux - bottom_flux);
-
-			double recip_volume = 1.0 / volume(i, j);
-
-			double energy_change =
-					(pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) *
-					total_flux * recip_volume;
-
-			energy1(i, j) = energy0(i, j) - energy_change;
-
-			density1(i, j) = density0(i, j) * volume_change_s;
-
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 2); i++) {
+				double left_flux = (xarea(i, j) * (xvel0(i, j) +
+				                                   xvel0(i + 0, j + 1) +
+				                                   xvel0(i, j) +
+				                                   xvel0(i + 0, j + 1))) * 0.25 * dt * 0.5;
+				double right_flux = (xarea(i + 1, j + 0) * (xvel0(i + 1, j + 0) +
+				                                            xvel0(i + 1, j + 1) +
+				                                            xvel0(i + 1, j + 0) +
+				                                            xvel0(i + 1, j + 1))) * 0.25 * dt * 0.5;
+				double bottom_flux = (yarea(i, j) * (yvel0(i, j) +
+				                                     yvel0(i + 1, j + 0) +
+				                                     yvel0(i, j) +
+				                                     yvel0(i + 1, j + 0))) * 0.25 * dt * 0.5;
+				double top_flux = (yarea(i + 0, j + 1) * (yvel0(i + 0, j + 1) +
+				                                          yvel0(i + 1, j + 1) +
+				                                          yvel0(i + 0, j + 1) +
+				                                          yvel0(i + 1, j + 1))) * 0.25 * dt * 0.5;
+				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
+				double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
+				double min_cell_volume = std::fmin(std::fmin(volume(i, j) + right_flux - left_flux + top_flux - bottom_flux, volume(i, j) + right_flux - left_flux), volume(i, j) + top_flux - bottom_flux);
+				double recip_volume = 1.0 / volume(i, j);
+				double energy_change = (pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) * total_flux * recip_volume;
+				energy1(i, j) = energy0(i, j) - energy_change;
+				density1(i, j) = density0(i, j) * volume_change_s;
+			}
+		}
 
 	} else {
 
-		clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-
-			double left_flux = (xarea(i, j) * (xvel0(i, j) + xvel0(i + 0, j + 1)
-			                                   + xvel1(i, j) + xvel1(i + 0, j + 1))) *
-			                   0.25 * dt;
-
-			double right_flux = (xarea(i + 1, j + 0) *
-			                     (xvel0(i + 1, j + 0) +
-			                      xvel0(i + 1, j + 1)
-			                      + xvel1(i + 1, j + 0) +
-			                      xvel1(i + 1, j + 1))) *
-			                    0.25 * dt;
-
-			double bottom_flux = (yarea(i, j) * (yvel0(i, j) + yvel0(i + 1, j + 0)
-			                                     + yvel1(i, j) + yvel1(i + 1, j + 0))) *
-			                     0.25 * dt;
-
-			double top_flux = (yarea(i + 0, j + 1) *
-			                   (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)
-			                    + yvel1(i + 0, j + 1) +
-			                    yvel1(i + 1, j + 1))) *
-			                  0.25 * dt;
-
-			double total_flux = right_flux - left_flux + top_flux - bottom_flux;
-
-			double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
-
-			double min_cell_volume =
-					std::fmin(std::fmin(
-							volume(i, j) + right_flux - left_flux + top_flux - bottom_flux,
-							volume(i, j) + right_flux - left_flux),
-					          volume(i, j) + top_flux - bottom_flux);
-
-			double recip_volume = 1.0 / volume(i, j);
-
-			double energy_change =
-					(pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) *
-					total_flux * recip_volume;
-
-			energy1(i, j) = energy0(i, j) - energy_change;
-
-			density1(i, j) = density0(i, j) * volume_change_s;
-
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 2); i++) {
+				double left_flux = (xarea(i, j) * (xvel0(i, j) +
+				                                   xvel0(i + 0, j + 1) +
+				                                   xvel1(i, j) +
+				                                   xvel1(i + 0, j + 1))) * 0.25 * dt;
+				double right_flux = (xarea(i + 1, j + 0) * (xvel0(i + 1, j + 0) +
+				                                            xvel0(i + 1, j + 1) +
+				                                            xvel1(i + 1, j + 0) +
+				                                            xvel1(i + 1, j + 1))) * 0.25 * dt;
+				double bottom_flux = (yarea(i, j) * (yvel0(i, j) +
+				                                     yvel0(i + 1, j + 0) +
+				                                     yvel1(i, j) +
+				                                     yvel1(i + 1, j + 0))) * 0.25 * dt;
+				double top_flux = (yarea(i + 0, j + 1) * (yvel0(i + 0, j + 1) +
+				                                          yvel0(i + 1, j + 1) +
+				                                          yvel1(i + 0, j + 1) + yvel1(i + 1, j + 1))) * 0.25 * dt;
+				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
+				double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
+				double min_cell_volume = std::fmin(std::fmin(
+						volume(i, j) + right_flux - left_flux + top_flux - bottom_flux, volume(i, j) + right_flux - left_flux),
+				                                   volume(i, j) + top_flux - bottom_flux);
+				double recip_volume = 1.0 / volume(i, j);
+				double energy_change = (pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) * total_flux * recip_volume;
+				energy1(i, j) = energy0(i, j) - energy_change;
+				density1(i, j) = density0(i, j) * volume_change_s;
+			}
+		}
 	}
 
 }

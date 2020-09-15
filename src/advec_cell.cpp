@@ -58,146 +58,132 @@ void advec_cell_kernel(
 		// DO k=y_min-2,y_max+2
 		//   DO j=x_min-2,x_max+2
 
-		const clover::Range2d policy(x_min - 2 + 1, y_min - 2 + 1, x_max + 2 + 2, y_max + 2 + 2);
-
 		if (sweep_number == 1) {
 
 
-			clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-
-				pre_vol(i, j) = volume(i, j) +
-				                (vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j) +
-				                 vol_flux_y(i + 0, j + 1) -
-				                 vol_flux_y(i, j));
-				post_vol(i, j) = pre_vol(i, j) -
-				                 (vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j));
-			});
+			_Pragma("kernel2d")
+			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+					pre_vol(i, j) = volume(i, j) + (vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j));
+					post_vol(i, j) = pre_vol(i, j) - (vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j));
+				}
+			}
 
 
 		} else {
 
 
-			clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-				pre_vol(i, j) =
-						volume(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
-				post_vol(i, j) = volume(i, j);
-			});
+			_Pragma("kernel2d")
+			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+					pre_vol(i, j) = volume(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j);
+					post_vol(i, j) = volume(i, j);
+				}
+			}
 
 		}
 
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max+2
-		clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 2 + 2, y_max + 2}, [&](const size_t x, const size_t y) {
-
-
-			int upwind, donor, downwind, dif;
-			double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
-
-			const int j = x;
-			const int k = y;
-
-			if (vol_flux_x(x, y) > 0.0) {
-				upwind = j - 2;
-				donor = j - 1;
-				downwind = j;
-				dif = donor;
-			} else {
-				upwind = std::min(j + 1, x_max + 2);
-				donor = j;
-				downwind = j - 1;
-				dif = upwind;
-			}
-
-
-			sigmat = std::fabs(vol_flux_x(x, y)) / pre_vol(donor, k);
-			sigma3 = (1.0 + sigmat) * (vertexdx[j] / vertexdx[dif]);
-			sigma4 = 2.0 - sigmat;
-
-			sigma = sigmat;
-			sigmav = sigmat;
-
-			diffuw = density1(donor, k) - density1(upwind, k);
-			diffdw = density1(downwind, k) - density1(donor, k);
-			wind = 1.0;
-			if (diffdw <= 0.0) wind = -1.0;
-			if (diffuw * diffdw > 0.0) {
-				limiter = (1.0 - sigmav) *
-				          wind *
-				          std::fmin(std::fmin(std::fabs(diffuw), std::fabs(diffdw)),
-				                    one_by_six *
-				                    (sigma3 * std::fabs(diffuw) +
-				                     sigma4 * std::fabs(diffdw)));
-			} else {
-				limiter = 0.0;
-			}
-			mass_flux_x(x, y) = vol_flux_x(x, y) * (density1(donor, k) + limiter);
-
-			sigmam = std::fabs(mass_flux_x(x, y)) /
-			         (density1(donor, k) * pre_vol(donor, k));
-			diffuw = energy1(donor, k) - energy1(upwind, k);
-			diffdw = energy1(downwind, k) - energy1(donor, k);
-			wind = 1.0;
-			if (diffdw <= 0.0) wind = -1.0;
-			if (diffuw * diffdw > 0.0) {
-				limiter = (1.0 - sigmam) * wind *
-				          std::fmin(std::fmin(std::fabs(diffuw), std::fabs(diffdw)),
-				                    one_by_six *
-				                    (sigma3 * std::fabs(diffuw) +
-				                     sigma4 * std::fabs(diffdw)));
-			} else {
-				limiter = 0.0;
-			}
-
-			ener_flux(x, y) = mass_flux_x(x, y) * (energy1(donor, k) + limiter);
-
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 2 + 2); i++)
+				({
+					int upwind, donor, downwind, dif;
+					double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
+					if (vol_flux_x(i, j) > 0.0) {
+						upwind = i - 2;
+						donor = i - 1;
+						downwind = i;
+						dif = donor;
+					} else {
+						upwind = std::min(i + 1, x_max + 2);
+						donor = i;
+						downwind = i - 1;
+						dif = upwind;
+					}
+					sigmat = std::fabs(vol_flux_x(i, j)) / pre_vol(donor, j);
+					sigma3 = (1.0 + sigmat) * (vertexdx[i] / vertexdx[dif]);
+					sigma4 = 2.0 - sigmat;
+					sigma = sigmat;
+					sigmav = sigmat;
+					diffuw = density1(donor, j) - density1(upwind, j);
+					diffdw = density1(downwind, j) - density1(donor, j);
+					wind = 1.0;
+					if (diffdw <= 0.0)wind = -1.0;
+					if (diffuw * diffdw > 0.0) {
+						limiter = (1.0 - sigmav) * wind *
+						          std::fmin(std::fmin(
+								          std::fabs(diffuw),
+								          std::fabs(diffdw)),
+						                    one_by_six * (sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
+					} else {
+						limiter = 0.0;
+					}
+					mass_flux_x(i, j) = vol_flux_x(i, j) * (density1(donor, j) + limiter);
+					sigmam = std::fabs(mass_flux_x(i, j)) / (density1(donor, j) * pre_vol(donor, j));
+					diffuw = energy1(donor, j) - energy1(upwind, j);
+					diffdw = energy1(downwind, j) - energy1(donor, j);
+					wind = 1.0;
+					if (diffdw <= 0.0)wind = -1.0;
+					if (diffuw * diffdw > 0.0) {
+						limiter = (1.0 - sigmam) *
+						          wind *
+						          std::fmin(std::fmin(
+								          std::fabs(diffuw),
+								          std::fabs(diffdw)),
+						                    one_by_six * (sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
+					} else {
+						limiter = 0.0;
+					}
+					ener_flux(i, j) = mass_flux_x(i, j) * (energy1(donor, j) + limiter);
+				});
+		}
 
 
 
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max
 
-		clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [&](const size_t i, const size_t j) {
-			double pre_mass_s = density1(i, j) * pre_vol(i, j);
-			double post_mass_s = pre_mass_s + mass_flux_x(i, j) -
-			                     mass_flux_x(i + 1, j + 0);
-			double post_ener_s =
-					(energy1(i, j) * pre_mass_s + ener_flux(i, j) -
-					 ener_flux(i + 1, j + 0)) /
-					post_mass_s;
-			double advec_vol_s = pre_vol(i, j) + vol_flux_x(i, j) -
-			                     vol_flux_x(i + 1, j + 0);
-			density1(i, j) = post_mass_s / advec_vol_s;
-			energy1(i, j) = post_ener_s;
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 2); i++) {
+				double pre_mass_s = density1(i, j) * pre_vol(i, j);
+				double post_mass_s = pre_mass_s + mass_flux_x(i, j) - mass_flux_x(i + 1, j + 0);
+				double post_ener_s = (energy1(i, j) * pre_mass_s + ener_flux(i, j) - ener_flux(i + 1, j + 0)) / post_mass_s;
+				double advec_vol_s = pre_vol(i, j) + vol_flux_x(i, j) - vol_flux_x(i + 1, j + 0);
+				density1(i, j) = post_mass_s / advec_vol_s;
+				energy1(i, j) = post_ener_s;
+			}
+		}
 
 	} else if (dir == g_ydir) {
 
 		// DO k=y_min-2,y_max+2
 		//   DO j=x_min-2,x_max+2
-		clover::Range2d policy(x_min - 2 + 1, y_min - 2 + 1, x_max + 2 + 2, y_max + 2 + 2);
 
 		if (sweep_number == 1) {
 
 
-			clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-				pre_vol(i, j) = volume(i, j) +
-				                (vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j) +
-				                 vol_flux_x(i + 1, j + 0) -
-				                 vol_flux_x(i, j));
-				post_vol(i, j) = pre_vol(i, j) -
-				                 (vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j));
-			});
+			_Pragma("kernel2d")
+			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+					pre_vol(i, j) = volume(i, j) + (vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j) + vol_flux_x(i + 1, j + 0) - vol_flux_x(i, j));
+					post_vol(i, j) = pre_vol(i, j) - (vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j));
+				}
+			}
 
 
 		} else {
 
 
-			clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-				pre_vol(i, j) =
-						volume(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
-				post_vol(i, j) = volume(i, j);
-			});
+			_Pragma("kernel2d")
+			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
+				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
+					pre_vol(i, j) = volume(i, j) + vol_flux_y(i + 0, j + 1) - vol_flux_y(i, j);
+					post_vol(i, j) = volume(i, j);
+				}
+			}
 
 
 		}
@@ -205,80 +191,74 @@ void advec_cell_kernel(
 
 		// DO k=y_min,y_max+2
 		//   DO j=x_min,x_max
-		clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 2, y_max + 2 + 2}, [&](const size_t x, const size_t y) {
-			int upwind, donor, downwind, dif;
-			double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
-
-			const int j = x;
-			const int k = y;
-
-			if (vol_flux_y(x, y) > 0.0) {
-				upwind = k - 2;
-				donor = k - 1;
-				downwind = k;
-				dif = donor;
-			} else {
-				upwind = std::min(k + 1, y_max + 2);
-				donor = k;
-				downwind = k - 1;
-				dif = upwind;
-			}
-
-			sigmat = std::fabs(vol_flux_y(x, y)) / pre_vol(j, donor);
-			sigma3 = (1.0 + sigmat) * (vertexdy[k] / vertexdy[dif]);
-			sigma4 = 2.0 - sigmat;
-
-			sigma = sigmat;
-			sigmav = sigmat;
-
-			diffuw = density1(j, donor) - density1(j, upwind);
-			diffdw = density1(j, downwind) - density1(j, donor);
-			wind = 1.0;
-			if (diffdw <= 0.0) wind = -1.0;
-			if (diffuw * diffdw > 0.0) {
-				limiter = (1.0 - sigmav) * wind * std::fmin(
-						std::fmin(std::fabs(diffuw), std::fabs(diffdw)),
-						one_by_six *
-						(sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
-			} else {
-				limiter = 0.0;
-			}
-			mass_flux_y(x, y) = vol_flux_y(x, y) * (density1(j, donor) + limiter);
-
-			sigmam = std::fabs(mass_flux_y(x, y)) /
-			         (density1(j, donor) * pre_vol(j, donor));
-			diffuw = energy1(j, donor) - energy1(j, upwind);
-			diffdw = energy1(j, downwind) - energy1(j, donor);
-			wind = 1.0;
-			if (diffdw <= 0.0) wind = -1.0;
-			if (diffuw * diffdw > 0.0) {
-				limiter = (1.0 - sigmam) * wind * std::fmin(
-						std::fmin(std::fabs(diffuw), std::fabs(diffdw)),
-						one_by_six *
-						(sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
-			} else {
-				limiter = 0.0;
-			}
-			ener_flux(x, y) = mass_flux_y(x, y) * (energy1(j, donor) + limiter);
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 2 + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 2); i++)
+				({
+					int upwind, donor, downwind, dif;
+					double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
+					if (vol_flux_y(i, j) > 0.0) {
+						upwind = j - 2;
+						donor = j - 1;
+						downwind = j;
+						dif = donor;
+					} else {
+						upwind = std::min(j + 1, y_max + 2);
+						donor = j;
+						downwind = j - 1;
+						dif = upwind;
+					}
+					sigmat = std::fabs(vol_flux_y(i, j)) / pre_vol(i, donor);
+					sigma3 = (1.0 + sigmat) * (vertexdy[j] / vertexdy[dif]);
+					sigma4 = 2.0 - sigmat;
+					sigma = sigmat;
+					sigmav = sigmat;
+					diffuw = density1(i, donor) - density1(i, upwind);
+					diffdw = density1(i, downwind) - density1(i, donor);
+					wind = 1.0;
+					if (diffdw <= 0.0)wind = -1.0;
+					if (diffuw * diffdw > 0.0) {
+						limiter = (1.0 - sigmav) * wind *
+						          std::fmin(std::fmin(
+								          std::fabs(diffuw),
+								          std::fabs(diffdw)),
+						                    one_by_six * (sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
+					} else {
+						limiter = 0.0;
+					}
+					mass_flux_y(i, j) = vol_flux_y(i, j) * (density1(i, donor) + limiter);
+					sigmam = std::fabs(mass_flux_y(i, j)) / (density1(i, donor) * pre_vol(i, donor));
+					diffuw = energy1(i, donor) - energy1(i, upwind);
+					diffdw = energy1(i, downwind) - energy1(i, donor);
+					wind = 1.0;
+					if (diffdw <= 0.0)wind = -1.0;
+					if (diffuw * diffdw > 0.0) {
+						limiter = (1.0 - sigmam) * wind *
+						          std::fmin(std::fmin(
+								          std::fabs(diffuw),
+								          std::fabs(diffdw)),
+						                    one_by_six * (sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
+					} else {
+						limiter = 0.0;
+					}
+					ener_flux(i, j) = mass_flux_y(i, j) * (energy1(i, donor) + limiter);
+				});
+		}
 
 
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max
-		clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [&](const size_t i, const size_t j) {
-
-			double pre_mass_s = density1(i, j) * pre_vol(i, j);
-			double post_mass_s = pre_mass_s + mass_flux_y(i, j) -
-			                     mass_flux_y(i + 0, j + 1);
-			double post_ener_s =
-					(energy1(i, j) * pre_mass_s + ener_flux(i, j) -
-					 ener_flux(i + 0, j + 1)) /
-					post_mass_s;
-			double advec_vol_s = pre_vol(i, j) + vol_flux_y(i, j) -
-			                     vol_flux_y(i + 0, j + 1);
-			density1(i, j) = post_mass_s / advec_vol_s;
-			energy1(i, j) = post_ener_s;
-		});
+		_Pragma("kernel2d")
+		for (int j = (y_min + 1); j < (y_max + 2); j++) {
+			for (int i = (x_min + 1); i < (x_max + 2); i++) {
+				double pre_mass_s = density1(i, j) * pre_vol(i, j);
+				double post_mass_s = pre_mass_s + mass_flux_y(i, j) - mass_flux_y(i + 0, j + 1);
+				double post_ener_s = (energy1(i, j) * pre_mass_s + ener_flux(i, j) - ener_flux(i + 0, j + 1)) / post_mass_s;
+				double advec_vol_s = pre_vol(i, j) + vol_flux_y(i, j) - vol_flux_y(i + 0, j + 1);
+				density1(i, j) = post_mass_s / advec_vol_s;
+				energy1(i, j) = post_ener_s;
+			}
+		}
 
 	}
 

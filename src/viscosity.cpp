@@ -38,62 +38,44 @@ void viscosity_kernel(int x_min, int x_max, int y_min, int y_max,
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [&](const size_t i, const size_t j) {
-
-		double ugrad = (xvel0(i + 1, j + 0) +
-		                xvel0(i + 1, j + 1)) -
-		               (xvel0(i, j) + xvel0(i + 0, j + 1));
-
-		double vgrad = (yvel0(i + 0, j + 1) +
-		                yvel0(i + 1, j + 1)) -
-		               (yvel0(i, j) + yvel0(i + 1, j + 0));
-
-		double div = (celldx[i] * (ugrad) + celldy[j] * (vgrad));
-
-		double strain2 = 0.5 * (xvel0(i + 0, j + 1) +
-		                        xvel0(i + 1, j + 1) - xvel0(i, j) -
-		                        xvel0(i + 1, j + 0)) /
-		                 celldy[j] +
-		                 0.5 * (yvel0(i + 1, j + 0) +
-		                        yvel0(i + 1, j + 1) - yvel0(i, j) -
-		                        yvel0(i + 0, j + 1)) /
-		                 celldx[i];
-
-		double pgradx = (pressure(i + 1, j + 0) -
-		                 pressure(i - 1, j + 0)) /
-		                (celldx[i] + celldx[i + 1]);
-		double pgrady = (pressure(i + 0, j + 1) -
-		                 pressure(i + 0, j - 1)) /
-		                (celldy[j] + celldy[j + 2]);
-
-		double pgradx2 = pgradx * pgradx;
-		double pgrady2 = pgrady * pgrady;
-
-		double limiter = ((0.5 * (ugrad) / celldx[i]) * pgradx2 +
-		                  (0.5 * (vgrad) / celldy[j]) * pgrady2 +
-		                  strain2 * pgradx * pgrady) /
-		                 std::fmax(pgradx2 + pgrady2, 1.0e-16);
-
-		if ((limiter > 0.0) || (div >= 0.0)) {
-			viscosity(i, j) = 0.0;
-		} else {
-			double dirx = 1.0;
-			if (pgradx < 0.0)
-				dirx = -1.0;
-			pgradx = dirx * std::fmax(1.0e-16, std::fabs(pgradx));
-			double diry = 1.0;
-			if (pgradx < 0.0)
-				diry = -1.0;
-			pgrady = diry * std::fmax(1.0e-16, std::fabs(pgrady));
-			double pgrad = std::sqrt(pgradx * pgradx + pgrady * pgrady);
-			double xgrad = std::fabs(celldx[i] * pgrad / pgradx);
-			double ygrad = std::fabs(celldy[j] * pgrad / pgrady);
-			double grad = std::fmin(xgrad, ygrad);
-			double grad2 = grad * grad;
-
-			viscosity(i, j) = 2.0 * density0(i, j) * grad2 * limiter * limiter;
+	_Pragma("kernel2d")
+	for (int j = (y_min + 1); j < (y_max + 2); j++) {
+		for (int i = (x_min + 1); i < (x_max + 2); i++) {
+			double ugrad = (xvel0(i + 1, j + 0) + xvel0(i + 1, j + 1)) - (xvel0(i, j) + xvel0(i + 0, j + 1));
+			double vgrad = (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)) - (yvel0(i, j) + yvel0(i + 1, j + 0));
+			double div = (celldx[i] * (ugrad) + celldy[j] * (vgrad));
+			double strain2 = 0.5 * (xvel0(i + 0, j + 1) +
+			                        xvel0(i + 1, j + 1) -
+			                        xvel0(i, j) -
+			                        xvel0(i + 1, j + 0)) / celldy[j] +
+			                 0.5 * (yvel0(i + 1, j + 0) +
+			                        yvel0(i + 1, j + 1) -
+			                        yvel0(i, j) -
+			                        yvel0(i + 0, j + 1)) / celldx[i];
+			double pgradx = (pressure(i + 1, j + 0) - pressure(i - 1, j + 0)) / (celldx[i] + celldx[i + 1]);
+			double pgrady = (pressure(i + 0, j + 1) - pressure(i + 0, j - 1)) / (celldy[j] + celldy[j + 2]);
+			double pgradx2 = pgradx * pgradx;
+			double pgrady2 = pgrady * pgrady;
+			double limiter = ((0.5 * (ugrad) / celldx[i]) * pgradx2 +
+			                  (0.5 * (vgrad) / celldy[j]) * pgrady2 + strain2 * pgradx * pgrady) /
+			                 std::fmax(pgradx2 + pgrady2, g_small);
+			if ((limiter > 0.0) || (div >= 0.0)) { viscosity(i, j) = 0.0; }
+			else {
+				double dirx = 1.0;
+				if (pgradx < 0.0)dirx = -1.0;
+				pgradx = dirx * std::fmax(g_small, std::fabs(pgradx));
+				double diry = 1.0;
+				if (pgradx < 0.0)diry = -1.0;
+				pgrady = diry * std::fmax(g_small, std::fabs(pgrady));
+				double pgrad = std::sqrt(pgradx * pgradx + pgrady * pgrady);
+				double xgrad = std::fabs(celldx[i] * pgrad / pgradx);
+				double ygrad = std::fabs(celldy[j] * pgrad / pgrady);
+				double grad = std::fmin(xgrad, ygrad);
+				double grad2 = grad * grad;
+				viscosity(i, j) = 2.0 * density0(i, j) * grad2 * limiter * limiter;
+			}
 		}
-	});
+	}
 }
 
 //  @brief Driver for the viscosity kernels

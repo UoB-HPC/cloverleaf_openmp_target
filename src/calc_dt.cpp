@@ -30,8 +30,6 @@
 //  condition, the velocity gradient and the velocity divergence. A safety
 //  factor is used to ensure numerical stability.
 
-#define SPLIT
-
 
 void calc_dt_kernel(
 		int x_min, int x_max, int y_min, int y_max,
@@ -71,59 +69,36 @@ void calc_dt_kernel(
 	//   DO j=x_min,x_max
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	auto policy = clover::Range2d(x_min + 1, y_min + 1, x_max + 2, y_max + 2);
 
-
-	clover::par_ranged2(policy, [&](const size_t i, const size_t j) {
-
-		double dsx = celldx[i];
-		double dsy = celldy[j];
-
-		double cc = soundspeed(i, j) * soundspeed(i, j);
-		cc = cc + 2.0 * viscosity_a(i, j) / density0(i, j);
-		cc = std::fmax(std::sqrt(cc), g_small);
-
-		double dtct = dtc_safe * std::fmin(dsx, dsy) / cc;
-
-		double div = 0.0;
-
-		double dv1 = (xvel0(i, j) + xvel0(i + 0, j + 1)) * xarea(i, j);
-		double dv2 =
-				(xvel0(i + 1, j + 0) + xvel0(i + 1, j + 1)) *
-				xarea(i + 1, j + 0);
-
-		div = div + dv2 - dv1;
-
-		double dtut = dtu_safe * 2.0 * volume(i, j) /
-		              std::fmax(std::fmax(
-				              std::fabs(dv1), std::fabs(dv2)), g_small * volume(i, j));
-
-		dv1 = (yvel0(i, j) + yvel0(i + 1, j + 0)) * yarea(i, j);
-		dv2 = (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)) *
-		      yarea(i + 0, j + 1);
-
-		div = div + dv2 - dv1;
-
-		double dtvt = dtv_safe * 2.0 * volume(i, j) /
-		              std::fmax(std::fmax(
-				              std::fabs(dv1), std::fabs(dv2)), g_small * volume(i, j));
-
-		div = div / (2.0 * volume(i, j));
-
-		double dtdivt;
-		if (div < -g_small) {
-			dtdivt = dtdiv_safe * (-1.0 / div);
-		} else {
-			dtdivt = g_big;
+	_Pragma("kernel2d")
+	for (int j = (y_min + 1); j < (y_max + 2); j++) {
+		for (int i = (x_min + 1); i < (x_max + 2); i++) {
+			double dsx = celldx[i];
+			double dsy = celldy[j];
+			double cc = soundspeed(i, j) * soundspeed(i, j);
+			cc = cc + 2.0 * viscosity_a(i, j) / density0(i, j);
+			cc = std::fmax(std::sqrt(cc), g_small);
+			double dtct = dtc_safe * std::fmin(dsx, dsy) / cc;
+			double div = 0.0;
+			double dv1 = (xvel0(i, j) + xvel0(i + 0, j + 1)) * xarea(i, j);
+			double dv2 = (xvel0(i + 1, j + 0) + xvel0(i + 1, j + 1)) * xarea(i + 1, j + 0);
+			div = div + dv2 - dv1;
+			double dtut = dtu_safe * 2.0 * volume(i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * volume(i, j));
+			dv1 = (yvel0(i, j) + yvel0(i + 1, j + 0)) * yarea(i, j);
+			dv2 = (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)) * yarea(i + 0, j + 1);
+			div = div + dv2 - dv1;
+			double dtvt = dtv_safe * 2.0 * volume(i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * volume(i, j));
+			div = div / (2.0 * volume(i, j));
+			double dtdivt;
+			if (div < -g_small) {
+				dtdivt = dtdiv_safe * (-1.0 / div);
+			} else {
+				dtdivt = g_big;
+			}
+			double mins = std::fmin(dtct, std::fmin(dtut, std::fmin(dtvt, std::fmin(dtdivt, g_big))));
+			dt_min_val = std::fmin(mins, dt_min_val);
 		}
-
-		double mins = std::fmin(dtct,
-		                        std::fmin(dtut, std::fmin(dtvt, std::fmin(dtdivt, g_big))));
-
-
-		dt_min_val = std::fmin(mins, dt_min_val);
-
-	});
+	}
 
 
 	dtl_control = static_cast<int>(10.01 * (jk_control - static_cast<int>(jk_control)));

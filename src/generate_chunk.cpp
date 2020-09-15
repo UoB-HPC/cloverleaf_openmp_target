@@ -66,79 +66,74 @@ void generate_chunk(const int tile, global_variables &globals) {
 	const int y_min = globals.chunk.tiles[tile].info.t_ymin;
 	const int y_max = globals.chunk.tiles[tile].info.t_ymax;
 
-	size_t xrange = (x_max + 2) - (x_min - 2) + 1;
-	size_t yrange = (y_max + 2) - (y_min - 2) + 1;
+	int xrange = (x_max + 2) - (x_min - 2) + 1;
+	int yrange = (y_max + 2) - (y_min - 2) + 1;
 
 	// Take a reference to the lowest structure, as Kokkos device cannot necessarily chase through the structure.
 
-	clover::Range2d xyrange_policy(0u, 0u, xrange, yrange);
 
 
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
 	// State 1 is always the background state
-	clover::par_ranged2(xyrange_policy, [&](const size_t i, const size_t j) {
-		field.energy0(i, j) = state_energy[0];
-		field.density0(i, j) = state_density[0];
-		field.xvel0(i, j) = state_xvel[0];
-		field.yvel0(i, j) = state_yvel[0];
-
-	});
+	_Pragma("kernel2d")
+	for (int j = (0); j < (yrange); j++) {
+		for (int i = (0); i < (xrange); i++) {
+			field.energy0(i, j) = state_energy[0];
+			field.density0(i, j) = state_density[0];
+			field.xvel0(i, j) = state_xvel[0];
+			field.yvel0(i, j) = state_yvel[0];
+		}
+	}
 
 
 	for (int state = 1; state < globals.config.number_of_states; ++state) {
-		clover::par_ranged2(xyrange_policy, [&](const size_t x, const size_t y) {
-
-			const int j = x;
-			const int k = y;
-
-			double x_cent = state_xmin[state];
-			double y_cent = state_ymin[state];
-
-			if (state_geometry[state] == g_rect) {
-				if (field.vertexx[j + 1] >= state_xmin[state] &&
-				    field.vertexx[j] < state_xmax[state]) {
-					if (field.vertexy[k + 1] >= state_ymin[state] &&
-					    field.vertexy[k] < state_ymax[state]) {
-						field.energy0(x, y) = state_energy[state];
-						field.density0(x, y) = state_density[state];
-						for (int kt = k; kt <= k + 1; ++kt) {
-							for (int jt = j; jt <= j + 1; ++jt) {
+		_Pragma("kernel2d")
+		for (int j = (0); j < (yrange); j++) {
+			for (int i = (0); i < (xrange); i++) {
+				double x_cent = state_xmin[state];
+				double y_cent = state_ymin[state];
+				if (state_geometry[state] == g_rect) {
+					if (field.vertexx[i + 1] >= state_xmin[state] && field.vertexx[i] < state_xmax[state]) {
+						if (field.vertexy[j + 1] >= state_ymin[state] && field.vertexy[j] < state_ymax[state]) {
+							field.energy0(i, j) = state_energy[state];
+							field.density0(i, j) = state_density[state];
+							for (int kt = j; kt <= j + 1; ++kt) {
+								for (int jt = i; jt <= i + 1; ++jt) {
+									field.xvel0(jt, kt) = state_xvel[state];
+									field.yvel0(jt, kt) = state_yvel[state];
+								}
+							}
+						}
+					}
+				} else if (state_geometry[state] == g_circ) {
+					double radius = std::sqrt((field.cellx[i] - x_cent) *
+					                          (field.cellx[i] - x_cent) + (field.celly[j] - y_cent) * (field.celly[j] - y_cent));
+					if (radius <= state_radius[state]) {
+						field.energy0(i, j) = state_energy[state];
+						field.density0(i, j) = state_density[state];
+						for (int kt = j; kt <= j + 1; ++kt) {
+							for (int jt = i; jt <= i + 1; ++jt) {
 								field.xvel0(jt, kt) = state_xvel[state];
 								field.yvel0(jt, kt) = state_yvel[state];
 							}
 						}
-
 					}
-				}
-			} else if (state_geometry[state] == g_circ) {
-				double radius = std::sqrt((field.cellx[j] - x_cent) * (field.cellx[j] - x_cent) +
-				                          (field.celly[k] - y_cent) * (field.celly[k] - y_cent));
-				if (radius <= state_radius[state]) {
-					field.energy0(x, y) = state_energy[state];
-					field.density0(x, y) = state_density[state];
-					for (int kt = k; kt <= k + 1; ++kt) {
-						for (int jt = j; jt <= j + 1; ++jt) {
-							field.xvel0(jt, kt) = state_xvel[state];
-							field.yvel0(jt, kt) = state_yvel[state];
-						}
-					}
-				}
-			} else if (state_geometry[state] == g_point) {
-				if (field.vertexx[j] == x_cent && field.vertexy[k] == y_cent) {
-					field.energy0(x, y) = state_energy[state];
-					field.density0(x, y) = state_density[state];
-					for (int kt = k; kt <= k + 1; ++kt) {
-						for (int jt = j; jt <= j + 1; ++jt) {
-							field.xvel0(jt, kt) = state_xvel[state];
-							field.yvel0(jt, kt) = state_yvel[state];
+				} else if (state_geometry[state] == g_point) {
+					if (field.vertexx[i] == x_cent && field.vertexy[j] == y_cent) {
+						field.energy0(i, j) = state_energy[state];
+						field.density0(i, j) = state_density[state];
+						for (int kt = j; kt <= j + 1; ++kt) {
+							for (int jt = i; jt <= i + 1; ++jt) {
+								field.xvel0(jt, kt) = state_xvel[state];
+								field.yvel0(jt, kt) = state_yvel[state];
+							}
 						}
 					}
 				}
 			}
-
-		});
+		}
 
 	}
 

@@ -41,20 +41,26 @@ void reset_field_kernel(
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 2, y_max + 2}, [&](const size_t i, const size_t j) {
-		density0(i, j) = density1(i, j);
-		energy0(i, j) = energy1(i, j);
-	});
+	_Pragma("kernel2d")
+	for (int j = (y_min + 1); j < (y_max + 2); j++) {
+		for (int i = (x_min + 1); i < (x_max + 2); i++) {
+			density0(i, j) = density1(i, j);
+			energy0(i, j) = energy1(i, j);
+		}
+	}
 
 
 
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
-	clover::par_ranged2(Range2d{x_min + 1, y_min + 1, x_max + 1 + 2, y_max + 1 + 2}, [&](const size_t i, const size_t j) {
-		xvel0(i, j) = xvel1(i, j);
-		yvel0(i, j) = yvel1(i, j);
-	});
+	_Pragma("kernel2d")
+	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
+		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
+			xvel0(i, j) = xvel1(i, j);
+			yvel0(i, j) = yvel1(i, j);
+		}
+	}
 
 }
 
