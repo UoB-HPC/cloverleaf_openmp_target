@@ -26,7 +26,7 @@
 #include "ideal_gas.h"
 #include "update_halo.h"
 #include "revert.h"
-#include "utils.hpp"
+
 
 //  @brief Fortran PdV kernel.
 //  @author Wayne Gaudin
@@ -35,6 +35,7 @@
 //  level of the velocity data depends on whether it is invoked as the
 //  predictor or corrector.
 void PdV_kernel(
+		bool use_target,
 		bool predict,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
@@ -59,64 +60,95 @@ void PdV_kernel(
 
 	if (predict) {
 
-		_Pragma("kernel2d")
+		omp(parallel(2) enable_target(use_target)
+				    mapToFrom2D(xarea)
+				    mapToFrom2D(yarea)
+				    mapToFrom2D(volume)
+				    mapToFrom2D(density0)
+				    mapToFrom2D(density1)
+				    mapToFrom2D(energy0)
+				    mapToFrom2D(energy1)
+				    mapToFrom2D(pressure)
+				    mapToFrom2D(viscosity)
+				    mapToFrom2D(xvel0)
+				    mapToFrom2D(xvel1)
+				    mapToFrom2D(yvel0)
+				    mapToFrom2D(yvel1)
+				    mapToFrom2D(volume_change)
+		)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double left_flux = (xarea(i, j) * (xvel0(i, j) +
-				                                   xvel0(i + 0, j + 1) +
-				                                   xvel0(i, j) +
-				                                   xvel0(i + 0, j + 1))) * 0.25 * dt * 0.5;
-				double right_flux = (xarea(i + 1, j + 0) * (xvel0(i + 1, j + 0) +
-				                                            xvel0(i + 1, j + 1) +
-				                                            xvel0(i + 1, j + 0) +
-				                                            xvel0(i + 1, j + 1))) * 0.25 * dt * 0.5;
-				double bottom_flux = (yarea(i, j) * (yvel0(i, j) +
-				                                     yvel0(i + 1, j + 0) +
-				                                     yvel0(i, j) +
-				                                     yvel0(i + 1, j + 0))) * 0.25 * dt * 0.5;
-				double top_flux = (yarea(i + 0, j + 1) * (yvel0(i + 0, j + 1) +
-				                                          yvel0(i + 1, j + 1) +
-				                                          yvel0(i + 0, j + 1) +
-				                                          yvel0(i + 1, j + 1))) * 0.25 * dt * 0.5;
+				double left_flux = (idx2(xarea, i, j) * (idx2(xvel0, i, j) +
+				                                         idx2(xvel0, i + 0, j + 1) +
+				                                         idx2(xvel0, i, j) +
+				                                         idx2(xvel0, i + 0, j + 1))) * 0.25 * dt * 0.5;
+				double right_flux = (idx2(xarea, i + 1, j + 0) * (idx2(xvel0, i + 1, j + 0) +
+				                                                  idx2(xvel0, i + 1, j + 1) +
+				                                                  idx2(xvel0, i + 1, j + 0) +
+				                                                  idx2(xvel0, i + 1, j + 1))) * 0.25 * dt * 0.5;
+				double bottom_flux = (idx2(yarea, i, j) * (idx2(yvel0, i, j) +
+				                                           idx2(yvel0, i + 1, j + 0) +
+				                                           idx2(yvel0, i, j) +
+				                                           idx2(yvel0, i + 1, j + 0))) * 0.25 * dt * 0.5;
+				double top_flux = (idx2(yarea, i + 0, j + 1) * (idx2(yvel0, i + 0, j + 1) +
+				                                                idx2(yvel0, i + 1, j + 1) +
+				                                                idx2(yvel0, i + 0, j + 1) +
+				                                                idx2(yvel0, i + 1, j + 1))) * 0.25 * dt * 0.5;
 				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
-				double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
-				double min_cell_volume = std::fmin(std::fmin(volume(i, j) + right_flux - left_flux + top_flux - bottom_flux, volume(i, j) + right_flux - left_flux), volume(i, j) + top_flux - bottom_flux);
-				double recip_volume = 1.0 / volume(i, j);
-				double energy_change = (pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) * total_flux * recip_volume;
-				energy1(i, j) = energy0(i, j) - energy_change;
-				density1(i, j) = density0(i, j) * volume_change_s;
+				double volume_change_s = idx2(volume, i, j) / (idx2(volume, i, j) + total_flux);
+				double min_cell_volume = std::fmin(std::fmin(idx2(volume, i, j) + right_flux - left_flux + top_flux - bottom_flux, idx2(volume, i, j) + right_flux - left_flux),
+				                                   idx2(volume, i, j) + top_flux - bottom_flux);
+				double recip_volume = 1.0 / idx2(volume, i, j);
+				double energy_change = (idx2(pressure, i, j) / idx2(density0, i, j) + idx2(viscosity, i, j) / idx2(density0, i, j)) * total_flux * recip_volume;
+				idx2(energy1, i, j) = idx2(energy0, i, j) - energy_change;
+				idx2(density1, i, j) = idx2(density0, i, j) * volume_change_s;
 			}
 		}
 
 	} else {
 
-		_Pragma("kernel2d")
+		omp(parallel(2) enable_target(use_target)
+				    mapToFrom2D(xarea)
+				    mapToFrom2D(yarea)
+				    mapToFrom2D(volume)
+				    mapToFrom2D(density0)
+				    mapToFrom2D(density1)
+				    mapToFrom2D(energy0)
+				    mapToFrom2D(energy1)
+				    mapToFrom2D(pressure)
+				    mapToFrom2D(viscosity)
+				    mapToFrom2D(xvel0)
+				    mapToFrom2D(xvel1)
+				    mapToFrom2D(yvel0)
+				    mapToFrom2D(yvel1)
+				    mapToFrom2D(volume_change)
+		)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double left_flux = (xarea(i, j) * (xvel0(i, j) +
-				                                   xvel0(i + 0, j + 1) +
-				                                   xvel1(i, j) +
-				                                   xvel1(i + 0, j + 1))) * 0.25 * dt;
-				double right_flux = (xarea(i + 1, j + 0) * (xvel0(i + 1, j + 0) +
-				                                            xvel0(i + 1, j + 1) +
-				                                            xvel1(i + 1, j + 0) +
-				                                            xvel1(i + 1, j + 1))) * 0.25 * dt;
-				double bottom_flux = (yarea(i, j) * (yvel0(i, j) +
-				                                     yvel0(i + 1, j + 0) +
-				                                     yvel1(i, j) +
-				                                     yvel1(i + 1, j + 0))) * 0.25 * dt;
-				double top_flux = (yarea(i + 0, j + 1) * (yvel0(i + 0, j + 1) +
-				                                          yvel0(i + 1, j + 1) +
-				                                          yvel1(i + 0, j + 1) + yvel1(i + 1, j + 1))) * 0.25 * dt;
+				double left_flux = (idx2(xarea, i, j) * (idx2(xvel0, i, j) +
+				                                         idx2(xvel0, i + 0, j + 1) +
+				                                         idx2(xvel1, i, j) +
+				                                         idx2(xvel1, i + 0, j + 1))) * 0.25 * dt;
+				double right_flux = (idx2(xarea, i + 1, j + 0) * (idx2(xvel0, i + 1, j + 0) +
+				                                                  idx2(xvel0, i + 1, j + 1) +
+				                                                  idx2(xvel1, i + 1, j + 0) +
+				                                                  idx2(xvel1, i + 1, j + 1))) * 0.25 * dt;
+				double bottom_flux = (idx2(yarea, i, j) * (idx2(yvel0, i, j) +
+				                                           idx2(yvel0, i + 1, j + 0) +
+				                                           idx2(yvel1, i, j) +
+				                                           idx2(yvel1, i + 1, j + 0))) * 0.25 * dt;
+				double top_flux = (idx2(yarea, i + 0, j + 1) * (idx2(yvel0, i + 0, j + 1) +
+				                                                idx2(yvel0, i + 1, j + 1) +
+				                                                idx2(yvel1, i + 0, j + 1) + idx2(yvel1, i + 1, j + 1))) * 0.25 * dt;
 				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
-				double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
+				double volume_change_s = idx2(volume, i, j) / (idx2(volume, i, j) + total_flux);
 				double min_cell_volume = std::fmin(std::fmin(
-						volume(i, j) + right_flux - left_flux + top_flux - bottom_flux, volume(i, j) + right_flux - left_flux),
-				                                   volume(i, j) + top_flux - bottom_flux);
-				double recip_volume = 1.0 / volume(i, j);
-				double energy_change = (pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) * total_flux * recip_volume;
-				energy1(i, j) = energy0(i, j) - energy_change;
-				density1(i, j) = density0(i, j) * volume_change_s;
+						idx2(volume, i, j) + right_flux - left_flux + top_flux - bottom_flux, idx2(volume, i, j) + right_flux - left_flux),
+				                                   idx2(volume, i, j) + top_flux - bottom_flux);
+				double recip_volume = 1.0 / idx2(volume, i, j);
+				double energy_change = (idx2(pressure, i, j) / idx2(density0, i, j) + idx2(viscosity, i, j) / idx2(density0, i, j)) * total_flux * recip_volume;
+				idx2(energy1, i, j) = idx2(energy0, i, j) - energy_change;
+				idx2(density1, i, j) = idx2(density0, i, j) * volume_change_s;
 			}
 		}
 	}
@@ -134,9 +166,14 @@ void PdV(global_variables &globals, bool predict) {
 
 	globals.error_condition = 0;
 
+	#if FLUSH_BUFFER
+	globals.hostToDevice();
+	#endif
+
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
-		PdV_kernel(predict,
+		PdV_kernel(globals.use_target,
+		           predict,
 		           t.info.t_xmin,
 		           t.info.t_xmax,
 		           t.info.t_ymin,
@@ -158,6 +195,9 @@ void PdV(global_variables &globals, bool predict) {
 		           t.field.work_array1);
 	}
 
+	#if FLUSH_BUFFER
+	globals.deviceToHost();
+	#endif
 
 	clover_check_error(globals.error_condition);
 	if (globals.profiler_on) globals.profiler.PdV += timer() - kernel_time;

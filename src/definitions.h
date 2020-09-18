@@ -21,6 +21,8 @@
 #define GRID_H
 
 #define DEBUG false
+#define FLUSH_BUFFER 0
+#define USE_CXX_OPERATORS 0
 
 
 #include <iostream>
@@ -29,7 +31,7 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
-#include "utils.hpp"
+#include <cassert>
 
 
 #define g_ibig 640000
@@ -37,7 +39,123 @@
 #define g_big   (1.0e+21)
 #define NUM_FIELDS 15
 
+namespace clover {
 
+
+	template<typename T>
+	struct Buffer1D {
+
+		const size_t size;
+		T *data;
+
+		explicit Buffer1D(size_t size) : size(size), data(new T[size]) {
+			assert(size > 0);
+		}
+
+		Buffer1D(const Buffer1D<T> &that) : size(that.size), data(new T[size]) {
+			std::copy(that.data, that.data + size, data);
+		}
+
+		Buffer1D(Buffer1D &&other) noexcept: size(other.size), data(std::exchange(other.data, nullptr)) {}
+
+		Buffer1D &operator=(Buffer1D &&other) noexcept {
+			size = other.size;
+			std::swap(data, other.data);
+			return *this;
+		}
+		#if USE_CXX_OPERATORS
+		[[nodiscard]] constexpr T operator[](size_t i) const { return data[i]; }
+		[[nodiscard]] constexpr T &operator[](size_t i) { return data[i]; }
+		#endif
+
+
+		[[nodiscard]] constexpr size_t N() const { return size; }
+
+
+		Buffer1D<T> &operator=(const Buffer1D<T> &other) {
+			if (this != &other) {
+				delete[] data;
+				std::copy(other.data, other.data + size, data);
+				size = other.size;
+			}
+			return *this;
+		}
+
+		~Buffer1D() { delete[] data; }
+	};
+
+
+	template<typename T>
+	struct Buffer2D {
+
+		const size_t sizeX, sizeY;
+		T *data;
+
+		Buffer2D(size_t sizeX, size_t sizeY) : sizeX(sizeX), sizeY(sizeY), data(new T[sizeX * sizeY]) {
+			assert(sizeX > 0);
+			assert(sizeY > 0);
+		}
+		Buffer2D(const Buffer2D<T> &that) : sizeX(that.sizeX), sizeY(that.sizeY), data(new T[sizeX * sizeY]) {
+			std::copy(that.data, that.data + (sizeX * sizeY), data);
+		}
+
+		Buffer2D(Buffer2D &&other) noexcept: sizeX(other.sizeX), sizeY(other.sizeY), data(std::exchange(other.data, nullptr)) {}
+
+
+		#if USE_CXX_OPERATORS
+		[[nodiscard]] constexpr T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
+		[[nodiscard]] constexpr T const &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
+		#endif
+
+
+		[[nodiscard]] constexpr size_t N() const { return sizeX * sizeY; }
+
+
+		Buffer2D<T> &operator=(const Buffer2D<T> &other) {
+			if (this != &other) {
+				return *this = Buffer2D(other);
+			}
+		}
+
+		Buffer2D &operator=(Buffer2D &&other) noexcept {
+			sizeX = other.sizeX;
+			sizeY = other.sizeY;
+			std::swap(data, other.data);
+			return *this;
+		}
+
+
+		~Buffer2D() { delete[] data; }
+
+	};
+
+	#if USE_CXX_OPERATORS
+	#define idx1(xs, i)    xs[i]
+	#define idx2(xs, i, j) xs(i,j)
+	#else
+	#define idx1(xs, i) xs.data[i]
+	#define idx2(xs, i, j) xs.data[(i) + (j) * xs.sizeX]
+	#endif
+
+
+	#define _xstr(s) _str(s)
+	#define _str(s) #s
+
+	#define parallel(n) omp target teams distribute parallel for simd collapse(n) device(0)
+
+
+	#define mapToFrom1D(xs) map(tofrom: xs.data[:0])
+	#define mapToFrom2D(xs) map(tofrom: xs.data[:0]) map(from: xs.sizeX)
+	#define enable_target(enable) if(target: (enable))
+
+//	#define mapTo(xs) map(to: xs.data[:xs.N()])
+	#define mapTo1D(xs) map(to: xs.data[:xs.N()])
+
+
+	#define omp(xs) _Pragma(_xstr(xs))
+
+
+}
 
 
 typedef std::chrono::time_point<std::chrono::system_clock> timepoint;
@@ -63,11 +181,11 @@ static inline void record(const std::string &name, const std::function<void(std:
 
 // formats and then dumps content of 1d double buffer to stream
 static inline void
-show(std::ostream &out, const std::string &name, clover::Buffer1D<double> &buffer) {
-	out << name << "(" << 1 << ") [" << buffer.size() << "]" << std::endl;
+show(std::ostream &out, const std::string &name, const clover::Buffer1D<double> &buffer) {
+	out << name << "(" << 1 << ") [" << buffer.size << "]" << std::endl;
 	out << "\t";
-	for (size_t i = 0; i < buffer.size(); ++i) {
-		out << buffer[i] << ", ";
+	for (size_t i = 0; i < buffer.size; ++i) {
+		out << idx1(buffer, i) << ", ";
 	}
 	out << std::endl;
 }
@@ -79,7 +197,7 @@ show(std::ostream &out, const std::string &name, clover::Buffer2D<double> &buffe
 	for (size_t i = 0; i < buffer.sizeX; ++i) {
 		out << "\t";
 		for (size_t j = 0; j < buffer.sizeY; ++j) {
-			out << buffer(i, j) << ", ";
+			out << idx2(buffer, i, j) << ", ";
 		}
 		out << std::endl;
 	}
@@ -368,6 +486,8 @@ struct global_variables {
 	const global_config config;
 
 	const size_t omp_device;
+	bool use_target;
+
 	chunk_type chunk;
 
 	int error_condition;
@@ -392,14 +512,104 @@ struct global_variables {
 	explicit global_variables(
 			const global_config &config,
 			size_t omp_device,
+			bool use_target,
 			chunk_type chunk) :
-			config(config), omp_device(omp_device), chunk(std::move(chunk)),
+			config(config), omp_device(omp_device), use_target(use_target), chunk(std::move(chunk)),
 			dt(config.dtinit),
 			dtold(config.dtinit),
 			profiler_on(config.profiler_on) {}
 
+	void hostToDevice() {
+		#pragma omp flush
+
+		for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
+			tile_type &t = chunk.tiles[tile];
+			field_type &field = t.field;
+			#pragma omp target update \
+                to(field.density0.data[:field.density0.N()]) \
+                to(field.density1.data[:field.density1.N()]) \
+                to(field.energy0.data[:field.energy0.N()]) \
+                to(field.energy1.data[:field.energy1.N()]) \
+                to(field.pressure.data[:field.pressure.N()]) \
+                to(field.viscosity.data[:field.viscosity.N()]) \
+                to(field.soundspeed.data[:field.soundspeed.N()]) \
+                to(field.yvel0.data[:field.yvel0.N()]) \
+                to(field.yvel1.data[:field.yvel1.N()]) \
+                to(field.xvel0.data[:field.xvel0.N()]) \
+                to(field.xvel1.data[:field.xvel1.N()]) \
+                to(field.vol_flux_x.data[:field.vol_flux_x.N()]) \
+                to(field.vol_flux_y.data[:field.vol_flux_y.N()]) \
+                to(field.mass_flux_x.data[:field.mass_flux_x.N()]) \
+                to(field.mass_flux_y.data[:field.mass_flux_y.N()]) \
+                to(field.work_array1.data[:field.work_array1.N()]) \
+                to(field.work_array2.data[:field.work_array2.N()]) \
+                to(field.work_array3.data[:field.work_array3.N()]) \
+                to(field.work_array4.data[:field.work_array4.N()]) \
+                to(field.work_array5.data[:field.work_array5.N()]) \
+                to(field.work_array6.data[:field.work_array6.N()]) \
+                to(field.work_array7.data[:field.work_array7.N()]) \
+                to(field.cellx.data[:field.cellx.N()]) \
+                to(field.celldx.data[:field.celldx.N()]) \
+                to(field.celly.data[:field.celly.N()]) \
+                to(field.celldy.data[:field.celldy.N()]) \
+                to(field.vertexx.data[:field.vertexx.N()]) \
+                to(field.vertexdx.data[:field.vertexdx.N()]) \
+                to(field.vertexy.data[:field.vertexy.N()]) \
+                to(field.vertexdy.data[:field.vertexdy.N()]) \
+                to(field.volume.data[:field.volume.N()]) \
+                to(field.xarea.data[:field.xarea.N()]) \
+                to(field.yarea.data[:field.yarea.N()])
+		}
+
+	}
+
+	void deviceToHost() {
+		#pragma omp flush
+
+		for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
+			tile_type &t = chunk.tiles[tile];
+			field_type &field = t.field;
+			#pragma omp target update \
+                from(field.density0.data[:field.density0.N()]) \
+                from(field.density1.data[:field.density1.N()]) \
+                from(field.energy0.data[:field.energy0.N()]) \
+                from(field.energy1.data[:field.energy1.N()]) \
+                from(field.pressure.data[:field.pressure.N()]) \
+                from(field.viscosity.data[:field.viscosity.N()]) \
+                from(field.soundspeed.data[:field.soundspeed.N()]) \
+                from(field.yvel0.data[:field.yvel0.N()]) \
+                from(field.yvel1.data[:field.yvel1.N()]) \
+                from(field.xvel0.data[:field.xvel0.N()]) \
+                from(field.xvel1.data[:field.xvel1.N()]) \
+                from(field.vol_flux_x.data[:field.vol_flux_x.N()]) \
+                from(field.vol_flux_y.data[:field.vol_flux_y.N()]) \
+                from(field.mass_flux_x.data[:field.mass_flux_x.N()]) \
+                from(field.mass_flux_y.data[:field.mass_flux_y.N()]) \
+                from(field.work_array1.data[:field.work_array1.N()]) \
+                from(field.work_array2.data[:field.work_array2.N()]) \
+                from(field.work_array3.data[:field.work_array3.N()]) \
+                from(field.work_array4.data[:field.work_array4.N()]) \
+                from(field.work_array5.data[:field.work_array5.N()]) \
+                from(field.work_array6.data[:field.work_array6.N()]) \
+                from(field.work_array7.data[:field.work_array7.N()]) \
+                from(field.cellx.data[:field.cellx.N()]) \
+                from(field.celldx.data[:field.celldx.N()]) \
+                from(field.celly.data[:field.celly.N()]) \
+                from(field.celldy.data[:field.celldy.N()]) \
+                from(field.vertexx.data[:field.vertexx.N()]) \
+                from(field.vertexdx.data[:field.vertexdx.N()]) \
+                from(field.vertexy.data[:field.vertexy.N()]) \
+                from(field.vertexdy.data[:field.vertexdy.N()]) \
+                from(field.volume.data[:field.volume.N()]) \
+                from(field.xarea.data[:field.xarea.N()]) \
+                from(field.yarea.data[:field.yarea.N()])
+		}
+	}
+
 	// dumps all content to file; for debugging only
 	void dump(const std::string &filename) {
+
+		deviceToHost();
 
 		std::cout << "Dumping globals to " << filename << std::endl;
 
@@ -499,6 +709,7 @@ struct global_variables {
 		});
 
 	}
+
 
 };
 

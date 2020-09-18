@@ -21,7 +21,7 @@
 
 #include <string>
 #include "calc_dt.h"
-#include "utils.hpp"
+
 #include <cmath>
 
 //  @brief Fortran timestep kernel
@@ -32,6 +32,7 @@
 
 
 void calc_dt_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		double dtmin,
 		double dtc_safe,
@@ -70,25 +71,38 @@ void calc_dt_kernel(
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
 
-	_Pragma("kernel2d")
+	omp(parallel(2) enable_target(use_target)
+			    mapToFrom2D(xarea)
+			    mapToFrom2D(yarea)
+			    mapToFrom1D(celldx)
+			    mapToFrom1D(celldy)
+			    mapToFrom2D(volume)
+			    mapToFrom2D(density0)
+			    mapToFrom2D(viscosity_a)
+			    mapToFrom2D(soundspeed)
+			    mapToFrom2D(xvel0)
+			    mapToFrom2D(yvel0)
+			    map(tofrom:dt_min_val)
+			    reduction(min:dt_min_val)
+	)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			double dsx = celldx[i];
-			double dsy = celldy[j];
-			double cc = soundspeed(i, j) * soundspeed(i, j);
-			cc = cc + 2.0 * viscosity_a(i, j) / density0(i, j);
+			double dsx = idx1(celldx, i);
+			double dsy = idx1(celldy, j);
+			double cc = idx2(soundspeed, i, j) * idx2(soundspeed, i, j);
+			cc = cc + 2.0 * idx2(viscosity_a, i, j) / idx2(density0, i, j);
 			cc = std::fmax(std::sqrt(cc), g_small);
 			double dtct = dtc_safe * std::fmin(dsx, dsy) / cc;
 			double div = 0.0;
-			double dv1 = (xvel0(i, j) + xvel0(i + 0, j + 1)) * xarea(i, j);
-			double dv2 = (xvel0(i + 1, j + 0) + xvel0(i + 1, j + 1)) * xarea(i + 1, j + 0);
+			double dv1 = (idx2(xvel0, i, j) + idx2(xvel0, i + 0, j + 1)) * idx2(xarea, i, j);
+			double dv2 = (idx2(xvel0, i + 1, j + 0) + idx2(xvel0, i + 1, j + 1)) * idx2(xarea, i + 1, j + 0);
 			div = div + dv2 - dv1;
-			double dtut = dtu_safe * 2.0 * volume(i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * volume(i, j));
-			dv1 = (yvel0(i, j) + yvel0(i + 1, j + 0)) * yarea(i, j);
-			dv2 = (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)) * yarea(i + 0, j + 1);
+			double dtut = dtu_safe * 2.0 * idx2(volume, i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * idx2(volume, i, j));
+			dv1 = (idx2(yvel0, i, j) + idx2(yvel0, i + 1, j + 0)) * idx2(yarea, i, j);
+			dv2 = (idx2(yvel0, i + 0, j + 1) + idx2(yvel0, i + 1, j + 1)) * idx2(yarea, i + 0, j + 1);
 			div = div + dv2 - dv1;
-			double dtvt = dtv_safe * 2.0 * volume(i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * volume(i, j));
-			div = div / (2.0 * volume(i, j));
+			double dtvt = dtv_safe * 2.0 * idx2(volume, i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * idx2(volume, i, j));
+			div = div / (2.0 * idx2(volume, i, j));
 			double dtdivt;
 			if (div < -g_small) {
 				dtdivt = dtdiv_safe * (-1.0 / div);
@@ -123,19 +137,19 @@ void calc_dt_kernel(
 		std::cout
 				<< "Timestep information:" << std::endl
 				<< "j, k                 : " << jldt << " " << kldt << std::endl
-				<< "x, y                 : " << cellx_acc[jldt] << " " << celly_acc[kldt]
+				<< "x, y                 : " << idx1(cellx_acc, jldt) << " " << idx1(celly_acc, kldt)
 				<< std::endl
 				<< "timestep : " << dt_min_val << std::endl
 				<< "Cell velocities;" << std::endl
-				<< xvel0_acc(jldt, kldt) << " " << yvel0_acc(jldt, kldt) << std::endl
-				<< xvel0_acc(jldt + 1, kldt) << " " << yvel0_acc(jldt + 1, kldt) << std::endl
-				<< xvel0_acc(jldt + 1, kldt + 1) << " " << yvel0_acc(jldt + 1, kldt + 1)
+				<< idx2(xvel0_acc, jldt, kldt) << " " << idx2(yvel0_acc, jldt, kldt) << std::endl
+				<< idx2(xvel0_acc, jldt + 1, kldt) << " " << idx2(yvel0_acc, jldt + 1, kldt) << std::endl
+				<< idx2(xvel0_acc, jldt + 1, kldt + 1) << " " << idx2(yvel0_acc, jldt + 1, kldt + 1)
 				<< std::endl
-				<< xvel0_acc(jldt, kldt + 1) << " " << yvel0_acc(jldt, kldt + 1) << std::endl
+				<< idx2(xvel0_acc, jldt, kldt + 1) << " " << idx2(yvel0_acc, jldt, kldt + 1) << std::endl
 				<< "density, energy, pressure, soundspeed " << std::endl
-				<< density0_acc(jldt, kldt) << " " << energy0_acc(jldt, kldt) << " "
-				<< pressure_acc(jldt, kldt)
-				<< " " << soundspeed_acc(jldt, kldt) << std::endl;
+				<< idx2(density0_acc, jldt, kldt) << " " << idx2(energy0_acc, jldt, kldt) << " "
+				<< idx2(pressure_acc, jldt, kldt)
+				<< " " << idx2(soundspeed_acc, jldt, kldt) << std::endl;
 	}
 
 
@@ -153,9 +167,13 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 	int l_control;
 	int small = 0;
 
+	#if FLUSH_BUFFER
+	globals.hostToDevice();
+	#endif
 
 	tile_type &t = globals.chunk.tiles[tile];
 	calc_dt_kernel(
+			globals.use_target,
 			t.info.t_xmin,
 			t.info.t_xmax,
 			t.info.t_ymin,
@@ -187,6 +205,10 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 			kldt,
 			small
 	);
+
+	#if FLUSH_BUFFER
+	globals.deviceToHost();
+	#endif
 
 
 	if (l_control == 1) local_control = "sound";

@@ -20,13 +20,14 @@
 
 #include "reset_field.h"
 #include "timer.h"
-#include "utils.hpp"
+
 
 //  @brief Fortran reset field kernel.
 //  @author Wayne Gaudin
 //  @details Copies all of the final end of step filed data to the begining of
 //  step data, ready for the next timestep.
 void reset_field_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		clover::Buffer2D<double> &density0,
 		clover::Buffer2D<double> &density1,
@@ -41,11 +42,16 @@ void reset_field_kernel(
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	_Pragma("kernel2d")
+	omp(parallel(2) enable_target(use_target)
+			    mapToFrom2D(density0)
+			    mapToFrom2D(density1)
+			    mapToFrom2D(energy0)
+			    mapToFrom2D(energy1)
+	)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			density0(i, j) = density1(i, j);
-			energy0(i, j) = energy1(i, j);
+			idx2(density0, i, j) = idx2(density1, i, j);
+			idx2(energy0, i, j) = idx2(energy1, i, j);
 		}
 	}
 
@@ -54,11 +60,16 @@ void reset_field_kernel(
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
-	_Pragma("kernel2d")
+	omp(parallel(2) enable_target(use_target)
+			    mapToFrom2D(xvel0)
+			    mapToFrom2D(xvel1)
+			    mapToFrom2D(yvel0)
+			    mapToFrom2D(yvel1)
+	)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			xvel0(i, j) = xvel1(i, j);
-			yvel0(i, j) = yvel1(i, j);
+			idx2(xvel0, i, j) = idx2(xvel1, i, j);
+			idx2(yvel0, i, j) = idx2(yvel1, i, j);
 		}
 	}
 
@@ -73,11 +84,15 @@ void reset_field(global_variables &globals) {
 	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
+	#if FLUSH_BUFFER
+	globals.hostToDevice();
+	#endif
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
 		tile_type &t = globals.chunk.tiles[tile];
 		reset_field_kernel(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -92,6 +107,10 @@ void reset_field(global_variables &globals) {
 				t.field.yvel0,
 				t.field.yvel1);
 	}
+
+	#if FLUSH_BUFFER
+	globals.deviceToHost();
+	#endif
 
 
 	if (globals.profiler_on) globals.profiler.reset += timer() - kernel_time;

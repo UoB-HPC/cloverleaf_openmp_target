@@ -22,7 +22,7 @@
 #include "field_summary.h"
 #include "timer.h"
 #include "ideal_gas.h"
-#include "utils.hpp"
+
 
 #include <iomanip>
 
@@ -75,6 +75,9 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 	double ke = 0.0;
 	double press = 0.0;
 
+	#if FLUSH_BUFFER
+	globals.hostToDevice();
+	#endif
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
@@ -85,27 +88,44 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int xmin = t.info.t_xmin;
 		field_type &field = t.field;
 
-		_Pragma("kernel1d")
+		omp(parallel(1) enable_target( globals.use_target)
+				    mapToFrom2D(field.volume)
+				    mapToFrom2D(field.density0)
+				    mapToFrom2D(field.energy0)
+				    mapToFrom2D(field.pressure)
+				    mapToFrom2D(field.xvel0)
+				    mapToFrom2D(field.yvel0)
+				    map(from:vol)
+				    map(from:mass)
+				    map(from:ie)
+				    map(from:ke)
+				    map(from:press)
+				    reduction(+:vol, mass, ie, ke, press)
+		)
 		for (int idx = (0); idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
 			const int j = xmin + 1 + idx % (xmax - xmin + 1);
 			const int k = ymin + 1 + idx / (xmax - xmin + 1);
 			double vsqrd = 0.0;
 			for (int kv = k; kv <= k + 1; ++kv) {
 				for (int jv = j; jv <= j + 1; ++jv) {
-					vsqrd += 0.25 * (field.xvel0(jv, kv) * field.xvel0(jv, kv) + field.yvel0(jv, kv) * field.yvel0(jv, kv));
+					vsqrd += 0.25 * (idx2(field.xvel0, jv, kv) * idx2(field.xvel0, jv, kv) + idx2(field.yvel0, jv, kv) * idx2(field.yvel0, jv, kv));
 				}
 			}
-			double cell_vol = field.volume(j, k);
-			double cell_mass = cell_vol * field.density0(j, k);
+			double cell_vol = idx2(field.volume, j, k);
+			double cell_mass = cell_vol * idx2(field.density0, j, k);
 			vol += cell_vol;
 			mass += cell_mass;
-			ie += cell_mass * field.energy0(j, k);
+			ie += cell_mass * idx2(field.energy0, j, k);
 			ke += cell_mass * 0.5 * vsqrd;
-			press += cell_vol * field.pressure(j, k);
+			press += cell_vol * idx2(field.pressure, j, k);
 		}
 
 
 	}
+
+	#if FLUSH_BUFFER
+	globals.deviceToHost();
+	#endif
 
 	clover_sum(vol);
 	clover_sum(mass);

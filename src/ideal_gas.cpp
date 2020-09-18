@@ -21,8 +21,8 @@
 
 #include <cmath>
 #include "ideal_gas.h"
-#include "utils.hpp"
 
+#include "comms.h"
 
 #define IDX(buffer, x, y) buffer[idx[(x)]][idx[(y)]]
 
@@ -35,6 +35,7 @@ int N = 0;
 //  @details Calculates the pressure and sound speed for the mesh chunk using
 //  the ideal gas equation of state, with a fixed gamma of 1.4.
 void ideal_gas_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		clover::Buffer2D<double> &density,
 		clover::Buffer2D<double> &energy,
@@ -47,15 +48,20 @@ void ideal_gas_kernel(
 
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	_Pragma("kernel2d")
+	omp(parallel(2) enable_target(use_target)
+			    mapToFrom2D(density)
+			    mapToFrom2D(energy)
+			    mapToFrom2D(pressure)
+			    mapToFrom2D(soundspeed)
+	)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			double v = 1.0 / density(i, j);
-			pressure(i, j) = (1.4 - 1.0) * density(i, j) * energy(i, j);
-			double pressurebyenergy = (1.4 - 1.0) * density(i, j);
-			double pressurebyvolume = -density(i, j) * pressure(i, j);
-			double sound_speed_squared = v * v * (pressure(i, j) * pressurebyenergy - pressurebyvolume);
-			soundspeed(i, j) = std::sqrt(sound_speed_squared);
+			double v = 1.0 / idx2(density, i, j);
+			idx2(pressure, i, j) = (1.4 - 1.0) * idx2(density, i, j) * idx2(energy, i, j);
+			double pressurebyenergy = (1.4 - 1.0) * idx2(density, i, j);
+			double pressurebyvolume = -idx2(density, i, j) * idx2(pressure, i, j);
+			double sound_speed_squared = v * v * (idx2(pressure, i, j) * pressurebyenergy - pressurebyvolume);
+			idx2(soundspeed, i, j) = std::sqrt(sound_speed_squared);
 		}
 	};
 
@@ -71,9 +77,13 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 
 	tile_type &t = globals.chunk.tiles[tile];
 
+	#if FLUSH_BUFFER
+	globals.hostToDevice();
+	#endif
 
 	if (!predict) {
 		ideal_gas_kernel(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -85,6 +95,7 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 		);
 	} else {
 		ideal_gas_kernel(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -95,6 +106,10 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 				t.field.soundspeed
 		);
 	}
+
+	#if FLUSH_BUFFER
+	globals.deviceToHost();
+	#endif
 
 }
 

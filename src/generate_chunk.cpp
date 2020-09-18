@@ -27,36 +27,37 @@
 
 #include <cmath>
 #include "generate_chunk.h"
-#include "utils.hpp"
+
+#include "comms.h"
 
 void generate_chunk(const int tile, global_variables &globals) {
 
 
 	// Need to copy the host array of state input data into a device array
-	Buffer1D<double> state_density(globals.config.number_of_states);
-	Buffer1D<double> state_energy(globals.config.number_of_states);
-	Buffer1D<double> state_xvel(globals.config.number_of_states);
-	Buffer1D<double> state_yvel(globals.config.number_of_states);
-	Buffer1D<double> state_xmin(globals.config.number_of_states);
-	Buffer1D<double> state_xmax(globals.config.number_of_states);
-	Buffer1D<double> state_ymin(globals.config.number_of_states);
-	Buffer1D<double> state_ymax(globals.config.number_of_states);
-	Buffer1D<double> state_radius(globals.config.number_of_states);
-	Buffer1D<int> state_geometry(globals.config.number_of_states);
+	clover::Buffer1D<double> state_density(globals.config.number_of_states);
+	clover::Buffer1D<double> state_energy(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xvel(globals.config.number_of_states);
+	clover::Buffer1D<double> state_yvel(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xmin(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xmax(globals.config.number_of_states);
+	clover::Buffer1D<double> state_ymin(globals.config.number_of_states);
+	clover::Buffer1D<double> state_ymax(globals.config.number_of_states);
+	clover::Buffer1D<double> state_radius(globals.config.number_of_states);
+	clover::Buffer1D<int> state_geometry(globals.config.number_of_states);
 
 
 	// Copy the data to the new views
 	for (int state = 0; state < globals.config.number_of_states; ++state) {
-		state_density[state] = globals.config.states[state].density;
-		state_energy[state] = globals.config.states[state].energy;
-		state_xvel[state] = globals.config.states[state].xvel;
-		state_yvel[state] = globals.config.states[state].yvel;
-		state_xmin[state] = globals.config.states[state].xmin;
-		state_xmax[state] = globals.config.states[state].xmax;
-		state_ymin[state] = globals.config.states[state].ymin;
-		state_ymax[state] = globals.config.states[state].ymax;
-		state_radius[state] = globals.config.states[state].radius;
-		state_geometry[state] = globals.config.states[state].geometry;
+		idx1(state_density, state) = globals.config.states[state].density;
+		idx1(state_energy, state) = globals.config.states[state].energy;
+		idx1(state_xvel, state) = globals.config.states[state].xvel;
+		idx1(state_yvel, state) = globals.config.states[state].yvel;
+		idx1(state_xmin, state) = globals.config.states[state].xmin;
+		idx1(state_xmax, state) = globals.config.states[state].xmax;
+		idx1(state_ymin, state) = globals.config.states[state].ymin;
+		idx1(state_ymax, state) = globals.config.states[state].ymax;
+		idx1(state_radius, state) = globals.config.states[state].radius;
+		idx1(state_geometry, state) = globals.config.states[state].geometry;
 	}
 
 	// Kokkos::deep_copy (TO, FROM)
@@ -76,58 +77,91 @@ void generate_chunk(const int tile, global_variables &globals) {
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
+	const double state_energy_0 = idx1(state_energy, 0);
+	const double state_density_0 = idx1(state_density, 0);
+	const double state_xvel_0 = idx1(state_xvel, 0);
+	const double state_yvel_0 = idx1(state_yvel, 0);
+
 	// State 1 is always the background state
-	_Pragma("kernel2d")
+	omp(parallel(2) enable_target(globals.use_target)
+			    mapToFrom2D(field.energy0)
+			    mapToFrom2D(field.density0)
+			    mapToFrom2D(field.xvel0)
+			    mapToFrom2D(field.yvel0)
+	)
 	for (int j = (0); j < (yrange); j++) {
 		for (int i = (0); i < (xrange); i++) {
-			field.energy0(i, j) = state_energy[0];
-			field.density0(i, j) = state_density[0];
-			field.xvel0(i, j) = state_xvel[0];
-			field.yvel0(i, j) = state_yvel[0];
+			idx2(field.energy0, i, j) = state_energy_0;
+			idx2(field.density0, i, j) = state_density_0;
+			idx2(field.xvel0, i, j) = state_xvel_0;
+			idx2(field.yvel0, i, j) = state_yvel_0;
 		}
 	}
 
 
 	for (int state = 1; state < globals.config.number_of_states; ++state) {
-		_Pragma("kernel2d")
+		omp(parallel(2) enable_target(globals.use_target)
+				    mapToFrom2D(field.density0)
+				    mapToFrom2D(field.xvel0)
+				    mapToFrom2D(field.yvel0)
+				    mapToFrom2D(field.energy0)
+
+				    mapToFrom1D(field.cellx)
+				    mapToFrom1D(field.celly)
+
+				    mapToFrom1D(field.vertexx)
+				    mapToFrom1D(field.vertexy)
+
+				    mapTo1D(state_density)
+				    mapTo1D(state_energy)
+				    mapTo1D(state_xvel)
+				    mapTo1D(state_yvel)
+				    mapTo1D(state_xmin)
+				    mapTo1D(state_xmax)
+				    mapTo1D(state_ymin)
+				    mapTo1D(state_ymax)
+				    mapTo1D(state_radius)
+				    mapTo1D(state_geometry)
+
+		)
 		for (int j = (0); j < (yrange); j++) {
 			for (int i = (0); i < (xrange); i++) {
-				double x_cent = state_xmin[state];
-				double y_cent = state_ymin[state];
-				if (state_geometry[state] == g_rect) {
-					if (field.vertexx[i + 1] >= state_xmin[state] && field.vertexx[i] < state_xmax[state]) {
-						if (field.vertexy[j + 1] >= state_ymin[state] && field.vertexy[j] < state_ymax[state]) {
-							field.energy0(i, j) = state_energy[state];
-							field.density0(i, j) = state_density[state];
+				double x_cent = idx1(state_xmin, state);
+				double y_cent = idx1(state_ymin, state);
+				if (idx1(state_geometry, state) == g_rect) {
+					if (idx1(field.vertexx, i + 1) >= idx1(state_xmin, state) && idx1(field.vertexx, i) < idx1(state_xmax, state)) {
+						if (idx1(field.vertexy, j + 1) >= idx1(state_ymin, state) && idx1(field.vertexy, j) < idx1(state_ymax, state)) {
+							idx2(field.energy0, i, j) = idx1(state_energy, state);
+							idx2(field.density0, i, j) = idx1(state_density, state);
 							for (int kt = j; kt <= j + 1; ++kt) {
 								for (int jt = i; jt <= i + 1; ++jt) {
-									field.xvel0(jt, kt) = state_xvel[state];
-									field.yvel0(jt, kt) = state_yvel[state];
+									idx2(field.xvel0, jt, kt) = idx1(state_xvel, state);
+									idx2(field.yvel0, jt, kt) = idx1(state_yvel, state);
 								}
 							}
 						}
 					}
-				} else if (state_geometry[state] == g_circ) {
-					double radius = std::sqrt((field.cellx[i] - x_cent) *
-					                          (field.cellx[i] - x_cent) + (field.celly[j] - y_cent) * (field.celly[j] - y_cent));
-					if (radius <= state_radius[state]) {
-						field.energy0(i, j) = state_energy[state];
-						field.density0(i, j) = state_density[state];
+				} else if (idx1(state_geometry, state) == g_circ) {
+					double radius = std::sqrt((idx1(field.cellx, i) - x_cent) *
+					                          (idx1(field.cellx, i) - x_cent) + (idx1(field.celly, j) - y_cent) * (idx1(field.celly, j) - y_cent));
+					if (radius <= idx1(state_radius, state)) {
+						idx2(field.energy0, i, j) = idx1(state_energy, state);
+						idx2(field.density0, i, j) = idx1(state_density, state);
 						for (int kt = j; kt <= j + 1; ++kt) {
 							for (int jt = i; jt <= i + 1; ++jt) {
-								field.xvel0(jt, kt) = state_xvel[state];
-								field.yvel0(jt, kt) = state_yvel[state];
+								idx2(field.xvel0, jt, kt) = idx1(state_xvel, state);
+								idx2(field.yvel0, jt, kt) = idx1(state_yvel, state);
 							}
 						}
 					}
-				} else if (state_geometry[state] == g_point) {
-					if (field.vertexx[i] == x_cent && field.vertexy[j] == y_cent) {
-						field.energy0(i, j) = state_energy[state];
-						field.density0(i, j) = state_density[state];
+				} else if (idx1(state_geometry, state) == g_point) {
+					if (idx1(field.vertexx, i) == x_cent && idx1(field.vertexy, j) == y_cent) {
+						idx2(field.energy0, i, j) = idx1(state_energy, state);
+						idx2(field.density0, i, j) = idx1(state_density, state);
 						for (int kt = j; kt <= j + 1; ++kt) {
 							for (int jt = i; jt <= i + 1; ++jt) {
-								field.xvel0(jt, kt) = state_xvel[state];
-								field.yvel0(jt, kt) = state_yvel[state];
+								idx2(field.xvel0, jt, kt) = idx1(state_xvel, state);
+								idx2(field.yvel0, jt, kt) = idx1(state_yvel, state);
 							}
 						}
 					}

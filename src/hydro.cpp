@@ -18,18 +18,18 @@
  */
 
 
+#include "accelerate.h"
 #include "hydro.h"
 #include "timer.h"
 #include "field_summary.h"
 #include "visit.h"
 #include "timestep.h"
 #include "PdV.h"
-#include "accelerate.h"
 #include "flux_calc.h"
 #include "advection.h"
 #include "reset_field.h"
+#include "finalise_field.h"
 
-#include <algorithm>
 
 extern std::ostream g_out;
 
@@ -219,6 +219,9 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 					      << std::endl;
 				}
 			}
+
+//			finalise_field(globals);
+
 
 			//clover_finalize(); Skipped as just closes the file and calls MPI_Finalize (which is done back in main).
 

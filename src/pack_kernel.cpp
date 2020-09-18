@@ -24,9 +24,9 @@
 
 
 #include "pack_kernel.h"
-#include "utils.hpp"
 
-void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
+
+void clover_pack_message_left(bool use_target, int x_min, int x_max, int y_min, int y_max,
                               clover::Buffer2D<double> &field,
                               clover::Buffer1D<double> &left_snd,
                               int cell_data, int vertex_data, int x_face_data, int y_face_data,
@@ -57,11 +57,11 @@ void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
 		// DO k=y_min-depth,y_max+y_inc+depth
 
 
-			_Pragma("kernel1d")
+			omp(parallel(1) enable_target(use_target) mapToFrom1D(left_snd) mapToFrom2D(field))
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			left_snd[index] = field(x_min + x_inc - 1 + j, k);
+			idx1(left_snd, index) = idx2(field, x_min + x_inc - 1 + j, k);
 		}
 	}
 
@@ -69,7 +69,7 @@ void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
 }
 
 
-void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
+void clover_unpack_message_left(bool use_target, int x_min, int x_max, int y_min, int y_max,
                                 clover::Buffer2D<double> &field,
                                 clover::Buffer1D<double> &left_rcv,
                                 int cell_data, int vertex_data, int x_face_data, int y_face_data,
@@ -98,11 +98,11 @@ void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
 
 
 
-			_Pragma("kernel1d")
+			omp(parallel(1) enable_target(use_target) mapToFrom2D(field) mapToFrom1D(left_rcv))
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			field(x_min - j, k) = left_rcv[index];
+			idx2(field, x_min - j, k) = idx1(left_rcv, index);
 		}
 	}
 
@@ -110,7 +110,7 @@ void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
 }
 
 
-void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
+void clover_pack_message_right(bool use_target, int x_min, int x_max, int y_min, int y_max,
                                clover::Buffer2D<double> &field,
                                clover::Buffer1D<double> &right_snd,
                                int cell_data, int vertex_data, int x_face_data, int y_face_data,
@@ -135,11 +135,11 @@ void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
 	}
 
 		// DO k=y_min-depth,y_max+y_inc+depth
-			_Pragma("kernel1d")
+			omp(parallel(1) enable_target(use_target) mapToFrom1D(right_snd) mapToFrom2D(field))
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			right_snd[index] = field(x_min + 1 + j, k);
+			idx1(right_snd, index) = idx2(field, x_min + 1 + j, k);
 		}
 	}
 
@@ -147,7 +147,7 @@ void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
 }
 
 
-void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
+void clover_unpack_message_right(bool use_target, int x_min, int x_max, int y_min, int y_max,
                                  clover::Buffer2D<double> &field,
                                  clover::Buffer1D<double> &right_rcv,
                                  int cell_data, int vertex_data, int x_face_data, int y_face_data,
@@ -176,18 +176,18 @@ void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
 	}
 
 		// DO k=y_min-depth,y_max+y_inc+depth
-			_Pragma("kernel1d")
+			omp(parallel(1) enable_target(use_target) mapToFrom1D(right_rcv) mapToFrom2D(field))
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			right_rcv[index] = field(x_max + x_inc + j, k);
+			idx1(right_rcv, index) = idx2(field, x_max + x_inc + j, k);
 		}
 	}
 
 
 }
 
-void clover_pack_message_top(int x_min, int x_max, int y_min, int y_max,
+void clover_pack_message_top(bool use_target, int x_min, int x_max, int y_min, int y_max,
                              clover::Buffer2D<double> &field,
                              clover::Buffer1D<double> &top_snd,
                              int cell_data, int vertex_data, int x_face_data, int y_face_data,
@@ -214,15 +214,15 @@ void clover_pack_message_top(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		omp(parallel(1) enable_target(use_target) mapToFrom1D(top_snd) mapToFrom2D(field))
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			top_snd[index] = field(j, y_max + 1 - k);
+			idx1(top_snd, index) = idx2(field, j, y_max + 1 - k);
 		}
 	}
 }
 
-void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
+void clover_unpack_message_top(bool use_target, int x_min, int x_max, int y_min, int y_max,
                                clover::Buffer2D<double> &field,
                                clover::Buffer1D<double> &top_rcv,
                                int cell_data, int vertex_data, int x_face_data, int y_face_data,
@@ -254,16 +254,16 @@ void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
 		// DO j=x_min-depth,x_max+x_inc+depth
 
 
-		_Pragma("kernel1d")
+		omp(parallel(1) enable_target(use_target) mapToFrom2D(field) mapToFrom1D(top_rcv))
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			field(j, y_max + y_inc + k) = top_rcv[index];
+			idx2(field, j, y_max + y_inc + k) = idx1(top_rcv, index);
 		}
 	}
 }
 
 
-void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
+void clover_pack_message_bottom(bool use_target, int x_min, int x_max, int y_min, int y_max,
                                 clover::Buffer2D<double> &field,
                                 clover::Buffer1D<double> &bottom_snd,
                                 int cell_data, int vertex_data, int x_face_data, int y_face_data,
@@ -294,15 +294,15 @@ void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		omp(parallel(1) enable_target(use_target) mapToFrom1D(bottom_snd) mapToFrom2D(field))
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			bottom_snd[index] = field(j, y_min + y_inc - 1 + k);
+			idx1(bottom_snd, index) = idx2(field, j, y_min + y_inc - 1 + k);
 		}
 	}
 }
 
-void clover_unpack_message_bottom(int x_min, int x_max, int y_min, int y_max,
+void clover_unpack_message_bottom(bool use_target, int x_min, int x_max, int y_min, int y_max,
                                   clover::Buffer2D<double> &field,
                                   clover::Buffer1D<double> &bottom_rcv,
                                   int cell_data, int vertex_data, int x_face_data, int y_face_data,
@@ -329,10 +329,10 @@ void clover_unpack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		omp(parallel(1) enable_target(use_target) mapToFrom2D(field) mapToFrom1D(bottom_rcv))
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			field(j, y_min - k) = bottom_rcv[index];
+			idx2(field, j, y_min - k) = idx1(bottom_rcv, index);
 		}
 	}
 }

@@ -41,7 +41,7 @@ std::ofstream of;
 
 struct RunConfig {
 	std::string file;
-	size_t deviceIdx;
+	int deviceIdx;
 };
 
 
@@ -84,6 +84,7 @@ RunConfig parseArgs(const size_t num_devices,
 			printHelp(args[0]);
 			std::exit(EXIT_SUCCESS);
 		} else if (arg == "--list") {
+			std::cout << "OMP devices:" << std::endl;
 			printSimple(num_devices);
 			std::exit(EXIT_SUCCESS);
 		} else if (arg == "--no-target") {
@@ -106,8 +107,7 @@ RunConfig parseArgs(const size_t num_devices,
 	return config;
 }
 
-std::unique_ptr<global_variables>
-initialise(parallel_ &parallel, const std::vector<std::string> &args) {
+global_variables initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 	global_config config;
 
@@ -133,10 +133,6 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 	clover_barrier();
 
-//
-//	int x = 1;
-//	#pragma omp target map(tofrom: x)
-//	x = x + 1;
 
 	auto num_devices = omp_get_num_devices();
 	if (num_devices == 0) {
@@ -145,11 +141,20 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 		std::cout << "Detected OMP devices:" << std::endl;
 		printSimple(num_devices);
 	}
+	std::cout << "\n" << std::endl;
 
 	auto runConfig = parseArgs(num_devices, args);
 	auto file = runConfig.file;
 	auto selectedDevice = runConfig.deviceIdx;
-	std::cout << "Using OMP device: " << selectedDevice << std::endl;
+	auto useTarget = selectedDevice != -1;
+
+	if (!useTarget) {
+		std::cout << "Using OMP device: (host fallback))" << std::endl;
+	} else {
+		std::cout << "Using OMP device: #" << selectedDevice << std::endl;
+		omp_set_default_device(selectedDevice);
+	}
+
 
 	std::ifstream g_in;
 	if (parallel.boss) {
@@ -207,9 +212,9 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 	config.number_of_chunks = parallel.max_task;
 
 
-	auto globals = start(parallel, config, selectedDevice);
+	auto globals = start(parallel, config, selectedDevice, useTarget);
 
-	clover_barrier(*globals);
+	clover_barrier(globals);
 
 	if (parallel.boss) {
 		g_out << "Starting the calculation" << std::endl;

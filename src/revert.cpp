@@ -19,7 +19,7 @@
 
 
 #include "revert.h"
-#include "utils.hpp"
+
 
 //  @brief Fortran revert kernel.
 //  @author Wayne Gaudin
@@ -27,19 +27,26 @@
 //  it to the start of step data, ready for the corrector.
 //  Note that this does not seem necessary in this proxy-app but should be
 //  left in to remain relevant to the full method.
-void revert_kernel(int x_min, int x_max, int y_min, int y_max,
-                   clover::Buffer2D<double> &density0,
-                   clover::Buffer2D<double> &density1,
-                   clover::Buffer2D<double> &energy0,
-                   clover::Buffer2D<double> &energy1) {
+void revert_kernel(
+		bool use_target,
+		int x_min, int x_max, int y_min, int y_max,
+		clover::Buffer2D<double> &density0,
+		clover::Buffer2D<double> &density1,
+		clover::Buffer2D<double> &energy0,
+		clover::Buffer2D<double> &energy1) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	_Pragma("kernel2d")
+	omp(parallel(2) enable_target(use_target)
+			    mapToFrom2D(density0)
+			    mapToFrom2D(density1)
+			    mapToFrom2D(energy0)
+			    mapToFrom2D(energy1)
+	)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			density1(i, j) = density0(i, j);
-			energy1(i, j) = energy0(i, j);
+			idx2(density1, i, j) = idx2(density0, i, j);
+			idx2(energy1, i, j) = idx2(energy0, i, j);
 		}
 	}
 
@@ -51,10 +58,14 @@ void revert_kernel(int x_min, int x_max, int y_min, int y_max,
 //  @details Invokes the user specified revert kernel.
 void revert(global_variables &globals) {
 
+	#if FLUSH_BUFFER
+	globals.hostToDevice();
+	#endif
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
 		revert_kernel(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -64,6 +75,11 @@ void revert(global_variables &globals) {
 				t.field.energy0,
 				t.field.energy1);
 	}
+
+	#if FLUSH_BUFFER
+	globals.deviceToHost();
+	#endif
+
 
 }
 

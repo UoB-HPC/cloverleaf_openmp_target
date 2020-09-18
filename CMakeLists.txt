@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 project(cloverleaf_sycl)
 
@@ -87,6 +87,7 @@ set(SOURCES
         src/advec_mom.cpp
         src/advection.cpp
         src/build_field.cpp
+        src/finalise_field.cpp
         src/calc_dt.cpp
         src/clover_leaf.cpp
         src/comms.cpp
@@ -129,18 +130,21 @@ target_compile_options(clover_leaf
         ${EXTRA_FLAGS}
         )
 
-set(OMP_OFFLOAD_FLAGS -foffload=nvptx-none)
+separate_arguments(OMP_OFFLOAD_FLAGS)
+separate_arguments(CXX_EXTRA_FLAGS)
+separate_arguments(CXX_EXTRA_LINKER_FLAGS)
 
-set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -fsanitize=address ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
-set(RELEASE_OPTIONS -Ofast -march=native -mtune=native ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
+
+#set(OMP_OFFLOAD_FLAGS -foffload=nvptx-none -foffload=-lm  -fno-fast-math -fno-associative-math)
+#set(OMP_OFFLOAD_FLAGS -foffload=amdgcn-amdhsa="-march=gfx906" -foffload=-lm  -fno-fast-math -fno-associative-math)
+
+
+set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -O3 -march=native -mtune=native ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
 
 target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 target_link_libraries(clover_leaf PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_C)
 
-# remove when using omp target
-#target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:RelWithDebInfo>:-Wl,-lasan>)
-#target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:Release>:-Wl,-lasan>)
-target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:Debug>:-Wl,-lasan>)
 
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
@@ -149,5 +153,5 @@ target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
 target_link_options(clover_leaf PUBLIC ${OpenMP_CXX_FLAGS} ${OMP_OFFLOAD_FLAGS})
 
-#target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
 
