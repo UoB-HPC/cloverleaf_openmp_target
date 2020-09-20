@@ -35,22 +35,7 @@ void advec_cell_kernel(
 		int y_max,
 		int dir,
 		int sweep_number,
-		clover::Buffer1D<double> &vertexdx,
-		clover::Buffer1D<double> &vertexdy,
-		clover::Buffer2D<double> &volume,
-		clover::Buffer2D<double> &density1,
-		clover::Buffer2D<double> &energy1,
-		clover::Buffer2D<double> &mass_flux_x,
-		clover::Buffer2D<double> &vol_flux_x,
-		clover::Buffer2D<double> &mass_flux_y,
-		clover::Buffer2D<double> &vol_flux_y,
-		clover::Buffer2D<double> &pre_vol,
-		clover::Buffer2D<double> &post_vol,
-		clover::Buffer2D<double> &pre_mass,
-		clover::Buffer2D<double> &post_mass,
-		clover::Buffer2D<double> &advec_vol,
-		clover::Buffer2D<double> &post_ener,
-		clover::Buffer2D<double> &ener_flux) {
+		field_type &field) {
 
 	const double one_by_six = 1.0 / 6.0;
 
@@ -62,17 +47,19 @@ void advec_cell_kernel(
 		if (sweep_number == 1) {
 
 
-			omp(parallel(2) enable_target(use_target)
-					    mapToFrom2D(volume)
-					    mapToFrom2D(vol_flux_x)
-					    mapToFrom2D(vol_flux_y)
-					    mapToFrom2D(pre_vol)
-					    mapToFrom2D(post_vol)
-			)
+			mapToFrom2Df(field, volume)
+			mapToFrom2Df(field, vol_flux_x)
+			mapToFrom2Df(field, vol_flux_y)
+			mapToFrom2Dfn(field, work_array1, pre_vol)
+			mapToFrom2Dfn(field, work_array2, post_vol)
+
+			omp(parallel(2) enable_target(use_target))
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					idx2(pre_vol, i, j) = idx2(volume, i, j) + (idx2(vol_flux_x, i + 1, j + 0) - idx2(vol_flux_x, i, j) + idx2(vol_flux_y, i + 0, j + 1) - idx2(vol_flux_y, i, j));
-					idx2(post_vol, i, j) = idx2(pre_vol, i, j) - (idx2(vol_flux_x, i + 1, j + 0) - idx2(vol_flux_x, i, j));
+					idx2f(field, pre_vol, i, j) = idx2f(field, volume, i, j) +
+					                              (idx2f(field, vol_flux_x, i + 1, j + 0) - idx2f(field, vol_flux_x, i, j) + idx2f(field, vol_flux_y, i + 0, j + 1) -
+					                               idx2f(field, vol_flux_y, i, j));
+					idx2f(field, post_vol, i, j) = idx2f(field, pre_vol, i, j) - (idx2f(field, vol_flux_x, i + 1, j + 0) - idx2f(field, vol_flux_x, i, j));
 				}
 			}
 
@@ -80,16 +67,16 @@ void advec_cell_kernel(
 		} else {
 
 
-			omp(parallel(2) enable_target(use_target)
-					    mapToFrom2D(volume)
-					    mapToFrom2D(vol_flux_x)
-					    mapToFrom2D(pre_vol)
-					    mapToFrom2D(post_vol)
-			)
+			mapToFrom2Df(field, volume)
+			mapToFrom2Df(field, vol_flux_x)
+			mapToFrom2Dfn(field, work_array1, pre_vol)
+			mapToFrom2Dfn(field, work_array2, post_vol)
+
+			omp(parallel(2) enable_target(use_target))
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					idx2(pre_vol, i, j) = idx2(volume, i, j) + idx2(vol_flux_x, i + 1, j + 0) - idx2(vol_flux_x, i, j);
-					idx2(post_vol, i, j) = idx2(volume, i, j);
+					idx2f(field, pre_vol, i, j) = idx2f(field, volume, i, j) + idx2f(field, vol_flux_x, i + 1, j + 0) - idx2f(field, vol_flux_x, i, j);
+					idx2f(field, post_vol, i, j) = idx2f(field, volume, i, j);
 				}
 			}
 
@@ -97,21 +84,21 @@ void advec_cell_kernel(
 
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max+2
-		omp(parallel(2) enable_target(use_target)
-				    mapToFrom1D(vertexdx)
-				    mapToFrom2D(density1)
-				    mapToFrom2D(energy1)
-				    mapToFrom2D(mass_flux_x)
-				    mapToFrom2D(vol_flux_x)
-				    mapToFrom2D(pre_vol)
-				    mapToFrom2D(ener_flux)
-		)
+		mapToFrom1Df(field, vertexdx)
+		mapToFrom2Df(field, density1)
+		mapToFrom2Df(field, energy1)
+		mapToFrom2Df(field, mass_flux_x)
+		mapToFrom2Df(field, vol_flux_x)
+		mapToFrom2Dfn(field, work_array1, pre_vol)
+		mapToFrom2Dfn(field, work_array7, ener_flux)
+
+		omp(parallel(2) enable_target(use_target))
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2 + 2); i++)
 				({
 					int upwind, donor, downwind, dif;
 					double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
-					if (idx2(vol_flux_x, i, j) > 0.0) {
+					if (idx2f(field, vol_flux_x, i, j) > 0.0) {
 						upwind = i - 2;
 						donor = i - 1;
 						downwind = i;
@@ -122,13 +109,13 @@ void advec_cell_kernel(
 						downwind = i - 1;
 						dif = upwind;
 					}
-					sigmat = std::fabs(idx2(vol_flux_x, i, j)) / idx2(pre_vol, donor, j);
-					sigma3 = (1.0 + sigmat) * (idx1(vertexdx, i) / idx1(vertexdx, dif));
+					sigmat = std::fabs(idx2f(field, vol_flux_x, i, j)) / idx2f(field, pre_vol, donor, j);
+					sigma3 = (1.0 + sigmat) * (idx1f(field, vertexdx, i) / idx1f(field, vertexdx, dif));
 					sigma4 = 2.0 - sigmat;
 //					sigma = sigmat;
 					sigmav = sigmat;
-					diffuw = idx2(density1, donor, j) - idx2(density1, upwind, j);
-					diffdw = idx2(density1, downwind, j) - idx2(density1, donor, j);
+					diffuw = idx2f(field, density1, donor, j) - idx2f(field, density1, upwind, j);
+					diffdw = idx2f(field, density1, downwind, j) - idx2f(field, density1, donor, j);
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
@@ -140,10 +127,10 @@ void advec_cell_kernel(
 					} else {
 						limiter = 0.0;
 					}
-					idx2(mass_flux_x, i, j) = idx2(vol_flux_x, i, j) * (idx2(density1, donor, j) + limiter);
-					sigmam = std::fabs(idx2(mass_flux_x, i, j)) / (idx2(density1, donor, j) * idx2(pre_vol, donor, j));
-					diffuw = idx2(energy1, donor, j) - idx2(energy1, upwind, j);
-					diffdw = idx2(energy1, downwind, j) - idx2(energy1, donor, j);
+					idx2f(field, mass_flux_x, i, j) = idx2f(field, vol_flux_x, i, j) * (idx2f(field, density1, donor, j) + limiter);
+					sigmam = std::fabs(idx2f(field, mass_flux_x, i, j)) / (idx2f(field, density1, donor, j) * idx2f(field, pre_vol, donor, j));
+					diffuw = idx2f(field, energy1, donor, j) - idx2f(field, energy1, upwind, j);
+					diffdw = idx2f(field, energy1, downwind, j) - idx2f(field, energy1, donor, j);
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
@@ -156,7 +143,7 @@ void advec_cell_kernel(
 					} else {
 						limiter = 0.0;
 					}
-					idx2(ener_flux, i, j) = idx2(mass_flux_x, i, j) * (idx2(energy1, donor, j) + limiter);
+					idx2f(field, ener_flux, i, j) = idx2f(field, mass_flux_x, i, j) * (idx2f(field, energy1, donor, j) + limiter);
 				});
 		}
 
@@ -165,22 +152,17 @@ void advec_cell_kernel(
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max
 
-		omp(parallel(2) enable_target(use_target)
-				    mapToFrom2D(density1)
-				    mapToFrom2D(energy1)
-				    mapToFrom2D(mass_flux_x)
-				    mapToFrom2D(vol_flux_x)
-				    mapToFrom2D(pre_vol)
-				    mapToFrom2D(ener_flux)
-		)
+
+
+		omp(parallel(2) enable_target(use_target))
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double pre_mass_s = idx2(density1, i, j) * idx2(pre_vol, i, j);
-				double post_mass_s = pre_mass_s + idx2(mass_flux_x, i, j) - idx2(mass_flux_x, i + 1, j + 0);
-				double post_ener_s = (idx2(energy1, i, j) * pre_mass_s + idx2(ener_flux, i, j) - idx2(ener_flux, i + 1, j + 0)) / post_mass_s;
-				double advec_vol_s = idx2(pre_vol, i, j) + idx2(vol_flux_x, i, j) - idx2(vol_flux_x, i + 1, j + 0);
-				idx2(density1, i, j) = post_mass_s / advec_vol_s;
-				idx2(energy1, i, j) = post_ener_s;
+				double pre_mass_s = idx2f(field, density1, i, j) * idx2f(field, pre_vol, i, j);
+				double post_mass_s = pre_mass_s + idx2f(field, mass_flux_x, i, j) - idx2f(field, mass_flux_x, i + 1, j + 0);
+				double post_ener_s = (idx2f(field, energy1, i, j) * pre_mass_s + idx2f(field, ener_flux, i, j) - idx2f(field, ener_flux, i + 1, j + 0)) / post_mass_s;
+				double advec_vol_s = idx2f(field, pre_vol, i, j) + idx2f(field, vol_flux_x, i, j) - idx2f(field, vol_flux_x, i + 1, j + 0);
+				idx2f(field, density1, i, j) = post_mass_s / advec_vol_s;
+				idx2f(field, energy1, i, j) = post_ener_s;
 			}
 		}
 
@@ -192,17 +174,19 @@ void advec_cell_kernel(
 		if (sweep_number == 1) {
 
 
-			omp(parallel(2) enable_target(use_target)
-					    mapToFrom2D(volume)
-					    mapToFrom2D(vol_flux_x)
-					    mapToFrom2D(vol_flux_y)
-					    mapToFrom2D(pre_vol)
-					    mapToFrom2D(post_vol)
-			)
+			mapToFrom2Df(field, volume)
+			mapToFrom2Df(field, vol_flux_x)
+			mapToFrom2Df(field, vol_flux_y)
+			mapToFrom2Dfn(field, work_array1, pre_vol)
+			mapToFrom2Dfn(field, work_array2, post_vol)
+
+			omp(parallel(2) enable_target(use_target))
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					idx2(pre_vol, i, j) = idx2(volume, i, j) + (idx2(vol_flux_y, i + 0, j + 1) - idx2(vol_flux_y, i, j) + idx2(vol_flux_x, i + 1, j + 0) - idx2(vol_flux_x, i, j));
-					idx2(post_vol, i, j) = idx2(pre_vol, i, j) - (idx2(vol_flux_y, i + 0, j + 1) - idx2(vol_flux_y, i, j));
+					idx2f(field, pre_vol, i, j) = idx2f(field, volume, i, j) +
+					                              (idx2f(field, vol_flux_y, i + 0, j + 1) - idx2f(field, vol_flux_y, i, j) + idx2f(field, vol_flux_x, i + 1, j + 0) -
+					                               idx2f(field, vol_flux_x, i, j));
+					idx2f(field, post_vol, i, j) = idx2f(field, pre_vol, i, j) - (idx2f(field, vol_flux_y, i + 0, j + 1) - idx2f(field, vol_flux_y, i, j));
 				}
 			}
 
@@ -210,16 +194,16 @@ void advec_cell_kernel(
 		} else {
 
 
-			omp(parallel(2) enable_target(use_target)
-					    mapToFrom2D(volume)
-					    mapToFrom2D(vol_flux_y)
-					    mapToFrom2D(pre_vol)
-					    mapToFrom2D(post_vol)
-			)
+			mapToFrom2Df(field, volume)
+			mapToFrom2Df(field, vol_flux_y)
+			mapToFrom2Dfn(field, work_array1, pre_vol)
+			mapToFrom2Dfn(field, work_array2, post_vol)
+
+			omp(parallel(2) enable_target(use_target))
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					idx2(pre_vol, i, j) = idx2(volume, i, j) + idx2(vol_flux_y, i + 0, j + 1) - idx2(vol_flux_y, i, j);
-					idx2(post_vol, i, j) = idx2(volume, i, j);
+					idx2f(field, pre_vol, i, j) = idx2f(field, volume, i, j) + idx2f(field, vol_flux_y, i + 0, j + 1) - idx2f(field, vol_flux_y, i, j);
+					idx2f(field, post_vol, i, j) = idx2f(field, volume, i, j);
 				}
 			}
 
@@ -229,21 +213,20 @@ void advec_cell_kernel(
 
 		// DO k=y_min,y_max+2
 		//   DO j=x_min,x_max
-		omp(parallel(2) enable_target(use_target)
-				    mapToFrom1D(vertexdy)
-				    mapToFrom2D(density1)
-				    mapToFrom2D(energy1)
-				    mapToFrom2D(mass_flux_y)
-				    mapToFrom2D(vol_flux_y)
-				    mapToFrom2D(pre_vol)
-				    mapToFrom2D(ener_flux)
-		)
+		mapToFrom1Df(field, vertexdy)
+		mapToFrom2Df(field, density1)
+		mapToFrom2Df(field, energy1)
+		mapToFrom2Df(field, mass_flux_y)
+		mapToFrom2Df(field, vol_flux_y)
+		mapToFrom2Dfn(field, work_array1, pre_vol)
+		mapToFrom2Dfn(field, work_array7, ener_flux)
+		omp(parallel(2) enable_target(use_target))
 		for (int j = (y_min + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++)
 				({
 					int upwind, donor, downwind, dif;
 					double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
-					if (idx2(vol_flux_y, i, j) > 0.0) {
+					if (idx2f(field, vol_flux_y, i, j) > 0.0) {
 						upwind = j - 2;
 						donor = j - 1;
 						downwind = j;
@@ -254,13 +237,13 @@ void advec_cell_kernel(
 						downwind = j - 1;
 						dif = upwind;
 					}
-					sigmat = std::fabs(idx2(vol_flux_y, i, j)) / idx2(pre_vol, i, donor);
-					sigma3 = (1.0 + sigmat) * (idx1(vertexdy, j) / idx1(vertexdy, dif));
+					sigmat = std::fabs(idx2f(field, vol_flux_y, i, j)) / idx2f(field, pre_vol, i, donor);
+					sigma3 = (1.0 + sigmat) * (idx1f(field, vertexdy, j) / idx1f(field, vertexdy, dif));
 					sigma4 = 2.0 - sigmat;
 //					sigma = sigmat;
 					sigmav = sigmat;
-					diffuw = idx2(density1, i, donor) - idx2(density1, i, upwind);
-					diffdw = idx2(density1, i, downwind) - idx2(density1, i, donor);
+					diffuw = idx2f(field, density1, i, donor) - idx2f(field, density1, i, upwind);
+					diffdw = idx2f(field, density1, i, downwind) - idx2f(field, density1, i, donor);
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
@@ -272,10 +255,10 @@ void advec_cell_kernel(
 					} else {
 						limiter = 0.0;
 					}
-					idx2(mass_flux_y, i, j) = idx2(vol_flux_y, i, j) * (idx2(density1, i, donor) + limiter);
-					sigmam = std::fabs(idx2(mass_flux_y, i, j)) / (idx2(density1, i, donor) * idx2(pre_vol, i, donor));
-					diffuw = idx2(energy1, i, donor) - idx2(energy1, i, upwind);
-					diffdw = idx2(energy1, i, downwind) - idx2(energy1, i, donor);
+					idx2f(field, mass_flux_y, i, j) = idx2f(field, vol_flux_y, i, j) * (idx2f(field, density1, i, donor) + limiter);
+					sigmam = std::fabs(idx2f(field, mass_flux_y, i, j)) / (idx2f(field, density1, i, donor) * idx2f(field, pre_vol, i, donor));
+					diffuw = idx2f(field, energy1, i, donor) - idx2f(field, energy1, i, upwind);
+					diffdw = idx2f(field, energy1, i, downwind) - idx2f(field, energy1, i, donor);
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
@@ -287,29 +270,24 @@ void advec_cell_kernel(
 					} else {
 						limiter = 0.0;
 					}
-					idx2(ener_flux, i, j) = idx2(mass_flux_y, i, j) * (idx2(energy1, i, donor) + limiter);
+					idx2f(field, ener_flux, i, j) = idx2f(field, mass_flux_y, i, j) * (idx2f(field, energy1, i, donor) + limiter);
 				});
 		}
 
 
 		// DO k=y_min,y_max
 		//   DO j=x_min,x_max
-		omp(parallel(2) enable_target(use_target)
-				    mapToFrom2D(density1)
-				    mapToFrom2D(energy1)
-				    mapToFrom2D(mass_flux_y)
-				    mapToFrom2D(vol_flux_y)
-				    mapToFrom2D(pre_vol)
-				    mapToFrom2D(ener_flux)
-		)
+
+
+		omp(parallel(2) enable_target(use_target))
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double pre_mass_s = idx2(density1, i, j) * idx2(pre_vol, i, j);
-				double post_mass_s = pre_mass_s + idx2(mass_flux_y, i, j) - idx2(mass_flux_y, i + 0, j + 1);
-				double post_ener_s = (idx2(energy1, i, j) * pre_mass_s + idx2(ener_flux, i, j) - idx2(ener_flux, i + 0, j + 1)) / post_mass_s;
-				double advec_vol_s = idx2(pre_vol, i, j) + idx2(vol_flux_y, i, j) - idx2(vol_flux_y, i + 0, j + 1);
-				idx2(density1, i, j) = post_mass_s / advec_vol_s;
-				idx2(energy1, i, j) = post_ener_s;
+				double pre_mass_s = idx2f(field, density1, i, j) * idx2f(field, pre_vol, i, j);
+				double post_mass_s = pre_mass_s + idx2f(field, mass_flux_y, i, j) - idx2f(field, mass_flux_y, i + 0, j + 1);
+				double post_ener_s = (idx2f(field, energy1, i, j) * pre_mass_s + idx2f(field, ener_flux, i, j) - idx2f(field, ener_flux, i + 0, j + 1)) / post_mass_s;
+				double advec_vol_s = idx2f(field, pre_vol, i, j) + idx2f(field, vol_flux_y, i, j) - idx2f(field, vol_flux_y, i + 0, j + 1);
+				idx2f(field, density1, i, j) = post_mass_s / advec_vol_s;
+				idx2f(field, energy1, i, j) = post_ener_s;
 			}
 		}
 
@@ -336,22 +314,7 @@ void advec_cell_driver(global_variables &globals, int tile, int sweep_number, in
 			t.info.t_ymax,
 			direction,
 			sweep_number,
-			t.field.vertexdx,
-			t.field.vertexdy,
-			t.field.volume,
-			t.field.density1,
-			t.field.energy1,
-			t.field.mass_flux_x,
-			t.field.vol_flux_x,
-			t.field.mass_flux_y,
-			t.field.vol_flux_y,
-			t.field.work_array1,
-			t.field.work_array2,
-			t.field.work_array3,
-			t.field.work_array4,
-			t.field.work_array5,
-			t.field.work_array6,
-			t.field.work_array7);
+			t.field);
 
 	#if FLUSH_BUFFER
 	globals.deviceToHost();

@@ -30,39 +30,41 @@
 void update_tile_halo_l_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
-		clover::Buffer2D<double> &density0, clover::Buffer2D<double> &energy0,
-		clover::Buffer2D<double> &pressure, clover::Buffer2D<double> &viscosity,
-		clover::Buffer2D<double> &soundspeed, clover::Buffer2D<double> &density1,
-		clover::Buffer2D<double> &energy1, clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0, clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel1, clover::Buffer2D<double> &vol_flux_x,
-		clover::Buffer2D<double> &vol_flux_y,
-		clover::Buffer2D<double> &mass_flux_x,
-		clover::Buffer2D<double> &mass_flux_y, int left_xmin, int left_xmax,
-		int left_ymin, int left_ymax, clover::Buffer2D<double> &left_density0,
-		clover::Buffer2D<double> &left_energy0,
-		clover::Buffer2D<double> &left_pressure,
-		clover::Buffer2D<double> &left_viscosity,
-		clover::Buffer2D<double> &left_soundspeed,
-		clover::Buffer2D<double> &left_density1,
-		clover::Buffer2D<double> &left_energy1,
-		clover::Buffer2D<double> &left_xvel0,
-		clover::Buffer2D<double> &left_yvel0,
-		clover::Buffer2D<double> &left_xvel1,
-		clover::Buffer2D<double> &left_yvel1,
-		clover::Buffer2D<double> &left_vol_flux_x,
-		clover::Buffer2D<double> &left_vol_flux_y,
-		clover::Buffer2D<double> &left_mass_flux_x,
-		clover::Buffer2D<double> &left_mass_flux_y, const int fields[NUM_FIELDS],
+		clover::Buffer2D<double> &density0_buffer, clover::Buffer2D<double> &energy0_buffer,
+		clover::Buffer2D<double> &pressure_buffer, clover::Buffer2D<double> &viscosity_buffer,
+		clover::Buffer2D<double> &soundspeed_buffer, clover::Buffer2D<double> &density1_buffer,
+		clover::Buffer2D<double> &energy1_buffer, clover::Buffer2D<double> &xvel0_buffer,
+		clover::Buffer2D<double> &yvel0_buffer, clover::Buffer2D<double> &xvel1_buffer,
+		clover::Buffer2D<double> &yvel1_buffer, clover::Buffer2D<double> &vol_flux_x_buffer,
+		clover::Buffer2D<double> &vol_flux_y_buffer,
+		clover::Buffer2D<double> &mass_flux_x_buffer,
+		clover::Buffer2D<double> &mass_flux_y_buffer, int left_xmin, int left_xmax,
+		int left_ymin, int left_ymax, clover::Buffer2D<double> &left_density0_buffer,
+		clover::Buffer2D<double> &left_energy0_buffer,
+		clover::Buffer2D<double> &left_pressure_buffer,
+		clover::Buffer2D<double> &left_viscosity_buffer,
+		clover::Buffer2D<double> &left_soundspeed_buffer,
+		clover::Buffer2D<double> &left_density1_buffer,
+		clover::Buffer2D<double> &left_energy1_buffer,
+		clover::Buffer2D<double> &left_xvel0_buffer,
+		clover::Buffer2D<double> &left_yvel0_buffer,
+		clover::Buffer2D<double> &left_xvel1_buffer,
+		clover::Buffer2D<double> &left_yvel1_buffer,
+		clover::Buffer2D<double> &left_vol_flux_x_buffer,
+		clover::Buffer2D<double> &left_vol_flux_y_buffer,
+		clover::Buffer2D<double> &left_mass_flux_x_buffer,
+		clover::Buffer2D<double> &left_mass_flux_y_buffer, const int fields[NUM_FIELDS],
 		int depth) {
 	// Density 0
 	if (fields[field_density0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(density0) mapToFrom2D(left_density0))
+		mapToFrom2Dfe(density0_buffer, density0)
+		mapToFrom2Dfe(left_density0_buffer, left_density0)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(density0, x_min - j, k) = idx2(left_density0, left_xmax + 1 - j, k);
+				idx2f(,density0, x_min - j, k) = idx2f(,left_density0, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -71,10 +73,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_density1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(density1) mapToFrom2D(left_density1))
+		mapToFrom2Dfe(density1_buffer, density1)
+		mapToFrom2Dfe(left_density1_buffer, left_density1)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(density1, x_min - j, k) = idx2(left_density1, left_xmax + 1 - j, k);
+				idx2f(,density1, x_min - j, k) = idx2f(,left_density1, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -83,10 +87,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_energy0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(energy0) mapToFrom2D(left_energy0))
+		mapToFrom2Dfe(energy0_buffer, energy0)
+		mapToFrom2Dfe(left_energy0_buffer, left_energy0)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(energy0, x_min - j, k) = idx2(left_energy0, left_xmax + 1 - j, k);
+				idx2f(,energy0, x_min - j, k) = idx2f(,left_energy0, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -95,10 +101,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_energy1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(energy1) mapToFrom2D(left_energy1))
+		mapToFrom2Dfe(energy1_buffer, energy1)
+		mapToFrom2Dfe(left_energy1_buffer, left_energy1)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(energy1, x_min - j, k) = idx2(left_energy1, left_xmax + 1 - j, k);
+				idx2f(,energy1, x_min - j, k) = idx2f(,left_energy1, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -107,10 +115,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_pressure] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(pressure) mapToFrom2D(left_pressure))
+		mapToFrom2Dfe(pressure_buffer, pressure)
+		mapToFrom2Dfe(left_pressure_buffer, left_pressure)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(pressure, x_min - j, k) = idx2(left_pressure, left_xmax + 1 - j, k);
+				idx2f(,pressure, x_min - j, k) = idx2f(,left_pressure, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -119,10 +129,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_viscosity] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(viscosity) mapToFrom2D(left_viscosity))
+		mapToFrom2Dfe(viscosity_buffer, viscosity)
+		mapToFrom2Dfe(left_viscosity_buffer, left_viscosity)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(viscosity, x_min - j, k) = idx2(left_viscosity, left_xmax + 1 - j, k);
+				idx2f(,viscosity, x_min - j, k) = idx2f(,left_viscosity, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -131,10 +143,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_soundspeed] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(soundspeed) mapToFrom2D(left_soundspeed))
+		mapToFrom2Dfe(soundspeed_buffer, soundspeed)
+		mapToFrom2Dfe(left_soundspeed_buffer, left_soundspeed)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(soundspeed, x_min - j, k) = idx2(left_soundspeed, left_xmax + 1 - j, k);
+				idx2f(,soundspeed, x_min - j, k) = idx2f(,left_soundspeed, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -143,10 +157,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_xvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(xvel0) mapToFrom2D(left_xvel0))
+		mapToFrom2Dfe(xvel0_buffer, xvel0)
+		mapToFrom2Dfe(left_xvel0_buffer, left_xvel0)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(xvel0, x_min - j, k) = idx2(left_xvel0, left_xmax + 1 - j, k);
+				idx2f(,xvel0, x_min - j, k) = idx2f(,left_xvel0, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -155,10 +171,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_xvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(xvel1) mapToFrom2D(left_xvel1))
+		mapToFrom2Dfe(xvel1_buffer, xvel1)
+		mapToFrom2Dfe(left_xvel1_buffer, left_xvel1)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(xvel1, x_min - j, k) = idx2(left_xvel1, left_xmax + 1 - j, k);
+				idx2f(,xvel1, x_min - j, k) = idx2f(,left_xvel1, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -167,10 +185,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_yvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(yvel0) mapToFrom2D(left_yvel0))
+		mapToFrom2Dfe(yvel0_buffer, yvel0)
+		mapToFrom2Dfe(left_yvel0_buffer, left_yvel0)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(yvel0, x_min - j, k) = idx2(left_yvel0, left_xmax + 1 - j, k);
+				idx2f(,yvel0, x_min - j, k) = idx2f(,left_yvel0, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -179,10 +199,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_yvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(yvel1) mapToFrom2D(left_yvel1))
+		mapToFrom2Dfe(yvel1_buffer, yvel1)
+		mapToFrom2Dfe(left_yvel1_buffer, left_yvel1)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(yvel1, x_min - j, k) = idx2(left_yvel1, left_xmax + 1 - j, k);
+				idx2f(,yvel1, x_min - j, k) = idx2f(,left_yvel1, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -191,10 +213,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_vol_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(vol_flux_x) mapToFrom2D(left_vol_flux_x))
+		mapToFrom2Dfe(vol_flux_x_buffer, vol_flux_x)
+		mapToFrom2Dfe(left_vol_flux_x_buffer, left_vol_flux_x)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(vol_flux_x, x_min - j, k) = idx2(left_vol_flux_x, left_xmax + 1 - j, k);
+				idx2f(,vol_flux_x, x_min - j, k) = idx2f(,left_vol_flux_x, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -203,10 +227,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_mass_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(mass_flux_x) mapToFrom2D(left_mass_flux_x))
+		mapToFrom2Dfe(mass_flux_x_buffer, mass_flux_x)
+		mapToFrom2Dfe(left_mass_flux_x_buffer, left_mass_flux_x)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(mass_flux_x, x_min - j, k) = idx2(left_mass_flux_x, left_xmax + 1 - j, k);
+				idx2f(,mass_flux_x, x_min - j, k) = idx2f(,left_mass_flux_x, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -215,10 +241,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_vol_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(vol_flux_y) mapToFrom2D(left_vol_flux_y))
+		mapToFrom2Dfe(vol_flux_y_buffer, vol_flux_y)
+		mapToFrom2Dfe(left_vol_flux_y_buffer, left_vol_flux_y)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(vol_flux_y, x_min - j, k) = idx2(left_vol_flux_y, left_xmax + 1 - j, k);
+				idx2f(,vol_flux_y, x_min - j, k) = idx2f(,left_vol_flux_y, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -227,10 +255,12 @@ void update_tile_halo_l_kernel(
 	if (fields[field_mass_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(mass_flux_y) mapToFrom2D(left_mass_flux_y))
+		mapToFrom2Dfe(mass_flux_y_buffer, mass_flux_y)
+		mapToFrom2Dfe(left_mass_flux_y_buffer, left_mass_flux_y)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(mass_flux_y, x_min - j, k) = idx2(left_mass_flux_y, left_xmax + 1 - j, k);
+				idx2f(,mass_flux_y, x_min - j, k) = idx2f(,left_mass_flux_y, left_xmax + 1 - j, k);
 			}
 		}
 	}
@@ -239,39 +269,41 @@ void update_tile_halo_l_kernel(
 void update_tile_halo_r_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
-		clover::Buffer2D<double> &density0, clover::Buffer2D<double> &energy0,
-		clover::Buffer2D<double> &pressure, clover::Buffer2D<double> &viscosity,
-		clover::Buffer2D<double> &soundspeed, clover::Buffer2D<double> &density1,
-		clover::Buffer2D<double> &energy1, clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0, clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel1, clover::Buffer2D<double> &vol_flux_x,
-		clover::Buffer2D<double> &vol_flux_y,
-		clover::Buffer2D<double> &mass_flux_x,
-		clover::Buffer2D<double> &mass_flux_y, int right_xmin, int right_xmax,
-		int right_ymin, int right_ymax, clover::Buffer2D<double> &right_density0,
-		clover::Buffer2D<double> &right_energy0,
-		clover::Buffer2D<double> &right_pressure,
-		clover::Buffer2D<double> &right_viscosity,
-		clover::Buffer2D<double> &right_soundspeed,
-		clover::Buffer2D<double> &right_density1,
-		clover::Buffer2D<double> &right_energy1,
-		clover::Buffer2D<double> &right_xvel0,
-		clover::Buffer2D<double> &right_yvel0,
-		clover::Buffer2D<double> &right_xvel1,
-		clover::Buffer2D<double> &right_yvel1,
-		clover::Buffer2D<double> &right_vol_flux_x,
-		clover::Buffer2D<double> &right_vol_flux_y,
-		clover::Buffer2D<double> &right_mass_flux_x,
-		clover::Buffer2D<double> &right_mass_flux_y, const int fields[NUM_FIELDS],
+		clover::Buffer2D<double> &density0_buffer, clover::Buffer2D<double> &energy0_buffer,
+		clover::Buffer2D<double> &pressure_buffer, clover::Buffer2D<double> &viscosity_buffer,
+		clover::Buffer2D<double> &soundspeed_buffer, clover::Buffer2D<double> &density1_buffer,
+		clover::Buffer2D<double> &energy1_buffer, clover::Buffer2D<double> &xvel0_buffer,
+		clover::Buffer2D<double> &yvel0_buffer, clover::Buffer2D<double> &xvel1_buffer,
+		clover::Buffer2D<double> &yvel1_buffer, clover::Buffer2D<double> &vol_flux_x_buffer,
+		clover::Buffer2D<double> &vol_flux_y_buffer,
+		clover::Buffer2D<double> &mass_flux_x_buffer,
+		clover::Buffer2D<double> &mass_flux_y_buffer, int right_xmin, int right_xmax,
+		int right_ymin, int right_ymax, clover::Buffer2D<double> &right_density0_buffer,
+		clover::Buffer2D<double> &right_energy0_buffer,
+		clover::Buffer2D<double> &right_pressure_buffer,
+		clover::Buffer2D<double> &right_viscosity_buffer,
+		clover::Buffer2D<double> &right_soundspeed_buffer,
+		clover::Buffer2D<double> &right_density1_buffer,
+		clover::Buffer2D<double> &right_energy1_buffer,
+		clover::Buffer2D<double> &right_xvel0_buffer,
+		clover::Buffer2D<double> &right_yvel0_buffer,
+		clover::Buffer2D<double> &right_xvel1_buffer,
+		clover::Buffer2D<double> &right_yvel1_buffer,
+		clover::Buffer2D<double> &right_vol_flux_x_buffer,
+		clover::Buffer2D<double> &right_vol_flux_y_buffer,
+		clover::Buffer2D<double> &right_mass_flux_x_buffer,
+		clover::Buffer2D<double> &right_mass_flux_y_buffer, const int fields[NUM_FIELDS],
 		int depth) {
 	// Density 0
 	if (fields[field_density0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(density0) mapToFrom2D(right_density0))
+		mapToFrom2Dfe(density0_buffer, density0)
+		mapToFrom2Dfe(right_density0_buffer, right_density0)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(density0, x_max + 2 + j, k) = idx2(right_density0, right_xmin - 1 + 2 + j, k);
+				idx2f(,density0, x_max + 2 + j, k) = idx2f(,right_density0, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -280,10 +312,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_density1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(density1) mapToFrom2D(right_density1))
+		mapToFrom2Dfe(density1_buffer, density1)
+		mapToFrom2Dfe(right_density1_buffer, right_density1)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(density1, x_max + 2 + j, k) = idx2(right_density1, right_xmin - 1 + 2 + j, k);
+				idx2f(,density1, x_max + 2 + j, k) = idx2f(,right_density1, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -292,10 +326,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_energy0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(energy0) mapToFrom2D(right_energy0))
+		mapToFrom2Dfe(energy0_buffer, energy0)
+		mapToFrom2Dfe(right_energy0_buffer, right_energy0)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(energy0, x_max + 2 + j, k) = idx2(right_energy0, right_xmin - 1 + 2 + j, k);
+				idx2f(,energy0, x_max + 2 + j, k) = idx2f(,right_energy0, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -304,10 +340,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_energy1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(energy1) mapToFrom2D(right_energy1))
+		mapToFrom2Dfe(energy1_buffer, energy1)
+		mapToFrom2Dfe(right_energy1_buffer, right_energy1)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(energy1, x_max + 2 + j, k) = idx2(right_energy1, right_xmin - 1 + 2 + j, k);
+				idx2f(,energy1, x_max + 2 + j, k) = idx2f(,right_energy1, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -316,10 +354,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_pressure] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(pressure) mapToFrom2D(right_pressure))
+		mapToFrom2Dfe(pressure_buffer, pressure)
+		mapToFrom2Dfe(right_pressure_buffer, right_pressure)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(pressure, x_max + 2 + j, k) = idx2(right_pressure, right_xmin - 1 + 2 + j, k);
+				idx2f(,pressure, x_max + 2 + j, k) = idx2f(,right_pressure, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -328,10 +368,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_viscosity] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(viscosity) mapToFrom2D(right_viscosity))
+		mapToFrom2Dfe(viscosity_buffer, viscosity)
+		mapToFrom2Dfe(right_viscosity_buffer, right_viscosity)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(viscosity, x_max + 2 + j, k) = idx2(right_viscosity, right_xmin - 1 + 2 + j, k);
+				idx2f(,viscosity, x_max + 2 + j, k) = idx2f(,right_viscosity, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -340,10 +382,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_soundspeed] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(soundspeed) mapToFrom2D(right_soundspeed))
+		mapToFrom2Dfe(soundspeed_buffer, soundspeed)
+		mapToFrom2Dfe(right_soundspeed_buffer, right_soundspeed)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(soundspeed, x_max + 2 + j, k) = idx2(right_soundspeed, right_xmin - 1 + 2 + j, k);
+				idx2f(,soundspeed, x_max + 2 + j, k) = idx2f(,right_soundspeed, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -352,10 +396,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_xvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(xvel0) mapToFrom2D(right_xvel0))
+		mapToFrom2Dfe(xvel0_buffer, xvel0)
+		mapToFrom2Dfe(right_xvel0_buffer, right_xvel0)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(xvel0, x_max + 1 + 2 + j, k) = idx2(right_xvel0, right_xmin + 1 - 1 + 2 + j, k);
+				idx2f(,xvel0, x_max + 1 + 2 + j, k) = idx2f(,right_xvel0, right_xmin + 1 - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -364,10 +410,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_xvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(xvel1) mapToFrom2D(right_xvel1))
+		mapToFrom2Dfe(xvel1_buffer, xvel1)
+		mapToFrom2Dfe(right_xvel1_buffer, right_xvel1)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(xvel1, x_max + 1 + 2 + j, k) = idx2(right_xvel1, right_xmin + 1 - 1 + 2 + j, k);
+				idx2f(,xvel1, x_max + 1 + 2 + j, k) = idx2f(,right_xvel1, right_xmin + 1 - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -376,10 +424,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_yvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(yvel0) mapToFrom2D(right_yvel0))
+		mapToFrom2Dfe(yvel0_buffer, yvel0)
+		mapToFrom2Dfe(right_yvel0_buffer, right_yvel0)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(yvel0, x_max + 1 + 2 + j, k) = idx2(right_yvel0, right_xmin + 1 - 1 + 2 + j, k);
+				idx2f(,yvel0, x_max + 1 + 2 + j, k) = idx2f(,right_yvel0, right_xmin + 1 - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -388,10 +438,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_yvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(yvel1) mapToFrom2D(right_yvel1))
+		mapToFrom2Dfe(yvel1_buffer, yvel1)
+		mapToFrom2Dfe(right_yvel1_buffer, right_yvel1)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(yvel1, x_max + 1 + 2 + j, k) = idx2(right_yvel1, right_xmin + 1 - 1 + 2 + j, k);
+				idx2f(,yvel1, x_max + 1 + 2 + j, k) = idx2f(,right_yvel1, right_xmin + 1 - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -400,10 +452,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_vol_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(vol_flux_x) mapToFrom2D(right_vol_flux_x))
+		mapToFrom2Dfe(vol_flux_x_buffer, vol_flux_x)
+		mapToFrom2Dfe(right_vol_flux_x_buffer, right_vol_flux_x)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(vol_flux_x, x_max + 1 + 2 + j, k) = idx2(right_vol_flux_x, right_xmin + 1 - 1 + 2 + j, k);
+				idx2f(,vol_flux_x, x_max + 1 + 2 + j, k) = idx2f(,right_vol_flux_x, right_xmin + 1 - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -412,10 +466,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_mass_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(mass_flux_x) mapToFrom2D(right_mass_flux_x))
+		mapToFrom2Dfe(mass_flux_x_buffer, mass_flux_x)
+		mapToFrom2Dfe(right_mass_flux_x_buffer, right_mass_flux_x)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(mass_flux_x, x_max + 1 + 2 + j, k) = idx2(right_mass_flux_x, right_xmin + 1 - 1 + 2 + j, k);
+				idx2f(,mass_flux_x, x_max + 1 + 2 + j, k) = idx2f(,right_mass_flux_x, right_xmin + 1 - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -424,10 +480,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_vol_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(vol_flux_y) mapToFrom2D(right_vol_flux_y))
+		mapToFrom2Dfe(vol_flux_y_buffer, vol_flux_y)
+		mapToFrom2Dfe(right_vol_flux_y_buffer, right_vol_flux_y)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(vol_flux_y, x_max + 2 + j, k) = idx2(right_vol_flux_y, right_xmin - 1 + 2 + j, k);
+				idx2f(,vol_flux_y, x_max + 2 + j, k) = idx2f(,right_vol_flux_y, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -436,10 +494,12 @@ void update_tile_halo_r_kernel(
 	if (fields[field_mass_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		omp(parallel(1) enable_target(use_target) mapToFrom2D(mass_flux_y) mapToFrom2D(right_mass_flux_y))
+		mapToFrom2Dfe(mass_flux_y_buffer, mass_flux_y)
+		mapToFrom2Dfe(right_mass_flux_y_buffer, right_mass_flux_y)
+		omp(parallel(1) enable_target(use_target))
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2(mass_flux_y, x_max + 2 + j, k) = idx2(right_mass_flux_y, right_xmin - 1 + 2 + j, k);
+				idx2f(,mass_flux_y, x_max + 2 + j, k) = idx2f(,right_mass_flux_y, right_xmin - 1 + 2 + j, k);
 			}
 		}
 	}
@@ -452,37 +512,39 @@ void update_tile_halo_r_kernel(
 void update_tile_halo_t_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
-		clover::Buffer2D<double> &density0, clover::Buffer2D<double> &energy0,
-		clover::Buffer2D<double> &pressure, clover::Buffer2D<double> &viscosity,
-		clover::Buffer2D<double> &soundspeed, clover::Buffer2D<double> &density1,
-		clover::Buffer2D<double> &energy1, clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0, clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel1, clover::Buffer2D<double> &vol_flux_x,
-		clover::Buffer2D<double> &vol_flux_y,
-		clover::Buffer2D<double> &mass_flux_x,
-		clover::Buffer2D<double> &mass_flux_y, int top_xmin, int top_xmax,
-		int top_ymin, int top_ymax, clover::Buffer2D<double> &top_density0,
-		clover::Buffer2D<double> &top_energy0,
-		clover::Buffer2D<double> &top_pressure,
-		clover::Buffer2D<double> &top_viscosity,
-		clover::Buffer2D<double> &top_soundspeed,
-		clover::Buffer2D<double> &top_density1,
-		clover::Buffer2D<double> &top_energy1,
-		clover::Buffer2D<double> &top_xvel0, clover::Buffer2D<double> &top_yvel0,
-		clover::Buffer2D<double> &top_xvel1, clover::Buffer2D<double> &top_yvel1,
-		clover::Buffer2D<double> &top_vol_flux_x,
-		clover::Buffer2D<double> &top_vol_flux_y,
-		clover::Buffer2D<double> &top_mass_flux_x,
-		clover::Buffer2D<double> &top_mass_flux_y, const int fields[NUM_FIELDS],
+		clover::Buffer2D<double> &density0_buffer, clover::Buffer2D<double> &energy0_buffer,
+		clover::Buffer2D<double> &pressure_buffer, clover::Buffer2D<double> &viscosity_buffer,
+		clover::Buffer2D<double> &soundspeed_buffer, clover::Buffer2D<double> &density1_buffer,
+		clover::Buffer2D<double> &energy1_buffer, clover::Buffer2D<double> &xvel0_buffer,
+		clover::Buffer2D<double> &yvel0_buffer, clover::Buffer2D<double> &xvel1_buffer,
+		clover::Buffer2D<double> &yvel1_buffer, clover::Buffer2D<double> &vol_flux_x_buffer,
+		clover::Buffer2D<double> &vol_flux_y_buffer,
+		clover::Buffer2D<double> &mass_flux_x_buffer,
+		clover::Buffer2D<double> &mass_flux_y_buffer, int top_xmin, int top_xmax,
+		int top_ymin, int top_ymax, clover::Buffer2D<double> &top_density0_buffer,
+		clover::Buffer2D<double> &top_energy0_buffer,
+		clover::Buffer2D<double> &top_pressure_buffer,
+		clover::Buffer2D<double> &top_viscosity_buffer,
+		clover::Buffer2D<double> &top_soundspeed_buffer,
+		clover::Buffer2D<double> &top_density1_buffer,
+		clover::Buffer2D<double> &top_energy1_buffer,
+		clover::Buffer2D<double> &top_xvel0_buffer, clover::Buffer2D<double> &top_yvel0_buffer,
+		clover::Buffer2D<double> &top_xvel1_buffer, clover::Buffer2D<double> &top_yvel1_buffer,
+		clover::Buffer2D<double> &top_vol_flux_x_buffer,
+		clover::Buffer2D<double> &top_vol_flux_y_buffer,
+		clover::Buffer2D<double> &top_mass_flux_x_buffer,
+		clover::Buffer2D<double> &top_mass_flux_y_buffer, const int fields[NUM_FIELDS],
 		int depth) {
 	// Density 0
 	if (fields[field_density0] == 1) {
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(density0) mapToFrom2D(top_density0))
+			mapToFrom2Dfe(density0_buffer, density0)
+			mapToFrom2Dfe(top_density0_buffer, top_density0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(density0, j, y_max + 2 + k) = idx2(top_density0, j, top_ymin - 1 + 2 + k);
+				idx2f(,density0, j, y_max + 2 + k) = idx2f(,top_density0, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -492,9 +554,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(density1) mapToFrom2D(top_density1))
+			mapToFrom2Dfe(density1_buffer, density1)
+			mapToFrom2Dfe(top_density1_buffer, top_density1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(density1, j, y_max + 2 + k) = idx2(top_density1, j, top_ymin - 1 + 2 + k);
+				idx2f(,density1, j, y_max + 2 + k) = idx2f(,top_density1, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -504,9 +568,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(energy0) mapToFrom2D(top_energy0))
+			mapToFrom2Dfe(energy0_buffer, energy0)
+			mapToFrom2Dfe(top_energy0_buffer, top_energy0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(energy0, j, y_max + 2 + k) = idx2(top_energy0, j, top_ymin - 1 + 2 + k);
+				idx2f(,energy0, j, y_max + 2 + k) = idx2f(,top_energy0, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -516,9 +582,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(energy1) mapToFrom2D(top_energy1))
+			mapToFrom2Dfe(energy1_buffer, energy1)
+			mapToFrom2Dfe(top_energy1_buffer, top_energy1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(energy1, j, y_max + 2 + k) = idx2(top_energy1, j, top_ymin - 1 + 2 + k);
+				idx2f(,energy1, j, y_max + 2 + k) = idx2f(,top_energy1, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -528,9 +596,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(pressure) mapToFrom2D(top_pressure))
+			mapToFrom2Dfe(pressure_buffer, pressure)
+			mapToFrom2Dfe(top_pressure_buffer, top_pressure)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(pressure, j, y_max + 2 + k) = idx2(top_pressure, j, top_ymin - 1 + 2 + k);
+				idx2f(,pressure, j, y_max + 2 + k) = idx2f(,top_pressure, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -540,9 +610,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(viscosity) mapToFrom2D(top_viscosity))
+			mapToFrom2Dfe(viscosity_buffer, viscosity)
+			mapToFrom2Dfe(top_viscosity_buffer, top_viscosity)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(viscosity, j, y_max + 2 + k) = idx2(top_viscosity, j, top_ymin - 1 + 2 + k);
+				idx2f(,viscosity, j, y_max + 2 + k) = idx2f(,top_viscosity, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -552,9 +624,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(soundspeed) mapToFrom2D(top_soundspeed))
+			mapToFrom2Dfe(soundspeed_buffer, soundspeed)
+			mapToFrom2Dfe(top_soundspeed_buffer, top_soundspeed)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(soundspeed, j, y_max + 2 + k) = idx2(top_soundspeed, j, top_ymin - 1 + 2 + k);
+				idx2f(,soundspeed, j, y_max + 2 + k) = idx2f(,top_soundspeed, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -564,9 +638,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(xvel0) mapToFrom2D(top_xvel0))
+			mapToFrom2Dfe(xvel0_buffer, xvel0)
+			mapToFrom2Dfe(top_xvel0_buffer, top_xvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(xvel0, j, y_max + 1 + 2 + k) = idx2(top_xvel0, j, top_ymin + 1 - 1 + 2 + k);
+				idx2f(,xvel0, j, y_max + 1 + 2 + k) = idx2f(,top_xvel0, j, top_ymin + 1 - 1 + 2 + k);
 			}
 		}
 	}
@@ -576,9 +652,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(xvel1) mapToFrom2D(top_xvel1))
+			mapToFrom2Dfe(xvel1_buffer, xvel1)
+			mapToFrom2Dfe(top_xvel1_buffer, top_xvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(xvel1, j, y_max + 1 + 2 + k) = idx2(top_xvel1, j, top_ymin + 1 - 1 + 2 + k);
+				idx2f(,xvel1, j, y_max + 1 + 2 + k) = idx2f(,top_xvel1, j, top_ymin + 1 - 1 + 2 + k);
 			}
 		}
 	}
@@ -588,9 +666,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(yvel0) mapToFrom2D(top_yvel0))
+			mapToFrom2Dfe(yvel0_buffer, yvel0)
+			mapToFrom2Dfe(top_yvel0_buffer, top_yvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(yvel0, j, y_max + 1 + 2 + k) = idx2(top_yvel0, j, top_ymin + 1 - 1 + 2 + k);
+				idx2f(,yvel0, j, y_max + 1 + 2 + k) = idx2f(,top_yvel0, j, top_ymin + 1 - 1 + 2 + k);
 			}
 		}
 	}
@@ -600,9 +680,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(yvel1) mapToFrom2D(top_yvel1))
+			mapToFrom2Dfe(yvel1_buffer, yvel1)
+			mapToFrom2Dfe(top_yvel1_buffer, top_yvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(yvel1, j, y_max + 1 + 2 + k) = idx2(top_yvel1, j, top_ymin + 1 - 1 + 2 + k);
+				idx2f(,yvel1, j, y_max + 1 + 2 + k) = idx2f(,top_yvel1, j, top_ymin + 1 - 1 + 2 + k);
 			}
 		}
 	}
@@ -612,9 +694,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(vol_flux_x) mapToFrom2D(top_vol_flux_x))
+			mapToFrom2Dfe(vol_flux_x_buffer, vol_flux_x)
+			mapToFrom2Dfe(top_vol_flux_x_buffer, top_vol_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(vol_flux_x, j, y_max + 2 + k) = idx2(top_vol_flux_x, j, top_ymin - 1 + 2 + k);
+				idx2f(,vol_flux_x, j, y_max + 2 + k) = idx2f(,top_vol_flux_x, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -624,9 +708,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(mass_flux_x) mapToFrom2D(top_mass_flux_x))
+			mapToFrom2Dfe(mass_flux_x_buffer, mass_flux_x)
+			mapToFrom2Dfe(top_mass_flux_x_buffer, top_mass_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(mass_flux_x, j, y_max + 2 + k) = idx2(top_mass_flux_x, j, top_ymin - 1 + 2 + k);
+				idx2f(,mass_flux_x, j, y_max + 2 + k) = idx2f(,top_mass_flux_x, j, top_ymin - 1 + 2 + k);
 			}
 		}
 	}
@@ -636,9 +722,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(vol_flux_y) mapToFrom2D(top_vol_flux_y))
+			mapToFrom2Dfe(vol_flux_y_buffer, vol_flux_y)
+			mapToFrom2Dfe(top_vol_flux_y_buffer, top_vol_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(vol_flux_y, j, y_max + 1 + 2 + k) = idx2(top_vol_flux_y, j, top_ymin + 1 - 1 + 2 + k);
+				idx2f(,vol_flux_y, j, y_max + 1 + 2 + k) = idx2f(,top_vol_flux_y, j, top_ymin + 1 - 1 + 2 + k);
 			}
 		}
 	}
@@ -648,9 +736,11 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(mass_flux_y) mapToFrom2D(top_mass_flux_y))
+			mapToFrom2Dfe(mass_flux_y_buffer, mass_flux_y)
+			mapToFrom2Dfe(top_mass_flux_y_buffer, top_mass_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(mass_flux_y, j, y_max + 1 + 2 + k) = idx2(top_mass_flux_y, j, top_ymin + 1 - 1 + 2 + k);
+				idx2f(,mass_flux_y, j, y_max + 1 + 2 + k) = idx2f(,top_mass_flux_y, j, top_ymin + 1 - 1 + 2 + k);
 			}
 		}
 	}
@@ -659,40 +749,42 @@ void update_tile_halo_t_kernel(
 void update_tile_halo_b_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
-		clover::Buffer2D<double> &density0, clover::Buffer2D<double> &energy0,
-		clover::Buffer2D<double> &pressure, clover::Buffer2D<double> &viscosity,
-		clover::Buffer2D<double> &soundspeed, clover::Buffer2D<double> &density1,
-		clover::Buffer2D<double> &energy1, clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0, clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel1, clover::Buffer2D<double> &vol_flux_x,
-		clover::Buffer2D<double> &vol_flux_y,
-		clover::Buffer2D<double> &mass_flux_x,
-		clover::Buffer2D<double> &mass_flux_y, int bottom_xmin, int bottom_xmax,
+		clover::Buffer2D<double> &density0_buffer, clover::Buffer2D<double> &energy0_buffer,
+		clover::Buffer2D<double> &pressure_buffer, clover::Buffer2D<double> &viscosity_buffer,
+		clover::Buffer2D<double> &soundspeed_buffer, clover::Buffer2D<double> &density1_buffer,
+		clover::Buffer2D<double> &energy1_buffer, clover::Buffer2D<double> &xvel0_buffer,
+		clover::Buffer2D<double> &yvel0_buffer, clover::Buffer2D<double> &xvel1_buffer,
+		clover::Buffer2D<double> &yvel1_buffer, clover::Buffer2D<double> &vol_flux_x_buffer,
+		clover::Buffer2D<double> &vol_flux_y_buffer,
+		clover::Buffer2D<double> &mass_flux_x_buffer,
+		clover::Buffer2D<double> &mass_flux_y_buffer, int bottom_xmin, int bottom_xmax,
 		int bottom_ymin, int bottom_ymax,
-		clover::Buffer2D<double> &bottom_density0,
-		clover::Buffer2D<double> &bottom_energy0,
-		clover::Buffer2D<double> &bottom_pressure,
-		clover::Buffer2D<double> &bottom_viscosity,
-		clover::Buffer2D<double> &bottom_soundspeed,
-		clover::Buffer2D<double> &bottom_density1,
-		clover::Buffer2D<double> &bottom_energy1,
-		clover::Buffer2D<double> &bottom_xvel0,
-		clover::Buffer2D<double> &bottom_yvel0,
-		clover::Buffer2D<double> &bottom_xvel1,
-		clover::Buffer2D<double> &bottom_yvel1,
-		clover::Buffer2D<double> &bottom_vol_flux_x,
-		clover::Buffer2D<double> &bottom_vol_flux_y,
-		clover::Buffer2D<double> &bottom_mass_flux_x,
-		clover::Buffer2D<double> &bottom_mass_flux_y, const int fields[NUM_FIELDS],
+		clover::Buffer2D<double> &bottom_density0_buffer,
+		clover::Buffer2D<double> &bottom_energy0_buffer,
+		clover::Buffer2D<double> &bottom_pressure_buffer,
+		clover::Buffer2D<double> &bottom_viscosity_buffer,
+		clover::Buffer2D<double> &bottom_soundspeed_buffer,
+		clover::Buffer2D<double> &bottom_density1_buffer,
+		clover::Buffer2D<double> &bottom_energy1_buffer,
+		clover::Buffer2D<double> &bottom_xvel0_buffer,
+		clover::Buffer2D<double> &bottom_yvel0_buffer,
+		clover::Buffer2D<double> &bottom_xvel1_buffer,
+		clover::Buffer2D<double> &bottom_yvel1_buffer,
+		clover::Buffer2D<double> &bottom_vol_flux_x_buffer,
+		clover::Buffer2D<double> &bottom_vol_flux_y_buffer,
+		clover::Buffer2D<double> &bottom_mass_flux_x_buffer,
+		clover::Buffer2D<double> &bottom_mass_flux_y_buffer, const int fields[NUM_FIELDS],
 		int depth) {
 	// Density 0
 	if (fields[field_density0] == 1) {
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(density0) mapToFrom2D(bottom_density0))
+			mapToFrom2Dfe(density0_buffer, density0)
+			mapToFrom2Dfe(bottom_density0_buffer, bottom_density0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(density0, j, y_min - k) = idx2(bottom_density0, j, bottom_ymax + 1 - k);
+				idx2f(,density0, j, y_min - k) = idx2f(,bottom_density0, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -702,9 +794,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(density1) mapToFrom2D(bottom_density1))
+			mapToFrom2Dfe(density1_buffer, density1)
+			mapToFrom2Dfe(bottom_density1_buffer, bottom_density1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(density1, j, y_min - k) = idx2(bottom_density1, j, bottom_ymax + 1 - k);
+				idx2f(,density1, j, y_min - k) = idx2f(,bottom_density1, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -714,9 +808,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(energy0) mapToFrom2D(bottom_energy0))
+			mapToFrom2Dfe(energy0_buffer, energy0)
+			mapToFrom2Dfe(bottom_energy0_buffer, bottom_energy0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(energy0, j, y_min - k) = idx2(bottom_energy0, j, bottom_ymax + 1 - k);
+				idx2f(,energy0, j, y_min - k) = idx2f(,bottom_energy0, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -726,9 +822,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(energy1) mapToFrom2D(bottom_energy1))
+			mapToFrom2Dfe(energy1_buffer, energy1)
+			mapToFrom2Dfe(bottom_energy1_buffer, bottom_energy1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(energy1, j, y_min - k) = idx2(bottom_energy1, j, bottom_ymax + 1 - k);
+				idx2f(,energy1, j, y_min - k) = idx2f(,bottom_energy1, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -738,9 +836,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(pressure) mapToFrom2D(bottom_pressure))
+			mapToFrom2Dfe(pressure_buffer, pressure)
+			mapToFrom2Dfe(bottom_pressure_buffer, bottom_pressure)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(pressure, j, y_min - k) = idx2(bottom_pressure, j, bottom_ymax + 1 - k);
+				idx2f(,pressure, j, y_min - k) = idx2f(,bottom_pressure, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -750,9 +850,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(viscosity) mapToFrom2D(bottom_viscosity))
+			mapToFrom2Dfe(viscosity_buffer, viscosity)
+			mapToFrom2Dfe(bottom_viscosity_buffer, bottom_viscosity)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(viscosity, j, y_min - k) = idx2(bottom_viscosity, j, bottom_ymax + 1 - k);
+				idx2f(,viscosity, j, y_min - k) = idx2f(,bottom_viscosity, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -762,9 +864,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(soundspeed) mapToFrom2D(bottom_soundspeed))
+			mapToFrom2Dfe(soundspeed_buffer, soundspeed)
+			mapToFrom2Dfe(bottom_soundspeed_buffer, bottom_soundspeed)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(soundspeed, j, y_min - k) = idx2(bottom_soundspeed, j, bottom_ymax + 1 - k);
+				idx2f(,soundspeed, j, y_min - k) = idx2f(,bottom_soundspeed, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -774,9 +878,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(xvel0) mapToFrom2D(bottom_xvel0))
+			mapToFrom2Dfe(xvel0_buffer, xvel0)
+			mapToFrom2Dfe(bottom_xvel0_buffer, bottom_xvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(xvel0, j, y_min - k) = idx2(bottom_xvel0, j, bottom_ymax + 1 - k);
+				idx2f(,xvel0, j, y_min - k) = idx2f(,bottom_xvel0, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -786,9 +892,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(xvel1) mapToFrom2D(bottom_xvel1))
+			mapToFrom2Dfe(xvel1_buffer, xvel1)
+			mapToFrom2Dfe(bottom_xvel1_buffer, bottom_xvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(xvel1, j, y_min - k) = idx2(bottom_xvel1, j, bottom_ymax + 1 - k);
+				idx2f(,xvel1, j, y_min - k) = idx2f(,bottom_xvel1, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -798,9 +906,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(yvel0) mapToFrom2D(bottom_yvel0))
+			mapToFrom2Dfe(yvel0_buffer, yvel0)
+			mapToFrom2Dfe(bottom_yvel0_buffer, bottom_yvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(yvel0, j, y_min - k) = idx2(bottom_yvel0, j, bottom_ymax + 1 - k);
+				idx2f(,yvel0, j, y_min - k) = idx2f(,bottom_yvel0, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -810,9 +920,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(yvel1) mapToFrom2D(bottom_yvel1))
+			mapToFrom2Dfe(yvel1_buffer, yvel1)
+			mapToFrom2Dfe(bottom_yvel1_buffer, bottom_yvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(yvel1, j, y_min - k) = idx2(bottom_yvel1, j, bottom_ymax + 1 - k);
+				idx2f(,yvel1, j, y_min - k) = idx2f(,bottom_yvel1, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -822,9 +934,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(vol_flux_x) mapToFrom2D(bottom_vol_flux_x))
+			mapToFrom2Dfe(vol_flux_x_buffer, vol_flux_x)
+			mapToFrom2Dfe(bottom_vol_flux_x_buffer, bottom_vol_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(vol_flux_x, j, y_min - k) = idx2(bottom_vol_flux_x, j, bottom_ymax + 1 - k);
+				idx2f(,vol_flux_x, j, y_min - k) = idx2f(,bottom_vol_flux_x, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -834,9 +948,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(mass_flux_x) mapToFrom2D(bottom_mass_flux_x))
+			mapToFrom2Dfe(mass_flux_x_buffer, mass_flux_x)
+			mapToFrom2Dfe(bottom_mass_flux_x_buffer, bottom_mass_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2(mass_flux_x, j, y_min - k) = idx2(bottom_mass_flux_x, j, bottom_ymax + 1 - k);
+				idx2f(,mass_flux_x, j, y_min - k) = idx2f(,bottom_mass_flux_x, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -846,9 +962,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(vol_flux_y) mapToFrom2D(bottom_vol_flux_y))
+			mapToFrom2Dfe(vol_flux_y_buffer, vol_flux_y)
+			mapToFrom2Dfe(bottom_vol_flux_y_buffer, bottom_vol_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(vol_flux_y, j, y_min - k) = idx2(bottom_vol_flux_y, j, bottom_ymax + 1 - k);
+				idx2f(,vol_flux_y, j, y_min - k) = idx2f(,bottom_vol_flux_y, j, bottom_ymax + 1 - k);
 			}
 		}
 	}
@@ -858,9 +976,11 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(mass_flux_y) mapToFrom2D(bottom_mass_flux_y))
+			mapToFrom2Dfe(mass_flux_y_buffer, mass_flux_y)
+			mapToFrom2Dfe(bottom_mass_flux_y_buffer, bottom_mass_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2(mass_flux_y, j, y_min - k) = idx2(bottom_mass_flux_y, j, bottom_ymax + 1 - k);
+				idx2f(,mass_flux_y, j, y_min - k) = idx2f(,bottom_mass_flux_y, j, bottom_ymax + 1 - k);
 			}
 		}
 	}

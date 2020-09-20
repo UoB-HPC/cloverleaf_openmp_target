@@ -37,10 +37,10 @@ int N = 0;
 void ideal_gas_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
-		clover::Buffer2D<double> &density,
-		clover::Buffer2D<double> &energy,
-		clover::Buffer2D<double> &pressure,
-		clover::Buffer2D<double> &soundspeed) {
+		clover::Buffer2D<double> &density_buffer,
+		clover::Buffer2D<double> &energy_buffer,
+		clover::Buffer2D<double> &pressure_buffer,
+		clover::Buffer2D<double> &soundspeed_buffer) {
 
 	//std::cout <<" ideal_gas(" << x_min+1 << ","<< y_min+1<< ","<< x_max+2<< ","<< y_max +2  << ")" << std::endl;
 	// DO k=y_min,y_max
@@ -48,20 +48,20 @@ void ideal_gas_kernel(
 
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	omp(parallel(2) enable_target(use_target)
-			    mapToFrom2D(density)
-			    mapToFrom2D(energy)
-			    mapToFrom2D(pressure)
-			    mapToFrom2D(soundspeed)
-	)
+	mapToFrom2Dfe(density_buffer, density)
+	mapToFrom2Dfe(energy_buffer, energy)
+	mapToFrom2Dfe(pressure_buffer, pressure)
+	mapToFrom2Dfe(soundspeed_buffer, soundspeed)
+
+	omp(parallel(2) enable_target(use_target))
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			double v = 1.0 / idx2(density, i, j);
-			idx2(pressure, i, j) = (1.4 - 1.0) * idx2(density, i, j) * idx2(energy, i, j);
-			double pressurebyenergy = (1.4 - 1.0) * idx2(density, i, j);
-			double pressurebyvolume = -idx2(density, i, j) * idx2(pressure, i, j);
-			double sound_speed_squared = v * v * (idx2(pressure, i, j) * pressurebyenergy - pressurebyvolume);
-			idx2(soundspeed, i, j) = std::sqrt(sound_speed_squared);
+			double v = 1.0 / idx2f(,density, i, j);
+			idx2f(,pressure, i, j) = (1.4 - 1.0) * idx2f(,density, i, j) * idx2f(,energy, i, j);
+			double pressurebyenergy = (1.4 - 1.0) * idx2f(,density, i, j);
+			double pressurebyvolume = -idx2f(,density, i, j) * idx2f(,pressure, i, j);
+			double sound_speed_squared = v * v * (idx2f(,pressure, i, j) * pressurebyenergy - pressurebyvolume);
+			idx2f(,soundspeed, i, j) = std::sqrt(sound_speed_squared);
 		}
 	};
 

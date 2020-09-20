@@ -32,16 +32,7 @@ void accelerate_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		clover::Buffer2D<double> &xarea,
-		clover::Buffer2D<double> &yarea,
-		clover::Buffer2D<double> &volume,
-		clover::Buffer2D<double> &density0,
-		clover::Buffer2D<double> &pressure,
-		clover::Buffer2D<double> &viscosity,
-		clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0,
-		clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel1) {
+		field_type &field) {
 
 	double halfdt = 0.5 * dt;
 
@@ -53,39 +44,39 @@ void accelerate_kernel(
 //for(int j = )
 
 
-	omp(parallel(2) enable_target(use_target)
-			    mapToFrom2D(xarea)
-			    mapToFrom2D(yarea)
-			    mapToFrom2D(volume)
-			    mapToFrom2D(density0)
-			    mapToFrom2D(pressure)
-			    mapToFrom2D(viscosity)
-			    mapToFrom2D(xvel0)
-			    mapToFrom2D(yvel0)
-			    mapToFrom2D(xvel1)
-			    mapToFrom2D(yvel1)
-	)
+	mapToFrom2Df(field, xarea)
+	mapToFrom2Df(field, yarea)
+	mapToFrom2Df(field, volume)
+	mapToFrom2Df(field, density0)
+	mapToFrom2Df(field, pressure)
+	mapToFrom2Df(field, viscosity)
+	mapToFrom2Df(field, xvel0)
+	mapToFrom2Df(field, yvel0)
+	mapToFrom2Df(field, xvel1)
+	mapToFrom2Df(field, yvel1)
+
+	omp(parallel(2) enable_target(use_target))
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			double stepbymass_s = halfdt / ((idx2(density0, i - 1, j - 1) * idx2(volume, i - 1, j - 1) +
-			                                 idx2(density0, i - 1, j + 0) * idx2(volume, i - 1, j + 0) + idx2(density0, i, j) * idx2(volume, i, j) +
-			                                 idx2(density0, i + 0, j - 1) * idx2(volume, i + 0, j - 1)) * 0.25);
-			idx2(xvel1, i, j) = idx2(xvel0, i, j) -
-			                    stepbymass_s * (idx2(xarea, i, j) * (idx2(pressure, i, j) - idx2(pressure, i - 1, j + 0)) +
-			                                    idx2(xarea, i + 0, j - 1) * (idx2(pressure, i + 0, j - 1) - idx2(pressure, i - 1, j - 1)));
-			idx2(yvel1, i, j) = idx2(yvel0, i, j) -
-			                    stepbymass_s * (idx2(yarea, i, j) *
-			                                    (idx2(pressure, i, j) - idx2(pressure, i + 0, j - 1)) +
-			                                    idx2(yarea, i - 1, j + 0) * (idx2(pressure, i - 1, j + 0) - idx2(pressure, i - 1, j - 1)));
-			idx2(xvel1, i, j) = idx2(xvel1, i, j) -
-			                    stepbymass_s * (idx2(xarea, i, j) *
-			                                    (idx2(viscosity, i, j) -
-			                                     idx2(viscosity, i - 1, j + 0)) +
-			                                    idx2(xarea, i + 0, j - 1) * (idx2(viscosity, i + 0, j - 1) - idx2(viscosity, i - 1, j - 1)));
-			idx2(yvel1, i, j) = idx2(yvel1, i, j) -
-			                    stepbymass_s * (idx2(yarea, i, j) *
-			                                    (idx2(viscosity, i, j) - idx2(viscosity, i + 0, j - 1)) +
-			                                    idx2(yarea, i - 1, j + 0) * (idx2(viscosity, i - 1, j + 0) - idx2(viscosity, i - 1, j - 1)));
+			double stepbymass_s = halfdt / ((idx2f(field, density0, i - 1, j - 1) * idx2f(field, volume, i - 1, j - 1) +
+			                                 idx2f(field, density0, i - 1, j + 0) * idx2f(field, volume, i - 1, j + 0) + idx2f(field, density0, i, j) * idx2f(field, volume, i, j) +
+			                                 idx2f(field, density0, i + 0, j - 1) * idx2f(field, volume, i + 0, j - 1)) * 0.25);
+			idx2f(field, xvel1, i, j) = idx2f(field, xvel0, i, j) -
+			                            stepbymass_s * (idx2f(field, xarea, i, j) * (idx2f(field, pressure, i, j) - idx2f(field, pressure, i - 1, j + 0)) +
+			                                            idx2f(field, xarea, i + 0, j - 1) * (idx2f(field, pressure, i + 0, j - 1) - idx2f(field, pressure, i - 1, j - 1)));
+			idx2f(field, yvel1, i, j) = idx2f(field, yvel0, i, j) -
+			                            stepbymass_s * (idx2f(field, yarea, i, j) *
+			                                            (idx2f(field, pressure, i, j) - idx2f(field, pressure, i + 0, j - 1)) +
+			                                            idx2f(field, yarea, i - 1, j + 0) * (idx2f(field, pressure, i - 1, j + 0) - idx2f(field, pressure, i - 1, j - 1)));
+			idx2f(field, xvel1, i, j) = idx2f(field, xvel1, i, j) -
+			                            stepbymass_s * (idx2f(field, xarea, i, j) *
+			                                            (idx2f(field, viscosity, i, j) -
+			                                             idx2f(field, viscosity, i - 1, j + 0)) +
+			                                            idx2f(field, xarea, i + 0, j - 1) * (idx2f(field, viscosity, i + 0, j - 1) - idx2f(field, viscosity, i - 1, j - 1)));
+			idx2f(field, yvel1, i, j) = idx2f(field, yvel1, i, j) -
+			                            stepbymass_s * (idx2f(field, yarea, i, j) *
+			                                            (idx2f(field, viscosity, i, j) - idx2f(field, viscosity, i + 0, j - 1)) +
+			                                            idx2f(field, yarea, i - 1, j + 0) * (idx2f(field, viscosity, i - 1, j + 0) - idx2f(field, viscosity, i - 1, j - 1)));
 		}
 	}
 }
@@ -113,16 +104,7 @@ void accelerate(global_variables &globals) {
 				t.info.t_ymin,
 				t.info.t_ymax,
 				globals.dt,
-				t.field.xarea,
-				t.field.yarea,
-				t.field.volume,
-				t.field.density0,
-				t.field.pressure,
-				t.field.viscosity,
-				t.field.xvel0,
-				t.field.yvel0,
-				t.field.xvel1,
-				t.field.yvel1);
+				t.field);
 
 
 	}

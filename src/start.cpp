@@ -108,7 +108,10 @@ global_variables start(parallel_ &parallel,
 
 	for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 		initialise_chunk(tile, globals);
+		if (DEBUG) std::cout << "Field initialised2" << std::endl;
+
 		generate_chunk(tile, globals);
+		if (DEBUG) std::cout << "Field initialised3" << std::endl;
 	}
 
 

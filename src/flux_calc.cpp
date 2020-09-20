@@ -31,33 +31,28 @@ void flux_calc_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		clover::Buffer2D<double> &xarea,
-		clover::Buffer2D<double> &yarea,
-		clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0,
-		clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel1,
-		clover::Buffer2D<double> &vol_flux_x,
-		clover::Buffer2D<double> &vol_flux_y) {
+		field_type &field) {
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
 // Note that the loops calculate one extra flux than required, but this
 	// allows loop fusion that improves performance
-	omp(parallel(2) enable_target(use_target)
-			    mapToFrom2D(xarea)
-			    mapToFrom2D(yarea)
-			    mapToFrom2D(xvel0)
-			    mapToFrom2D(yvel0)
-			    mapToFrom2D(xvel1)
-			    mapToFrom2D(yvel1)
-			    mapToFrom2D(vol_flux_x)
-			    mapToFrom2D(vol_flux_y)
-	)
+	mapToFrom2Df(field, xarea)
+	mapToFrom2Df(field, yarea)
+	mapToFrom2Df(field, xvel0)
+	mapToFrom2Df(field, yvel0)
+	mapToFrom2Df(field, xvel1)
+	mapToFrom2Df(field, yvel1)
+	mapToFrom2Df(field, vol_flux_x)
+	mapToFrom2Df(field, vol_flux_y)
+
+	omp(parallel(2) enable_target(use_target))
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			idx2(vol_flux_x, i, j) = 0.25 * dt * idx2(xarea, i, j) * (idx2(xvel0, i, j) + idx2(xvel0, i + 0, j + 1) + idx2(xvel1, i, j) + idx2(xvel1, i + 0, j + 1));
-			idx2(vol_flux_y, i, j) = 0.25 * dt * idx2(yarea, i, j) * (idx2(yvel0, i, j) + idx2(yvel0, i + 1, j + 0) + idx2(yvel1, i, j) + idx2(yvel1, i + 1, j + 0));
+			idx2f(field, vol_flux_x, i, j) = 0.25 * dt * idx2f(field, xarea, i, j) *
+			                                 (idx2f(field, xvel0, i, j) + idx2f(field, xvel0, i + 0, j + 1) + idx2f(field, xvel1, i, j) + idx2f(field, xvel1, i + 0, j + 1));
+			idx2f(field, vol_flux_y, i, j) = 0.25 * dt * idx2f(field, yarea, i, j) *
+			                                 (idx2f(field, yvel0, i, j) + idx2f(field, yvel0, i + 1, j + 0) + idx2f(field, yvel1, i, j) + idx2f(field, yvel1, i + 1, j + 0));
 		}
 	}
 }
@@ -85,14 +80,7 @@ void flux_calc(global_variables &globals) {
 				t.info.t_ymin,
 				t.info.t_ymax,
 				globals.dt,
-				t.field.xarea,
-				t.field.yarea,
-				t.field.xvel0,
-				t.field.yvel0,
-				t.field.xvel1,
-				t.field.yvel1,
-				t.field.vol_flux_x,
-				t.field.vol_flux_y);
+				t.field);
 	}
 
 	#if FLUSH_BUFFER

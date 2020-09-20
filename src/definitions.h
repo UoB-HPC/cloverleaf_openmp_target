@@ -142,14 +142,35 @@ namespace clover {
 	#define _str(s) #s
 
 	#define parallel(n) omp target teams distribute parallel for simd collapse(n) device(0)
-
-
-	#define mapToFrom1D(xs) map(tofrom: xs.data[:0])
-	#define mapToFrom2D(xs) map(tofrom: xs.data[:0]) map(from: xs.sizeX)
 	#define enable_target(enable) if(target: (enable))
 
-//	#define mapTo(xs) map(to: xs.data[:xs.N()])
-	#define mapTo1D(xs) map(to: xs.data[:xs.N()])
+
+//	#define mapToFrom1D(xs) map(tofrom: xs.data[:0])
+//	#define mapToFrom2D(xs) map(tofrom: xs.data[:0]) map(from: xs.sizeX)
+//
+////	#define mapTo(xs) map(to: xs.data[:xs.N()])
+//	#define mapTo1D(xs) map(to: xs.data[:xs.N()])
+
+
+
+
+	#define mapToFrom2Df(f, xs) double * xs = f.xs.data; const int xs##_sizex = f.xs.sizeX;
+	#define mapToFrom1Df(f, xs) double * xs = f.xs.data;
+
+
+
+	#define mapToFrom2Dfn(f, xs, name) double * name = f.xs.data; const int name##_sizex = f.xs.sizeX;
+
+	#define mapToFrom2Dfe( xs, name) double * name = xs.data; const int name##_sizex = xs.sizeX;
+	#define mapToFrom1Dfe(xs, name) double * name = xs.data;
+//	#define idx2fn(f, xs, i, j) xs[(i) + (j) * f.xs.sizeX]
+
+
+
+	#define idx1f(f, xs, i) xs[i]
+	#define idx2f(f, xs, i, j) xs[(i) + (j) * xs##_sizex]
+
+	#define mapTo1D(xs)
 
 
 	#define omp(xs) _Pragma(_xstr(xs))
@@ -340,6 +361,7 @@ struct field_type {
 			pressure(xrange, yrange),
 			viscosity(xrange, yrange),
 			soundspeed(xrange, yrange),
+
 			xvel0(xrange + 1, yrange + 1),
 			xvel1(xrange + 1, yrange + 1),
 			yvel0(xrange + 1, yrange + 1),
@@ -348,6 +370,7 @@ struct field_type {
 			mass_flux_x(xrange + 1, yrange),
 			vol_flux_y(xrange, yrange + 1),
 			mass_flux_y(xrange, yrange + 1),
+
 			work_array1(xrange + 1, yrange + 1),
 			work_array2(xrange + 1, yrange + 1),
 			work_array3(xrange + 1, yrange + 1),
@@ -359,6 +382,7 @@ struct field_type {
 			celldx(xrange),
 			celly(yrange),
 			celldy(yrange),
+
 			vertexx(xrange + 1),
 			vertexdx(xrange + 1),
 			vertexy(yrange + 1),

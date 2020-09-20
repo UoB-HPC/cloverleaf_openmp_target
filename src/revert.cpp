@@ -30,23 +30,20 @@
 void revert_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
-		clover::Buffer2D<double> &density0,
-		clover::Buffer2D<double> &density1,
-		clover::Buffer2D<double> &energy0,
-		clover::Buffer2D<double> &energy1) {
+		field_type &field) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	omp(parallel(2) enable_target(use_target)
-			    mapToFrom2D(density0)
-			    mapToFrom2D(density1)
-			    mapToFrom2D(energy0)
-			    mapToFrom2D(energy1)
-	)
+	mapToFrom2Df(field, density0)
+	mapToFrom2Df(field, density1)
+	mapToFrom2Df(field, energy0)
+	mapToFrom2Df(field, energy1)
+
+	omp(parallel(2) enable_target(use_target))
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			idx2(density1, i, j) = idx2(density0, i, j);
-			idx2(energy1, i, j) = idx2(energy0, i, j);
+			idx2f(field, density1, i, j) = idx2f(field, density0, i, j);
+			idx2f(field, energy1, i, j) = idx2f(field, energy0, i, j);
 		}
 	}
 
@@ -70,10 +67,7 @@ void revert(global_variables &globals) {
 				t.info.t_xmax,
 				t.info.t_ymin,
 				t.info.t_ymax,
-				t.field.density0,
-				t.field.density1,
-				t.field.energy0,
-				t.field.energy1);
+				t.field);
 	}
 
 	#if FLUSH_BUFFER

@@ -29,29 +29,22 @@
 void reset_field_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
-		clover::Buffer2D<double> &density0,
-		clover::Buffer2D<double> &density1,
-		clover::Buffer2D<double> &energy0,
-		clover::Buffer2D<double> &energy1,
-		clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel0,
-		clover::Buffer2D<double> &yvel1) {
+		field_type &field) {
 
 
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	omp(parallel(2) enable_target(use_target)
-			    mapToFrom2D(density0)
-			    mapToFrom2D(density1)
-			    mapToFrom2D(energy0)
-			    mapToFrom2D(energy1)
-	)
+	mapToFrom2Df(field, density0)
+	mapToFrom2Df(field, density1)
+	mapToFrom2Df(field, energy0)
+	mapToFrom2Df(field, energy1)
+
+	omp(parallel(2) enable_target(use_target))
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			idx2(density0, i, j) = idx2(density1, i, j);
-			idx2(energy0, i, j) = idx2(energy1, i, j);
+			idx2f(field, density0, i, j) = idx2f(field, density1, i, j);
+			idx2f(field, energy0, i, j) = idx2f(field, energy1, i, j);
 		}
 	}
 
@@ -60,16 +53,16 @@ void reset_field_kernel(
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
-	omp(parallel(2) enable_target(use_target)
-			    mapToFrom2D(xvel0)
-			    mapToFrom2D(xvel1)
-			    mapToFrom2D(yvel0)
-			    mapToFrom2D(yvel1)
-	)
+	mapToFrom2Df(field, xvel0)
+	mapToFrom2Df(field, xvel1)
+	mapToFrom2Df(field, yvel0)
+	mapToFrom2Df(field, yvel1)
+
+	omp(parallel(2) enable_target(use_target))
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			idx2(xvel0, i, j) = idx2(xvel1, i, j);
-			idx2(yvel0, i, j) = idx2(yvel1, i, j);
+			idx2f(field, xvel0, i, j) = idx2f(field, xvel1, i, j);
+			idx2f(field, yvel0, i, j) = idx2f(field, yvel1, i, j);
 		}
 	}
 
@@ -97,15 +90,7 @@ void reset_field(global_variables &globals) {
 				t.info.t_xmax,
 				t.info.t_ymin,
 				t.info.t_ymax,
-
-				t.field.density0,
-				t.field.density1,
-				t.field.energy0,
-				t.field.energy1,
-				t.field.xvel0,
-				t.field.xvel1,
-				t.field.yvel0,
-				t.field.yvel1);
+				t.field);
 	}
 
 	#if FLUSH_BUFFER

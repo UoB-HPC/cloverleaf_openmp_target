@@ -88,13 +88,15 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int xmin = t.info.t_xmin;
 		field_type &field = t.field;
 
-		omp(parallel(1) enable_target( globals.use_target)
-				    mapToFrom2D(field.volume)
-				    mapToFrom2D(field.density0)
-				    mapToFrom2D(field.energy0)
-				    mapToFrom2D(field.pressure)
-				    mapToFrom2D(field.xvel0)
-				    mapToFrom2D(field.yvel0)
+		mapToFrom2Df(field, volume)
+		mapToFrom2Df(field, density0)
+		mapToFrom2Df(field, energy0)
+		mapToFrom2Df(field, pressure)
+		mapToFrom2Df(field, xvel0)
+		mapToFrom2Df(field, yvel0)
+
+
+		omp(parallel(1) enable_target(globals.use_target)
 				    map(from:vol)
 				    map(from:mass)
 				    map(from:ie)
@@ -108,16 +110,16 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 			double vsqrd = 0.0;
 			for (int kv = k; kv <= k + 1; ++kv) {
 				for (int jv = j; jv <= j + 1; ++jv) {
-					vsqrd += 0.25 * (idx2(field.xvel0, jv, kv) * idx2(field.xvel0, jv, kv) + idx2(field.yvel0, jv, kv) * idx2(field.yvel0, jv, kv));
+					vsqrd += 0.25 * (idx2f(field, xvel0, jv, kv) * idx2f(field, xvel0, jv, kv) + idx2f(field, yvel0, jv, kv) * idx2f(field, yvel0, jv, kv));
 				}
 			}
-			double cell_vol = idx2(field.volume, j, k);
-			double cell_mass = cell_vol * idx2(field.density0, j, k);
+			double cell_vol = idx2f(field, volume, j, k);
+			double cell_mass = cell_vol * idx2f(field, density0, j, k);
 			vol += cell_vol;
 			mass += cell_mass;
-			ie += cell_mass * idx2(field.energy0, j, k);
+			ie += cell_mass * idx2f(field, energy0, j, k);
 			ke += cell_mass * 0.5 * vsqrd;
-			press += cell_vol * idx2(field.pressure, j, k);
+			press += cell_vol * idx2f(field, pressure, j, k);
 		}
 
 

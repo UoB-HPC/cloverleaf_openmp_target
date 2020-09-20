@@ -28,36 +28,34 @@
 #include <cmath>
 #include "generate_chunk.h"
 
-#include "comms.h"
-
 void generate_chunk(const int tile, global_variables &globals) {
 
 
 	// Need to copy the host array of state input data into a device array
-	clover::Buffer1D<double> state_density(globals.config.number_of_states);
-	clover::Buffer1D<double> state_energy(globals.config.number_of_states);
-	clover::Buffer1D<double> state_xvel(globals.config.number_of_states);
-	clover::Buffer1D<double> state_yvel(globals.config.number_of_states);
-	clover::Buffer1D<double> state_xmin(globals.config.number_of_states);
-	clover::Buffer1D<double> state_xmax(globals.config.number_of_states);
-	clover::Buffer1D<double> state_ymin(globals.config.number_of_states);
-	clover::Buffer1D<double> state_ymax(globals.config.number_of_states);
-	clover::Buffer1D<double> state_radius(globals.config.number_of_states);
-	clover::Buffer1D<int> state_geometry(globals.config.number_of_states);
+	clover::Buffer1D<double> state_density_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_energy_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xvel_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_yvel_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xmin_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xmax_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_ymin_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_ymax_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_radius_buffer(globals.config.number_of_states);
+	clover::Buffer1D<int> state_geometry_buffer(globals.config.number_of_states);
 
 
 	// Copy the data to the new views
 	for (int state = 0; state < globals.config.number_of_states; ++state) {
-		idx1(state_density, state) = globals.config.states[state].density;
-		idx1(state_energy, state) = globals.config.states[state].energy;
-		idx1(state_xvel, state) = globals.config.states[state].xvel;
-		idx1(state_yvel, state) = globals.config.states[state].yvel;
-		idx1(state_xmin, state) = globals.config.states[state].xmin;
-		idx1(state_xmax, state) = globals.config.states[state].xmax;
-		idx1(state_ymin, state) = globals.config.states[state].ymin;
-		idx1(state_ymax, state) = globals.config.states[state].ymax;
-		idx1(state_radius, state) = globals.config.states[state].radius;
-		idx1(state_geometry, state) = globals.config.states[state].geometry;
+		idx1(state_density_buffer, state) = globals.config.states[state].density;
+		idx1(state_energy_buffer, state) = globals.config.states[state].energy;
+		idx1(state_xvel_buffer, state) = globals.config.states[state].xvel;
+		idx1(state_yvel_buffer, state) = globals.config.states[state].yvel;
+		idx1(state_xmin_buffer, state) = globals.config.states[state].xmin;
+		idx1(state_xmax_buffer, state) = globals.config.states[state].xmax;
+		idx1(state_ymin_buffer, state) = globals.config.states[state].ymin;
+		idx1(state_ymax_buffer, state) = globals.config.states[state].ymax;
+		idx1(state_radius_buffer, state) = globals.config.states[state].radius;
+		idx1(state_geometry_buffer, state) = globals.config.states[state].geometry;
 	}
 
 	// Kokkos::deep_copy (TO, FROM)
@@ -77,91 +75,97 @@ void generate_chunk(const int tile, global_variables &globals) {
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
-	const double state_energy_0 = idx1(state_energy, 0);
-	const double state_density_0 = idx1(state_density, 0);
-	const double state_xvel_0 = idx1(state_xvel, 0);
-	const double state_yvel_0 = idx1(state_yvel, 0);
+	const double state_energy_0 = idx1(state_energy_buffer, 0);
+	const double state_density_0 = idx1(state_density_buffer, 0);
+	const double state_xvel_0 = idx1(state_xvel_buffer, 0);
+	const double state_yvel_0 = idx1(state_yvel_buffer, 0);
 
 	// State 1 is always the background state
-	omp(parallel(2) enable_target(globals.use_target)
-			    mapToFrom2D(field.energy0)
-			    mapToFrom2D(field.density0)
-			    mapToFrom2D(field.xvel0)
-			    mapToFrom2D(field.yvel0)
-	)
+	mapToFrom2Df(field, energy0)
+	mapToFrom2Df(field, density0)
+	mapToFrom2Df(field, xvel0)
+	mapToFrom2Df(field, yvel0)
+
+	omp(parallel(2) enable_target(globals.use_target))
 	for (int j = (0); j < (yrange); j++) {
 		for (int i = (0); i < (xrange); i++) {
-			idx2(field.energy0, i, j) = state_energy_0;
-			idx2(field.density0, i, j) = state_density_0;
-			idx2(field.xvel0, i, j) = state_xvel_0;
-			idx2(field.yvel0, i, j) = state_yvel_0;
+			idx2f(field, energy0, i, j) = state_energy_0;
+			idx2f(field, density0, i, j) = state_density_0;
+			idx2f(field, xvel0, i, j) = state_xvel_0;
+			idx2f(field, yvel0, i, j) = state_yvel_0;
 		}
 	}
 
 
 	for (int state = 1; state < globals.config.number_of_states; ++state) {
+
+		mapToFrom1Df(field, cellx)
+		mapToFrom1Df(field, celly)
+
+		mapToFrom1Df(field, vertexx)
+		mapToFrom1Df(field, vertexy)
+
+		const double *state_density = state_density_buffer.data;
+		const double *state_energy = state_energy_buffer.data;
+		const double *state_xvel = state_xvel_buffer.data;
+		const double *state_yvel = state_yvel_buffer.data;
+		const double *state_xmin = state_xmin_buffer.data;
+		const double *state_xmax = state_xmax_buffer.data;
+		const double *state_ymin = state_ymin_buffer.data;
+		const double *state_ymax = state_ymax_buffer.data;
+		const double *state_radius = state_radius_buffer.data;
+		const int *state_geometry = state_geometry_buffer.data;
+
 		omp(parallel(2) enable_target(globals.use_target)
-				    mapToFrom2D(field.density0)
-				    mapToFrom2D(field.xvel0)
-				    mapToFrom2D(field.yvel0)
-				    mapToFrom2D(field.energy0)
-
-				    mapToFrom1D(field.cellx)
-				    mapToFrom1D(field.celly)
-
-				    mapToFrom1D(field.vertexx)
-				    mapToFrom1D(field.vertexy)
-
-				    mapTo1D(state_density)
-				    mapTo1D(state_energy)
-				    mapTo1D(state_xvel)
-				    mapTo1D(state_yvel)
-				    mapTo1D(state_xmin)
-				    mapTo1D(state_xmax)
-				    mapTo1D(state_ymin)
-				    mapTo1D(state_ymax)
-				    mapTo1D(state_radius)
-				    mapTo1D(state_geometry)
-
+				    map(to : state_density[:state_density_buffer.N()])
+				    map(to : state_energy[:state_energy_buffer.N()])
+				    map(to : state_xvel[:state_xvel_buffer.N()])
+				    map(to : state_yvel[:state_yvel_buffer.N()])
+				    map(to : state_xmin[:state_xmin_buffer.N()])
+				    map(to : state_xmax[:state_xmax_buffer.N()])
+				    map(to : state_ymin[:state_ymin_buffer.N()])
+				    map(to : state_ymax[:state_ymax_buffer.N()])
+				    map(to : state_radius[:state_radius_buffer.N()])
+				    map(to : state_geometry[:state_geometry_buffer.N()])
 		)
 		for (int j = (0); j < (yrange); j++) {
 			for (int i = (0); i < (xrange); i++) {
-				double x_cent = idx1(state_xmin, state);
-				double y_cent = idx1(state_ymin, state);
-				if (idx1(state_geometry, state) == g_rect) {
-					if (idx1(field.vertexx, i + 1) >= idx1(state_xmin, state) && idx1(field.vertexx, i) < idx1(state_xmax, state)) {
-						if (idx1(field.vertexy, j + 1) >= idx1(state_ymin, state) && idx1(field.vertexy, j) < idx1(state_ymax, state)) {
-							idx2(field.energy0, i, j) = idx1(state_energy, state);
-							idx2(field.density0, i, j) = idx1(state_density, state);
+				double x_cent = state_xmin[state];
+				double y_cent = state_ymin[state];
+				if (state_geometry[state] == g_rect) {
+					if (idx1f(field, vertexx, i + 1) >= state_xmin[state] && idx1f(field, vertexx, i) < state_xmax[state]) {
+						if (idx1f(field, vertexy, j + 1) >= state_ymin[state] && idx1f(field, vertexy, j) < state_ymax[state]) {
+							idx2f(field, energy0, i, j) = state_energy[state];
+							idx2f(field, density0, i, j) = state_density[state];
 							for (int kt = j; kt <= j + 1; ++kt) {
 								for (int jt = i; jt <= i + 1; ++jt) {
-									idx2(field.xvel0, jt, kt) = idx1(state_xvel, state);
-									idx2(field.yvel0, jt, kt) = idx1(state_yvel, state);
+									idx2f(field, xvel0, jt, kt) = state_xvel[state];
+									idx2f(field, yvel0, jt, kt) = state_yvel[state];
 								}
 							}
 						}
 					}
-				} else if (idx1(state_geometry, state) == g_circ) {
-					double radius = std::sqrt((idx1(field.cellx, i) - x_cent) *
-					                          (idx1(field.cellx, i) - x_cent) + (idx1(field.celly, j) - y_cent) * (idx1(field.celly, j) - y_cent));
-					if (radius <= idx1(state_radius, state)) {
-						idx2(field.energy0, i, j) = idx1(state_energy, state);
-						idx2(field.density0, i, j) = idx1(state_density, state);
+				} else if (state_geometry[state] == g_circ) {
+					double radius = std::sqrt((idx1f(field, cellx, i) - x_cent) *
+					                          (idx1f(field, cellx, i) - x_cent) + (idx1f(field, celly, j) - y_cent) * (idx1f(field, celly, j) - y_cent));
+					if (radius <= state_radius[state]) {
+						idx2f(field, energy0, i, j) = state_energy[state];
+						idx2f(field, density0, i, j) = state_density[state];
 						for (int kt = j; kt <= j + 1; ++kt) {
 							for (int jt = i; jt <= i + 1; ++jt) {
-								idx2(field.xvel0, jt, kt) = idx1(state_xvel, state);
-								idx2(field.yvel0, jt, kt) = idx1(state_yvel, state);
+								idx2f(field, xvel0, jt, kt) = state_xvel[state];
+								idx2f(field, yvel0, jt, kt) = state_yvel[state];
 							}
 						}
 					}
-				} else if (idx1(state_geometry, state) == g_point) {
-					if (idx1(field.vertexx, i) == x_cent && idx1(field.vertexy, j) == y_cent) {
-						idx2(field.energy0, i, j) = idx1(state_energy, state);
-						idx2(field.density0, i, j) = idx1(state_density, state);
+				} else if (state_geometry[state] == g_point) {
+					if (idx1f(field, vertexx, i) == x_cent && idx1f(field, vertexy, j) == y_cent) {
+						idx2f(field, energy0, i, j) = state_energy[state];
+						idx2f(field, density0, i, j) = state_density[state];
 						for (int kt = j; kt <= j + 1; ++kt) {
 							for (int jt = i; jt <= i + 1; ++jt) {
-								idx2(field.xvel0, jt, kt) = idx1(state_xvel, state);
-								idx2(field.yvel0, jt, kt) = idx1(state_yvel, state);
+								idx2f(field, xvel0, jt, kt) = state_xvel[state];
+								idx2f(field, yvel0, jt, kt) = state_yvel[state];
 							}
 						}
 					}

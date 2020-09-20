@@ -52,10 +52,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.density0))
+			mapToFrom2Df(field, density0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.density0, j, 1 - k) = idx2(field.density0, j, 2 + k);
+					idx2f(field, density0, j, 1 - k) = idx2f(field, density0, j, 2 + k);
 				}
 			}
 
@@ -65,10 +66,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.density0))
+			mapToFrom2Df(field, density0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.density0, j, y_max + 2 + k) = idx2(field.density0, j, y_max + 1 - k);
+					idx2f(field, density0, j, y_max + 2 + k) = idx2f(field, density0, j, y_max + 1 - k);
 				}
 			}
 
@@ -78,10 +80,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.density0))
+			mapToFrom2Df(field, density0)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.density0, 1 - j, k) = idx2(field.density0, 2 + j, k);
+					idx2f(field, density0, 1 - j, k) = idx2f(field, density0, 2 + j, k);
 				}
 			}
 
@@ -91,10 +94,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.density0))
+			mapToFrom2Df(field, density0)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.density0, x_max + 2 + j, k) = idx2(field.density0, x_max + 1 - j, k);
+					idx2f(field, density0, x_max + 2 + j, k) = idx2f(field, density0, x_max + 1 - j, k);
 				}
 			}
 
@@ -108,10 +112,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.density1))
+			mapToFrom2Df(field, density1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.density1, j, 1 - k) = idx2(field.density1, j, 2 + k);
+					idx2f(field, density1, j, 1 - k) = idx2f(field, density1, j, 2 + k);
 				}
 			}
 
@@ -121,10 +126,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.density1))
+			mapToFrom2Df(field, density1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.density1, j, y_max + 2 + k) = idx2(field.density1, j, y_max + 1 - k);
+					idx2f(field, density1, j, y_max + 2 + k) = idx2f(field, density1, j, y_max + 1 - k);
 				}
 			}
 
@@ -134,10 +140,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.density1))
+			mapToFrom2Df(field, density1)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.density1, 1 - j, k) = idx2(field.density1, 2 + j, k);
+					idx2f(field, density1, 1 - j, k) = idx2f(field, density1, 2 + j, k);
 				}
 			}
 
@@ -147,10 +154,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.density1))
+			mapToFrom2Df(field, density1)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.density1, x_max + 2 + j, k) = idx2(field.density1, x_max + 1 - j, k);
+					idx2f(field, density1, x_max + 2 + j, k) = idx2f(field, density1, x_max + 1 - j, k);
 				}
 			}
 
@@ -162,10 +170,11 @@ void update_halo_kernel(
 		    (tile_neighbours[tile_bottom] == external_tile)) {
 			//  DO j=x_min-depth,x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.energy0))
+			mapToFrom2Df(field, energy0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.energy0, j, 1 - k) = idx2(field.energy0, j, 2 + k);
+					idx2f(field, energy0, j, 1 - k) = idx2f(field, energy0, j, 2 + k);
 				}
 			}
 
@@ -174,10 +183,11 @@ void update_halo_kernel(
 		    (tile_neighbours[tile_top] == external_tile)) {
 			// DO j=x_min-depth,x_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.energy0))
+			mapToFrom2Df(field, energy0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.energy0, j, y_max + 2 + k) = idx2(field.energy0, j, y_max + 1 - k);
+					idx2f(field, energy0, j, y_max + 2 + k) = idx2f(field, energy0, j, y_max + 1 - k);
 				}
 			}
 
@@ -186,10 +196,11 @@ void update_halo_kernel(
 		    (tile_neighbours[tile_left] == external_tile)) {
 			// DO k=y_min-depth,y_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.energy0))
+			mapToFrom2Df(field, energy0)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.energy0, 1 - j, k) = idx2(field.energy0, 2 + j, k);
+					idx2f(field, energy0, 1 - j, k) = idx2f(field, energy0, 2 + j, k);
 				}
 			}
 
@@ -198,10 +209,11 @@ void update_halo_kernel(
 		    (tile_neighbours[tile_right] == external_tile)) {
 			// DO k=y_min-depth,y_max+depth
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.energy0))
+			mapToFrom2Df(field, energy0)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.energy0, x_max + 2 + j, k) = idx2(field.energy0, x_max + 1 - j, k);
+					idx2f(field, energy0, x_max + 2 + j, k) = idx2f(field, energy0, x_max + 1 - j, k);
 				}
 			}
 
@@ -215,10 +227,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.energy1))
+			mapToFrom2Df(field, energy1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.energy1, j, 1 - k) = idx2(field.energy1, j, 2 + k);
+					idx2f(field, energy1, j, 1 - k) = idx2f(field, energy1, j, 2 + k);
 				}
 			}
 
@@ -228,10 +241,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.energy1))
+			mapToFrom2Df(field, energy1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.energy1, j, y_max + 2 + k) = idx2(field.energy1, j, y_max + 1 - k);
+					idx2f(field, energy1, j, y_max + 2 + k) = idx2f(field, energy1, j, y_max + 1 - k);
 				}
 			}
 
@@ -241,10 +255,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.energy1))
+			mapToFrom2Df(field, energy1)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.energy1, 1 - j, k) = idx2(field.energy1, 2 + j, k);
+					idx2f(field, energy1, 1 - j, k) = idx2f(field, energy1, 2 + j, k);
 				}
 			}
 
@@ -254,10 +269,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.energy1))
+			mapToFrom2Df(field, energy1)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.energy1, x_max + 2 + j, k) = idx2(field.energy1, x_max + 1 - j, k);
+					idx2f(field, energy1, x_max + 2 + j, k) = idx2f(field, energy1, x_max + 1 - j, k);
 				}
 			}
 
@@ -270,10 +286,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.pressure))
+			mapToFrom2Df(field, pressure)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.pressure, j, 1 - k) = idx2(field.pressure, j, 2 + k);
+					idx2f(field, pressure, j, 1 - k) = idx2f(field, pressure, j, 2 + k);
 				}
 			}
 
@@ -283,10 +300,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.pressure))
+			mapToFrom2Df(field, pressure)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.pressure, j, y_max + 2 + k) = idx2(field.pressure, j, y_max + 1 - k);
+					idx2f(field, pressure, j, y_max + 2 + k) = idx2f(field, pressure, j, y_max + 1 - k);
 				}
 			}
 
@@ -296,10 +314,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.pressure))
+			mapToFrom2Df(field, pressure)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.pressure, 1 - j, k) = idx2(field.pressure, 2 + j, k);
+					idx2f(field, pressure, 1 - j, k) = idx2f(field, pressure, 2 + j, k);
 				}
 			}
 
@@ -309,10 +328,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.pressure))
+			mapToFrom2Df(field, pressure)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.pressure, x_max + 2 + j, k) = idx2(field.pressure, x_max + 1 - j, k);
+					idx2f(field, pressure, x_max + 2 + j, k) = idx2f(field, pressure, x_max + 1 - j, k);
 				}
 			}
 
@@ -325,10 +345,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.viscosity))
+			mapToFrom2Df(field, viscosity)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.viscosity, j, 1 - k) = idx2(field.viscosity, j, 2 + k);
+					idx2f(field, viscosity, j, 1 - k) = idx2f(field, viscosity, j, 2 + k);
 				}
 			}
 
@@ -338,10 +359,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.viscosity))
+			mapToFrom2Df(field, viscosity)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.viscosity, j, y_max + 2 + k) = idx2(field.viscosity, j, y_max + 1 - k);
+					idx2f(field, viscosity, j, y_max + 2 + k) = idx2f(field, viscosity, j, y_max + 1 - k);
 				}
 			}
 
@@ -351,10 +373,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.viscosity))
+			mapToFrom2Df(field, viscosity)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.viscosity, 1 - j, k) = idx2(field.viscosity, 2 + j, k);
+					idx2f(field, viscosity, 1 - j, k) = idx2f(field, viscosity, 2 + j, k);
 				}
 			}
 
@@ -364,10 +387,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.viscosity))
+			mapToFrom2Df(field, viscosity)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.viscosity, x_max + 2 + j, k) = idx2(field.viscosity, x_max + 1 - j, k);
+					idx2f(field, viscosity, x_max + 2 + j, k) = idx2f(field, viscosity, x_max + 1 - j, k);
 				}
 			}
 
@@ -380,10 +404,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.soundspeed))
+			mapToFrom2Df(field, soundspeed)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.soundspeed, j, 1 - k) = idx2(field.soundspeed, j, +k);
+					idx2f(field, soundspeed, j, 1 - k) = idx2f(field, soundspeed, j, +k);
 				}
 			}
 
@@ -393,10 +418,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.soundspeed))
+			mapToFrom2Df(field, soundspeed)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.soundspeed, j, y_max + 2 + k) = idx2(field.soundspeed, j, y_max + 1 - k);
+					idx2f(field, soundspeed, j, y_max + 2 + k) = idx2f(field, soundspeed, j, y_max + 1 - k);
 				}
 			}
 
@@ -406,10 +432,11 @@ void update_halo_kernel(
 			//  DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.soundspeed))
+			mapToFrom2Df(field, soundspeed)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.soundspeed, 1 - j, k) = idx2(field.soundspeed, 2 + j, k);
+					idx2f(field, soundspeed, 1 - j, k) = idx2f(field, soundspeed, 2 + j, k);
 				}
 			}
 
@@ -419,10 +446,11 @@ void update_halo_kernel(
 			//  DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.soundspeed))
+			mapToFrom2Df(field, soundspeed)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.soundspeed, x_max + 2 + j, k) = idx2(field.soundspeed, x_max + 1 - j, k);
+					idx2f(field, soundspeed, x_max + 2 + j, k) = idx2f(field, soundspeed, x_max + 1 - j, k);
 				}
 			}
 
@@ -436,10 +464,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.xvel0))
+			mapToFrom2Df(field, xvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.xvel0, j, 1 - k) = idx2(field.xvel0, j,
+					idx2f(field, xvel0, j, 1 - k) = idx2f(field, xvel0, j,
 					                                   1 + 2 +
 					                                   k);
 				}
@@ -451,10 +480,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.xvel0))
+			mapToFrom2Df(field, xvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.xvel0, j, y_max + 1 + 2 + k) = idx2(field.xvel0, j, y_max + 1 - k);
+					idx2f(field, xvel0, j, y_max + 1 + 2 + k) = idx2f(field, xvel0, j, y_max + 1 - k);
 				}
 			}
 
@@ -464,10 +494,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.xvel0))
+			mapToFrom2Df(field, xvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.xvel0, 1 - j, k) = -idx2(field.xvel0, 1 + 2 + j, k);
+					idx2f(field, xvel0, 1 - j, k) = -idx2f(field, xvel0, 1 + 2 + j, k);
 				}
 			}
 
@@ -477,10 +508,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.xvel0))
+			mapToFrom2Df(field, xvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.xvel0, x_max + 2 + 1 + j, k) = -idx2(field.xvel0, x_max + 1 - j, k);
+					idx2f(field, xvel0, x_max + 2 + 1 + j, k) = -idx2f(field, xvel0, x_max + 1 - j, k);
 				}
 			}
 
@@ -493,10 +525,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.xvel1))
+			mapToFrom2Df(field, xvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.xvel1, j, 1 - k) = idx2(field.xvel1, j, 1 + 2 + k);
+					idx2f(field, xvel1, j, 1 - k) = idx2f(field, xvel1, j, 1 + 2 + k);
 				}
 			}
 
@@ -506,10 +539,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.xvel1))
+			mapToFrom2Df(field, xvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.xvel1, j, y_max + 1 + 2 + k) = idx2(field.xvel1, j, y_max + 1 - k);
+					idx2f(field, xvel1, j, y_max + 1 + 2 + k) = idx2f(field, xvel1, j, y_max + 1 - k);
 				}
 			}
 
@@ -519,10 +553,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.xvel1))
+			mapToFrom2Df(field, xvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.xvel1, 1 - j, k) = -idx2(field.xvel1, 1 + 2 + j, k);
+					idx2f(field, xvel1, 1 - j, k) = -idx2f(field, xvel1, 1 + 2 + j, k);
 				}
 			}
 
@@ -532,10 +567,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.xvel1))
+			mapToFrom2Df(field, xvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.xvel1, x_max + 2 + 1 + j, k) = -idx2(field.xvel1, x_max + 1 - j, k);
+					idx2f(field, xvel1, x_max + 2 + 1 + j, k) = -idx2f(field, xvel1, x_max + 1 - j, k);
 				}
 			}
 
@@ -548,10 +584,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.yvel0))
+			mapToFrom2Df(field, yvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.yvel0, j, 1 - k) = -idx2(field.yvel0, j, 1 + 2 + k);
+					idx2f(field, yvel0, j, 1 - k) = -idx2f(field, yvel0, j, 1 + 2 + k);
 				}
 			}
 
@@ -561,10 +598,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.yvel0))
+			mapToFrom2Df(field, yvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.yvel0, j, y_max + 1 + 2 + k) = -idx2(field.yvel0, j, y_max + 1 - k);
+					idx2f(field, yvel0, j, y_max + 1 + 2 + k) = -idx2f(field, yvel0, j, y_max + 1 - k);
 				}
 			}
 
@@ -574,10 +612,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.yvel0))
+			mapToFrom2Df(field, yvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.yvel0, 1 - j, k) = idx2(field.yvel0, 1 + 2 + j, k);
+					idx2f(field, yvel0, 1 - j, k) = idx2f(field, yvel0, 1 + 2 + j, k);
 				}
 			}
 
@@ -587,10 +626,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.yvel0))
+			mapToFrom2Df(field, yvel0)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.yvel0, x_max + 2 + 1 + j, k) = idx2(field.yvel0, x_max + 1 - j, k);
+					idx2f(field, yvel0, x_max + 2 + 1 + j, k) = idx2f(field, yvel0, x_max + 1 - j, k);
 				}
 			}
 
@@ -603,10 +643,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.yvel1))
+			mapToFrom2Df(field, yvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.yvel1, j, 1 - k) = -idx2(field.yvel1, j, 1 + 2 + k);
+					idx2f(field, yvel1, j, 1 - k) = -idx2f(field, yvel1, j, 1 + 2 + k);
 				}
 			}
 
@@ -616,10 +657,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.yvel1))
+			mapToFrom2Df(field, yvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.yvel1, j, y_max + 1 + 2 + k) = -idx2(field.yvel1, j, y_max + 1 - k);
+					idx2f(field, yvel1, j, y_max + 1 + 2 + k) = -idx2f(field, yvel1, j, y_max + 1 - k);
 				}
 			}
 
@@ -629,10 +671,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.yvel1))
+			mapToFrom2Df(field, yvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.yvel1, 1 - j, k) = idx2(field.yvel1, 1 + 2 + j, k);
+					idx2f(field, yvel1, 1 - j, k) = idx2f(field, yvel1, 1 + 2 + j, k);
 				}
 			}
 
@@ -642,10 +685,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.yvel1))
+			mapToFrom2Df(field, yvel1)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.yvel1, x_max + 2 + 1 + j, k) = idx2(field.yvel1, x_max + 1 - j, k);
+					idx2f(field, yvel1, x_max + 2 + 1 + j, k) = idx2f(field, yvel1, x_max + 1 - j, k);
 				}
 			}
 
@@ -659,10 +703,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.vol_flux_x))
+			mapToFrom2Df(field, vol_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.vol_flux_x, j, 1 - k) = idx2(field.vol_flux_x, j, 1 + 2 + k);
+					idx2f(field, vol_flux_x, j, 1 - k) = idx2f(field, vol_flux_x, j, 1 + 2 + k);
 				}
 			}
 
@@ -672,10 +717,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.vol_flux_x))
+			mapToFrom2Df(field, vol_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.vol_flux_x, j, y_max + 2 + k) = idx2(field.vol_flux_x, j, y_max - k);
+					idx2f(field, vol_flux_x, j, y_max + 2 + k) = idx2f(field, vol_flux_x, j, y_max - k);
 				}
 			}
 
@@ -685,10 +731,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.vol_flux_x))
+			mapToFrom2Df(field, vol_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.vol_flux_x, 1 - j, k) = -idx2(field.vol_flux_x, 1 + 2 + j, k);
+					idx2f(field, vol_flux_x, 1 - j, k) = -idx2f(field, vol_flux_x, 1 + 2 + j, k);
 				}
 			}
 
@@ -698,10 +745,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.vol_flux_x))
+			mapToFrom2Df(field, vol_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.vol_flux_x, x_max + j + 1 + 2, k) = -idx2(field.vol_flux_x, x_max + 1 - j, k);
+					idx2f(field, vol_flux_x, x_max + j + 1 + 2, k) = -idx2f(field, vol_flux_x, x_max + 1 - j, k);
 				}
 			}
 
@@ -715,10 +763,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.mass_flux_x))
+			mapToFrom2Df(field, mass_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.mass_flux_x, j, 1 - k) = idx2(field.mass_flux_x, j, 1 + 2 + k);
+					idx2f(field, mass_flux_x, j, 1 - k) = idx2f(field, mass_flux_x, j, 1 + 2 + k);
 				}
 			}
 
@@ -728,10 +777,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.mass_flux_x))
+			mapToFrom2Df(field, mass_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.mass_flux_x, j, y_max + 2 + k) = idx2(field.mass_flux_x, j, y_max - k);
+					idx2f(field, mass_flux_x, j, y_max + 2 + k) = idx2f(field, mass_flux_x, j, y_max - k);
 				}
 			}
 
@@ -741,10 +791,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.mass_flux_x))
+			mapToFrom2Df(field, mass_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.mass_flux_x, 1 - j, k) = -idx2(field.mass_flux_x, 1 + 2 + j, k);
+					idx2f(field, mass_flux_x, 1 - j, k) = -idx2f(field, mass_flux_x, 1 + 2 + j, k);
 				}
 			}
 
@@ -754,10 +805,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.mass_flux_x))
+			mapToFrom2Df(field, mass_flux_x)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.mass_flux_x, x_max + j + 1 + 2, k) = -idx2(field.mass_flux_x, x_max + 1 - j, k);
+					idx2f(field, mass_flux_x, x_max + j + 1 + 2, k) = -idx2f(field, mass_flux_x, x_max + 1 - j, k);
 				}
 			}
 
@@ -771,10 +823,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.vol_flux_y))
+			mapToFrom2Df(field, vol_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.vol_flux_y, j, 1 - k) = -idx2(field.vol_flux_y, j, 1 + 2 + k);
+					idx2f(field, vol_flux_y, j, 1 - k) = -idx2f(field, vol_flux_y, j, 1 + 2 + k);
 				}
 			}
 
@@ -784,10 +837,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.vol_flux_y))
+			mapToFrom2Df(field, vol_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.vol_flux_y, j, y_max + k + 1 + 2) = -idx2(field.vol_flux_y, j, y_max + 1 - k);
+					idx2f(field, vol_flux_y, j, y_max + k + 1 + 2) = -idx2f(field, vol_flux_y, j, y_max + 1 - k);
 				}
 			}
 
@@ -797,10 +851,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.vol_flux_y))
+			mapToFrom2Df(field, vol_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.vol_flux_y, 1 - j, k) = idx2(field.vol_flux_y, 1 + 2 + j, k);
+					idx2f(field, vol_flux_y, 1 - j, k) = idx2f(field, vol_flux_y, 1 + 2 + j, k);
 				}
 			}
 
@@ -810,10 +865,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.vol_flux_y))
+			mapToFrom2Df(field, vol_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.vol_flux_y, x_max + 2 + j, k) = idx2(field.vol_flux_y, x_max - j, k);
+					idx2f(field, vol_flux_y, x_max + 2 + j, k) = idx2f(field, vol_flux_y, x_max - j, k);
 				}
 			}
 
@@ -826,10 +882,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.mass_flux_y))
+			mapToFrom2Df(field, mass_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.mass_flux_y, j, 1 - k) = -idx2(field.mass_flux_y, j, 1 + 2 + k);
+					idx2f(field, mass_flux_y, j, 1 - k) = -idx2f(field, mass_flux_y, j, 1 + 2 + k);
 				}
 			}
 
@@ -839,10 +896,11 @@ void update_halo_kernel(
 			// DO j=x_min-depth,x_max+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.mass_flux_y))
+			mapToFrom2Df(field, mass_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
-					idx2(field.mass_flux_y, j, y_max + k + 1 + 2) = -idx2(field.mass_flux_y, j, y_max + 1 - k);
+					idx2f(field, mass_flux_y, j, y_max + k + 1 + 2) = -idx2f(field, mass_flux_y, j, y_max + 1 - k);
 				}
 			}
 
@@ -852,10 +910,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.mass_flux_y))
+			mapToFrom2Df(field, mass_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.mass_flux_y, 1 - j, k) = idx2(field.mass_flux_y, 1 + 2 + j, k);
+					idx2f(field, mass_flux_y, 1 - j, k) = idx2f(field, mass_flux_y, 1 + 2 + j, k);
 				}
 			}
 
@@ -865,10 +924,11 @@ void update_halo_kernel(
 			// DO k=y_min-depth,y_max+1+depth
 
 
-			omp(parallel(1) enable_target(use_target) mapToFrom2D(field.mass_flux_y))
+			mapToFrom2Df(field, mass_flux_y)
+			omp(parallel(1) enable_target(use_target))
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
-					idx2(field.mass_flux_y, x_max + 2 + j, k) = idx2(field.mass_flux_y, x_max - j, k);
+					idx2f(field, mass_flux_y, x_max + 2 + j, k) = idx2f(field, mass_flux_y, x_max - j, k);
 				}
 			}
 

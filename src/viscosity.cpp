@@ -29,46 +29,40 @@
 void viscosity_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
-		clover::Buffer1D<double> &celldx,
-		clover::Buffer1D<double> &celldy,
-		clover::Buffer2D<double> &density0,
-		clover::Buffer2D<double> &pressure,
-		clover::Buffer2D<double> &viscosity,
-		clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0) {
+		field_type &field) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	omp(parallel(2) enable_target(use_target)
-			    mapToFrom1D(celldx)
-			    mapToFrom1D(celldy)
-			    mapToFrom2D(density0)
-			    mapToFrom2D(pressure)
-			    mapToFrom2D(viscosity)
-			    mapToFrom2D(xvel0)
-			    mapToFrom2D(yvel0)
-	)
+	mapToFrom1Df(field, celldx)
+	mapToFrom1Df(field, celldy)
+	mapToFrom2Df(field, density0)
+	mapToFrom2Df(field, pressure)
+	mapToFrom2Df(field, viscosity)
+	mapToFrom2Df(field, xvel0)
+	mapToFrom2Df(field, yvel0)
+
+	omp(parallel(2) enable_target(use_target))
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			double ugrad = (idx2(xvel0, i + 1, j + 0) + idx2(xvel0, i + 1, j + 1)) - (idx2(xvel0, i, j) + idx2(xvel0, i + 0, j + 1));
-			double vgrad = (idx2(yvel0, i + 0, j + 1) + idx2(yvel0, i + 1, j + 1)) - (idx2(yvel0, i, j) + idx2(yvel0, i + 1, j + 0));
-			double div = (idx1(celldx, i) * (ugrad) + idx1(celldy, j) * (vgrad));
-			double strain2 = 0.5 * (idx2(xvel0, i + 0, j + 1) +
-			                        idx2(xvel0, i + 1, j + 1) -
-			                        idx2(xvel0, i, j) -
-			                        idx2(xvel0, i + 1, j + 0)) / idx1(celldy, j) +
-			                 0.5 * (idx2(yvel0, i + 1, j + 0) +
-			                        idx2(yvel0, i + 1, j + 1) -
-			                        idx2(yvel0, i, j) -
-			                        idx2(yvel0, i + 0, j + 1)) / idx1(celldx, i);
-			double pgradx = (idx2(pressure, i + 1, j + 0) - idx2(pressure, i - 1, j + 0)) / (idx1(celldx, i) + idx1(celldx, i + 1));
-			double pgrady = (idx2(pressure, i + 0, j + 1) - idx2(pressure, i + 0, j - 1)) / (idx1(celldy, j) + idx1(celldy, j + 2));
+			double ugrad = (idx2f(field, xvel0, i + 1, j + 0) + idx2f(field, xvel0, i + 1, j + 1)) - (idx2f(field, xvel0, i, j) + idx2f(field, xvel0, i + 0, j + 1));
+			double vgrad = (idx2f(field, yvel0, i + 0, j + 1) + idx2f(field, yvel0, i + 1, j + 1)) - (idx2f(field, yvel0, i, j) + idx2f(field, yvel0, i + 1, j + 0));
+			double div = (idx1f(field, celldx, i) * (ugrad) + idx1f(field, celldy, j) * (vgrad));
+			double strain2 = 0.5 * (idx2f(field, xvel0, i + 0, j + 1) +
+			                        idx2f(field, xvel0, i + 1, j + 1) -
+			                        idx2f(field, xvel0, i, j) -
+			                        idx2f(field, xvel0, i + 1, j + 0)) / idx1f(field, celldy, j) +
+			                 0.5 * (idx2f(field, yvel0, i + 1, j + 0) +
+			                        idx2f(field, yvel0, i + 1, j + 1) -
+			                        idx2f(field, yvel0, i, j) -
+			                        idx2f(field, yvel0, i + 0, j + 1)) / idx1f(field, celldx, i);
+			double pgradx = (idx2f(field, pressure, i + 1, j + 0) - idx2f(field, pressure, i - 1, j + 0)) / (idx1f(field, celldx, i) + idx1f(field, celldx, i + 1));
+			double pgrady = (idx2f(field, pressure, i + 0, j + 1) - idx2f(field, pressure, i + 0, j - 1)) / (idx1f(field, celldy, j) + idx1f(field, celldy, j + 2));
 			double pgradx2 = pgradx * pgradx;
 			double pgrady2 = pgrady * pgrady;
-			double limiter = ((0.5 * (ugrad) / idx1(celldx, i)) * pgradx2 +
-			                  (0.5 * (vgrad) / idx1(celldy, j)) * pgrady2 + strain2 * pgradx * pgrady) /
+			double limiter = ((0.5 * (ugrad) / idx1f(field, celldx, i)) * pgradx2 +
+			                  (0.5 * (vgrad) / idx1f(field, celldy, j)) * pgrady2 + strain2 * pgradx * pgrady) /
 			                 std::fmax(pgradx2 + pgrady2, g_small);
-			if ((limiter > 0.0) || (div >= 0.0)) { idx2(viscosity, i, j) = 0.0; }
+			if ((limiter > 0.0) || (div >= 0.0)) { idx2f(field, viscosity, i, j) = 0.0; }
 			else {
 				double dirx = 1.0;
 				if (pgradx < 0.0)dirx = -1.0;
@@ -77,11 +71,11 @@ void viscosity_kernel(
 				if (pgradx < 0.0)diry = -1.0;
 				pgrady = diry * std::fmax(g_small, std::fabs(pgrady));
 				double pgrad = std::sqrt(pgradx * pgradx + pgrady * pgrady);
-				double xgrad = std::fabs(idx1(celldx, i) * pgrad / pgradx);
-				double ygrad = std::fabs(idx1(celldy, j) * pgrad / pgrady);
+				double xgrad = std::fabs(idx1f(field, celldx, i) * pgrad / pgradx);
+				double ygrad = std::fabs(idx1f(field, celldy, j) * pgrad / pgrady);
 				double grad = std::fmin(xgrad, ygrad);
 				double grad2 = grad * grad;
-				idx2(viscosity, i, j) = 2.0 * idx2(density0, i, j) * grad2 * limiter * limiter;
+				idx2f(field, viscosity, i, j) = 2.0 * idx2f(field, density0, i, j) * grad2 * limiter * limiter;
 			}
 		}
 	}
@@ -101,10 +95,11 @@ void viscosity(global_variables &globals) {
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
 		viscosity_kernel(globals.use_target,
-		                 t.info.t_xmin, t.info.t_xmax, t.info.t_ymin, t.info.t_ymax,
-		                 t.field.celldx, t.field.celldy, t.field.density0,
-		                 t.field.pressure, t.field.viscosity, t.field.xvel0,
-		                 t.field.yvel0);
+		                 t.info.t_xmin,
+		                 t.info.t_xmax,
+		                 t.info.t_ymin,
+		                 t.info.t_ymax,
+		                 t.field);
 	}
 
 	#if FLUSH_BUFFER
