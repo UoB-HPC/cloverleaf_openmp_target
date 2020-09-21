@@ -80,17 +80,17 @@ void calc_dt_kernel(
 			double dsy = idx1f(field, celldy, j);
 			double cc = idx2f(field, soundspeed, i, j) * idx2f(field, soundspeed, i, j);
 			cc = cc + 2.0 * idx2f(field, viscosity, i, j) / idx2f(field, density0, i, j);
-			cc = std::fmax(std::sqrt(cc), g_small);
-			double dtct = dtc_safe * std::fmin(dsx, dsy) / cc;
+			cc = fmax(sqrt(cc), g_small);
+			double dtct = dtc_safe * fmin(dsx, dsy) / cc;
 			double div = 0.0;
 			double dv1 = (idx2f(field, xvel0, i, j) + idx2f(field, xvel0, i + 0, j + 1)) * idx2f(field, xarea, i, j);
 			double dv2 = (idx2f(field, xvel0, i + 1, j + 0) + idx2f(field, xvel0, i + 1, j + 1)) * idx2f(field, xarea, i + 1, j + 0);
 			div = div + dv2 - dv1;
-			double dtut = dtu_safe * 2.0 * idx2f(field, volume, i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * idx2f(field, volume, i, j));
+			double dtut = dtu_safe * 2.0 * idx2f(field, volume, i, j) / fmax(fmax(fabs(dv1), fabs(dv2)), g_small * idx2f(field, volume, i, j));
 			dv1 = (idx2f(field, yvel0, i, j) + idx2f(field, yvel0, i + 1, j + 0)) * idx2f(field, yarea, i, j);
 			dv2 = (idx2f(field, yvel0, i + 0, j + 1) + idx2f(field, yvel0, i + 1, j + 1)) * idx2f(field, yarea, i + 0, j + 1);
 			div = div + dv2 - dv1;
-			double dtvt = dtv_safe * 2.0 * idx2f(field, volume, i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * idx2f(field, volume, i, j));
+			double dtvt = dtv_safe * 2.0 * idx2f(field, volume, i, j) / fmax(fmax(fabs(dv1), fabs(dv2)), g_small * idx2f(field, volume, i, j));
 			div = div / (2.0 * idx2f(field, volume, i, j));
 			double dtdivt;
 			if (div < -g_small) {
@@ -98,8 +98,8 @@ void calc_dt_kernel(
 			} else {
 				dtdivt = g_big;
 			}
-			double mins = std::fmin(dtct, std::fmin(dtut, std::fmin(dtvt, std::fmin(dtdivt, g_big))));
-			dt_min_val = std::fmin(mins, dt_min_val);
+			double mins = fmin(dtct, fmin(dtut, fmin(dtvt, fmin(dtdivt, g_big))));
+			dt_min_val = fmin(mins, dt_min_val);
 		}
 	}
 

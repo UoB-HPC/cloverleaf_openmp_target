@@ -177,17 +177,17 @@ void advec_mom_kernel(
 						downwind = i + 1;
 						dif = upwind;
 					}
-					sigma = std::fabs(idx2f(, node_flux, i, j)) / (idx2f(, node_mass_pre, donor, j));
+					sigma = fabs(idx2f(, node_flux, i, j)) / (idx2f(, node_mass_pre, donor, j));
 					width = idx1f(, celldx, i);
 					vdiffuw = idx2f(, vel1, donor, j) - idx2f(, vel1, upwind, j);
 					vdiffdw = idx2f(, vel1, downwind, j) - idx2f(, vel1, donor, j);
 					limiter = 0.0;
 					if (vdiffuw * vdiffdw > 0.0) {
-						auw = std::fabs(vdiffuw);
-						adw = std::fabs(vdiffdw);
+						auw = fabs(vdiffuw);
+						adw = fabs(vdiffdw);
 						wind = 1.0;
 						if (vdiffdw <= 0.0)wind = -1.0;
-						limiter = wind * std::fmin(std::fmin(
+						limiter = wind * fmin(fmin(
 								width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / idx1f(, celldx, dif)) / 6.0, auw), adw);
 					}
 					advec_vel_s = idx2f(, vel1, donor, j) + (1.0 - sigma) * limiter;
@@ -278,17 +278,17 @@ void advec_mom_kernel(
 						downwind = j + 1;
 						dif = upwind;
 					}
-					sigma = std::fabs(idx2f(, node_flux, i, j)) / (idx2f(, node_mass_pre, i, donor));
+					sigma = fabs(idx2f(, node_flux, i, j)) / (idx2f(, node_mass_pre, i, donor));
 					width = idx1f(, celldy, j);
 					vdiffuw = idx2f(, vel1, i, donor) - idx2f(, vel1, i, upwind);
 					vdiffdw = idx2f(, vel1, i, downwind) - idx2f(, vel1, i, donor);
 					limiter = 0.0;
 					if (vdiffuw * vdiffdw > 0.0) {
-						auw = std::fabs(vdiffuw);
-						adw = std::fabs(vdiffdw);
+						auw = fabs(vdiffuw);
+						adw = fabs(vdiffdw);
 						wind = 1.0;
 						if (vdiffdw <= 0.0)wind = -1.0;
-						limiter = wind * std::fmin(std::fmin(
+						limiter = wind * fmin(fmin(
 								width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / idx1f(, celldy, dif)) / 6.0, auw), adw);
 					}
 					advec_vel_s = idx2f(, vel1, i, donor) + (1.0 - sigma) * limiter;

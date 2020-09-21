@@ -22,6 +22,8 @@
 #include "advec_cell.h"
 
 
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 
 //  @brief Fortran cell advection kernel.
 //  @author Wayne Gaudin
@@ -104,12 +106,12 @@ void advec_cell_kernel(
 						downwind = i;
 						dif = donor;
 					} else {
-						upwind = std::min(i + 1, x_max + 2);
+						upwind = MIN(i + 1, x_max + 2);
 						donor = i;
 						downwind = i - 1;
 						dif = upwind;
 					}
-					sigmat = std::fabs(idx2f(field, vol_flux_x, i, j)) / idx2f(field, pre_vol, donor, j);
+					sigmat = fabs(idx2f(field, vol_flux_x, i, j)) / idx2f(field, pre_vol, donor, j);
 					sigma3 = (1.0 + sigmat) * (idx1f(field, vertexdx, i) / idx1f(field, vertexdx, dif));
 					sigma4 = 2.0 - sigmat;
 //					sigma = sigmat;
@@ -120,15 +122,15 @@ void advec_cell_kernel(
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
 						limiter = (1.0 - sigmav) * wind *
-						          std::fmin(std::fmin(
-								          std::fabs(diffuw),
-								          std::fabs(diffdw)),
-						                    one_by_six * (sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
+						          fmin(fmin(
+								          fabs(diffuw),
+								          fabs(diffdw)),
+						               one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
 					} else {
 						limiter = 0.0;
 					}
 					idx2f(field, mass_flux_x, i, j) = idx2f(field, vol_flux_x, i, j) * (idx2f(field, density1, donor, j) + limiter);
-					sigmam = std::fabs(idx2f(field, mass_flux_x, i, j)) / (idx2f(field, density1, donor, j) * idx2f(field, pre_vol, donor, j));
+					sigmam = fabs(idx2f(field, mass_flux_x, i, j)) / (idx2f(field, density1, donor, j) * idx2f(field, pre_vol, donor, j));
 					diffuw = idx2f(field, energy1, donor, j) - idx2f(field, energy1, upwind, j);
 					diffdw = idx2f(field, energy1, downwind, j) - idx2f(field, energy1, donor, j);
 					wind = 1.0;
@@ -136,10 +138,10 @@ void advec_cell_kernel(
 					if (diffuw * diffdw > 0.0) {
 						limiter = (1.0 - sigmam) *
 						          wind *
-						          std::fmin(std::fmin(
-								          std::fabs(diffuw),
-								          std::fabs(diffdw)),
-						                    one_by_six * (sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
+						          fmin(fmin(
+								          fabs(diffuw),
+								          fabs(diffdw)),
+						               one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
 					} else {
 						limiter = 0.0;
 					}
@@ -232,12 +234,12 @@ void advec_cell_kernel(
 						downwind = j;
 						dif = donor;
 					} else {
-						upwind = std::min(j + 1, y_max + 2);
+						upwind = MIN(j + 1, y_max + 2);
 						donor = j;
 						downwind = j - 1;
 						dif = upwind;
 					}
-					sigmat = std::fabs(idx2f(field, vol_flux_y, i, j)) / idx2f(field, pre_vol, i, donor);
+					sigmat = fabs(idx2f(field, vol_flux_y, i, j)) / idx2f(field, pre_vol, i, donor);
 					sigma3 = (1.0 + sigmat) * (idx1f(field, vertexdy, j) / idx1f(field, vertexdy, dif));
 					sigma4 = 2.0 - sigmat;
 //					sigma = sigmat;
@@ -248,25 +250,25 @@ void advec_cell_kernel(
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
 						limiter = (1.0 - sigmav) * wind *
-						          std::fmin(std::fmin(
-								          std::fabs(diffuw),
-								          std::fabs(diffdw)),
-						                    one_by_six * (sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
+						          fmin(fmin(
+								          fabs(diffuw),
+								          fabs(diffdw)),
+						               one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
 					} else {
 						limiter = 0.0;
 					}
 					idx2f(field, mass_flux_y, i, j) = idx2f(field, vol_flux_y, i, j) * (idx2f(field, density1, i, donor) + limiter);
-					sigmam = std::fabs(idx2f(field, mass_flux_y, i, j)) / (idx2f(field, density1, i, donor) * idx2f(field, pre_vol, i, donor));
+					sigmam = fabs(idx2f(field, mass_flux_y, i, j)) / (idx2f(field, density1, i, donor) * idx2f(field, pre_vol, i, donor));
 					diffuw = idx2f(field, energy1, i, donor) - idx2f(field, energy1, i, upwind);
 					diffdw = idx2f(field, energy1, i, downwind) - idx2f(field, energy1, i, donor);
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
 						limiter = (1.0 - sigmam) * wind *
-						          std::fmin(std::fmin(
-								          std::fabs(diffuw),
-								          std::fabs(diffdw)),
-						                    one_by_six * (sigma3 * std::fabs(diffuw) + sigma4 * std::fabs(diffdw)));
+						          fmin(fmin(
+								          fabs(diffuw),
+								          fabs(diffdw)),
+						               one_by_six * (sigma3 * fabs(diffuw) + sigma4 * fabs(diffdw)));
 					} else {
 						limiter = 0.0;
 					}

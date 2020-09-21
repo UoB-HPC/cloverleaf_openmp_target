@@ -97,11 +97,11 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 
 
 		omp(parallel(1) enable_target(globals.use_target)
-				    map(from:vol)
-				    map(from:mass)
-				    map(from:ie)
-				    map(from:ke)
-				    map(from:press)
+				    map(tofrom:vol)
+				    map(tofrom:mass)
+				    map(tofrom:ie)
+				    map(tofrom:ke)
+				    map(tofrom:press)
 				    reduction(+:vol, mass, ie, ke, press)
 		)
 		for (int idx = (0); idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {

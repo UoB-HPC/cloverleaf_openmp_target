@@ -84,8 +84,8 @@ void PdV_kernel(
 				                                                        idx2f(field, yvel0, i + 1, j + 1))) * 0.25 * dt * 0.5;
 				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
 				double volume_change_s = idx2f(field, volume, i, j) / (idx2f(field, volume, i, j) + total_flux);
-				double min_cell_volume = std::fmin(std::fmin(idx2f(field, volume, i, j) + right_flux - left_flux + top_flux - bottom_flux, idx2f(field, volume, i, j) + right_flux - left_flux),
-				                                   idx2f(field, volume, i, j) + top_flux - bottom_flux);
+				double min_cell_volume = fmin(fmin(idx2f(field, volume, i, j) + right_flux - left_flux + top_flux - bottom_flux, idx2f(field, volume, i, j) + right_flux - left_flux),
+				                              idx2f(field, volume, i, j) + top_flux - bottom_flux);
 				double recip_volume = 1.0 / idx2f(field, volume, i, j);
 				double energy_change = (idx2f(field, pressure, i, j) / idx2f(field, density0, i, j) + idx2f(field, viscosity, i, j) / idx2f(field, density0, i, j)) * total_flux * recip_volume;
 				idx2f(field, energy1, i, j) = idx2f(field, energy0, i, j) - energy_change;
@@ -130,9 +130,9 @@ void PdV_kernel(
 				                                                        idx2f(field, yvel1, i + 0, j + 1) + idx2f(field, yvel1, i + 1, j + 1))) * 0.25 * dt;
 				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
 				double volume_change_s = idx2f(field, volume, i, j) / (idx2f(field, volume, i, j) + total_flux);
-				double min_cell_volume = std::fmin(std::fmin(
+				double min_cell_volume = fmin(fmin(
 						idx2f(field, volume, i, j) + right_flux - left_flux + top_flux - bottom_flux, idx2f(field, volume, i, j) + right_flux - left_flux),
-				                                   idx2f(field, volume, i, j) + top_flux - bottom_flux);
+				                              idx2f(field, volume, i, j) + top_flux - bottom_flux);
 				double recip_volume = 1.0 / idx2f(field, volume, i, j);
 				double energy_change = (idx2f(field, pressure, i, j) / idx2f(field, density0, i, j) + idx2f(field, viscosity, i, j) / idx2f(field, density0, i, j)) * total_flux * recip_volume;
 				idx2f(field, energy1, i, j) = idx2f(field, energy0, i, j) - energy_change;

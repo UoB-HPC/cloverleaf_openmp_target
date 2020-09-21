@@ -61,19 +61,19 @@ void viscosity_kernel(
 			double pgrady2 = pgrady * pgrady;
 			double limiter = ((0.5 * (ugrad) / idx1f(field, celldx, i)) * pgradx2 +
 			                  (0.5 * (vgrad) / idx1f(field, celldy, j)) * pgrady2 + strain2 * pgradx * pgrady) /
-			                 std::fmax(pgradx2 + pgrady2, g_small);
+			                 fmax(pgradx2 + pgrady2, g_small);
 			if ((limiter > 0.0) || (div >= 0.0)) { idx2f(field, viscosity, i, j) = 0.0; }
 			else {
 				double dirx = 1.0;
 				if (pgradx < 0.0)dirx = -1.0;
-				pgradx = dirx * std::fmax(g_small, std::fabs(pgradx));
+				pgradx = dirx * fmax(g_small, fabs(pgradx));
 				double diry = 1.0;
 				if (pgradx < 0.0)diry = -1.0;
-				pgrady = diry * std::fmax(g_small, std::fabs(pgrady));
-				double pgrad = std::sqrt(pgradx * pgradx + pgrady * pgrady);
-				double xgrad = std::fabs(idx1f(field, celldx, i) * pgrad / pgradx);
-				double ygrad = std::fabs(idx1f(field, celldy, j) * pgrad / pgrady);
-				double grad = std::fmin(xgrad, ygrad);
+				pgrady = diry * fmax(g_small, fabs(pgrady));
+				double pgrad = sqrt(pgradx * pgradx + pgrady * pgrady);
+				double xgrad = fabs(idx1f(field, celldx, i) * pgrad / pgradx);
+				double ygrad = fabs(idx1f(field, celldy, j) * pgrad / pgrady);
+				double grad = fmin(xgrad, ygrad);
 				double grad2 = grad * grad;
 				idx2f(field, viscosity, i, j) = 2.0 * idx2f(field, density0, i, j) * grad2 * limiter * limiter;
 			}
