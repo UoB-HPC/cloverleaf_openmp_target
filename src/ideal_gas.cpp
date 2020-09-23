@@ -48,20 +48,24 @@ void ideal_gas_kernel(
 
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
-	mapToFrom2Dfe(density_buffer, density)
-	mapToFrom2Dfe(energy_buffer, energy)
-	mapToFrom2Dfe(pressure_buffer, pressure)
-	mapToFrom2Dfe(soundspeed_buffer, soundspeed)
+	double *density = density_buffer.data;
+	const int density_sizex = density_buffer.sizeX;
+	double *energy = energy_buffer.data;
+	const int energy_sizex = energy_buffer.sizeX;
+	double *pressure = pressure_buffer.data;
+	const int pressure_sizex = pressure_buffer.sizeX;
+	double *soundspeed = soundspeed_buffer.data;
+	const int soundspeed_sizex = soundspeed_buffer.sizeX;
 
-	omp(parallel(2) enable_target(use_target))
+	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			double v = 1.0 / idx2f(,density, i, j);
-			idx2f(,pressure, i, j) = (1.4 - 1.0) * idx2f(,density, i, j) * idx2f(,energy, i, j);
-			double pressurebyenergy = (1.4 - 1.0) * idx2f(,density, i, j);
-			double pressurebyvolume = -idx2f(,density, i, j) * idx2f(,pressure, i, j);
-			double sound_speed_squared = v * v * (idx2f(,pressure, i, j) * pressurebyenergy - pressurebyvolume);
-			idx2f(,soundspeed, i, j) = std::sqrt(sound_speed_squared);
+			double v = 1.0 / density[i + j * density_sizex];
+			pressure[i + j * pressure_sizex] = (1.4 - 1.0) * density[i + j * density_sizex] * energy[i + j * energy_sizex];
+			double pressurebyenergy = (1.4 - 1.0) * density[i + j * density_sizex];
+			double pressurebyvolume = -density[i + j * density_sizex] * pressure[i + j * pressure_sizex];
+			double sound_speed_squared = v * v * (pressure[i + j * pressure_sizex] * pressurebyenergy - pressurebyvolume);
+			soundspeed[i + j * soundspeed_sizex] = std::sqrt(sound_speed_squared);
 		}
 	};
 

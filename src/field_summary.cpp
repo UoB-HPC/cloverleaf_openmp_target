@@ -88,38 +88,43 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int xmin = t.info.t_xmin;
 		field_type &field = t.field;
 
-		mapToFrom2Df(field, volume)
-		mapToFrom2Df(field, density0)
-		mapToFrom2Df(field, energy0)
-		mapToFrom2Df(field, pressure)
-		mapToFrom2Df(field, xvel0)
-		mapToFrom2Df(field, yvel0)
+		double *volume = field.volume.data;
+		const int volume_sizex = field.volume.sizeX;
+		double *density0 = field.density0.data;
+		const int density0_sizex = field.density0.sizeX;
+		double *energy0 = field.energy0.data;
+		const int energy0_sizex = field.energy0.sizeX;
+		double *pressure = field.pressure.data;
+		const int pressure_sizex = field.pressure.sizeX;
+		double *xvel0 = field.xvel0.data;
+		const int xvel0_sizex = field.xvel0.sizeX;
+		double *yvel0 = field.yvel0.data;
+		const int yvel0_sizex = field.yvel0.sizeX;
 
 
-		omp(parallel(1) enable_target(globals.use_target)
-				    map(tofrom:vol)
-				    map(tofrom:mass)
-				    map(tofrom:ie)
-				    map(tofrom:ke)
-				    map(tofrom:press)
-				    reduction(+:vol, mass, ie, ke, press)
-		)
-		for (int idx = (0); idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
+		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target)) \
+        map(tofrom:vol) \
+        map(tofrom:mass) \
+        map(tofrom:ie) \
+        map(tofrom:ke) \
+        map(tofrom:press) \
+        reduction(+:vol, mass, ie, ke, press)
+		for (int idx = 0; idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
 			const int j = xmin + 1 + idx % (xmax - xmin + 1);
 			const int k = ymin + 1 + idx / (xmax - xmin + 1);
 			double vsqrd = 0.0;
 			for (int kv = k; kv <= k + 1; ++kv) {
 				for (int jv = j; jv <= j + 1; ++jv) {
-					vsqrd += 0.25 * (idx2f(field, xvel0, jv, kv) * idx2f(field, xvel0, jv, kv) + idx2f(field, yvel0, jv, kv) * idx2f(field, yvel0, jv, kv));
+					vsqrd += 0.25 * (xvel0[(jv) + (kv) * xvel0_sizex] * xvel0[(jv) + (kv) * xvel0_sizex] + yvel0[(jv) + (kv) * yvel0_sizex] * yvel0[(jv) + (kv) * yvel0_sizex]);
 				}
 			}
-			double cell_vol = idx2f(field, volume, j, k);
-			double cell_mass = cell_vol * idx2f(field, density0, j, k);
+			double cell_vol = volume[j + (k) * volume_sizex];
+			double cell_mass = cell_vol * density0[j + (k) * density0_sizex];
 			vol += cell_vol;
 			mass += cell_mass;
-			ie += cell_mass * idx2f(field, energy0, j, k);
+			ie += cell_mass * energy0[j + (k) * energy0_sizex];
 			ke += cell_mass * 0.5 * vsqrd;
-			press += cell_vol * idx2f(field, pressure, j, k);
+			press += cell_vol * pressure[j + (k) * pressure_sizex];
 		}
 
 

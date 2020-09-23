@@ -48,95 +48,127 @@ void PdV_kernel(
 
 	if (predict) {
 
-		mapToFrom2Df(field, xarea)
-		mapToFrom2Df(field, yarea)
-		mapToFrom2Df(field, volume)
-		mapToFrom2Df(field, density0)
-		mapToFrom2Df(field, density1)
-		mapToFrom2Df(field, energy0)
-		mapToFrom2Df(field, energy1)
-		mapToFrom2Df(field, pressure)
-		mapToFrom2Df(field, viscosity)
-		mapToFrom2Df(field, xvel0)
-		mapToFrom2Df(field, xvel1)
-		mapToFrom2Df(field, yvel0)
-		mapToFrom2Df(field, yvel1)
-		mapToFrom2Dfn(field, work_array1, volume_change)
+		double *xarea = field.xarea.data;
+		const int xarea_sizex = field.xarea.sizeX;
+		double *yarea = field.yarea.data;
+		const int yarea_sizex = field.yarea.sizeX;
+		double *volume = field.volume.data;
+		const int volume_sizex = field.volume.sizeX;
+		double *density0 = field.density0.data;
+		const int density0_sizex = field.density0.sizeX;
+		double *density1 = field.density1.data;
+		const int density1_sizex = field.density1.sizeX;
+		double *energy0 = field.energy0.data;
+		const int energy0_sizex = field.energy0.sizeX;
+		double *energy1 = field.energy1.data;
+		const int energy1_sizex = field.energy1.sizeX;
+		double *pressure = field.pressure.data;
+		const int pressure_sizex = field.pressure.sizeX;
+		double *viscosity = field.viscosity.data;
+		const int viscosity_sizex = field.viscosity.sizeX;
+		double *xvel0 = field.xvel0.data;
+		const int xvel0_sizex = field.xvel0.sizeX;
+		double *xvel1 = field.xvel1.data;
+		const int xvel1_sizex = field.xvel1.sizeX;
+		double *yvel0 = field.yvel0.data;
+		const int yvel0_sizex = field.yvel0.sizeX;
+		double *yvel1 = field.yvel1.data;
+		const int yvel1_sizex = field.yvel1.sizeX;
+		double *volume_change = field.work_array1.data;
+		const int volume_change_sizex = field.work_array1.sizeX;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double left_flux = (idx2f(field, xarea, i, j) * (idx2f(field, xvel0, i, j) +
-				                                                 idx2f(field, xvel0, i + 0, j + 1) +
-				                                                 idx2f(field, xvel0, i, j) +
-				                                                 idx2f(field, xvel0, i + 0, j + 1))) * 0.25 * dt * 0.5;
-				double right_flux = (idx2f(field, xarea, i + 1, j + 0) * (idx2f(field, xvel0, i + 1, j + 0) +
-				                                                          idx2f(field, xvel0, i + 1, j + 1) +
-				                                                          idx2f(field, xvel0, i + 1, j + 0) +
-				                                                          idx2f(field, xvel0, i + 1, j + 1))) * 0.25 * dt * 0.5;
-				double bottom_flux = (idx2f(field, yarea, i, j) * (idx2f(field, yvel0, i, j) +
-				                                                   idx2f(field, yvel0, i + 1, j + 0) +
-				                                                   idx2f(field, yvel0, i, j) +
-				                                                   idx2f(field, yvel0, i + 1, j + 0))) * 0.25 * dt * 0.5;
-				double top_flux = (idx2f(field, yarea, i + 0, j + 1) * (idx2f(field, yvel0, i + 0, j + 1) +
-				                                                        idx2f(field, yvel0, i + 1, j + 1) +
-				                                                        idx2f(field, yvel0, i + 0, j + 1) +
-				                                                        idx2f(field, yvel0, i + 1, j + 1))) * 0.25 * dt * 0.5;
+				double left_flux = (xarea[i + j * xarea_sizex] * (xvel0[i + j * xvel0_sizex] +
+				                                                  xvel0[(i + 0) + (j + 1) * xvel0_sizex] +
+				                                                  xvel0[i + j * xvel0_sizex] +
+				                                                  xvel0[(i + 0) + (j + 1) * xvel0_sizex])) * 0.25 * dt * 0.5;
+				double right_flux = (xarea[(i + 1) + (j + 0) * xarea_sizex] * (xvel0[(i + 1) + (j + 0) * xvel0_sizex] +
+				                                                               xvel0[(i + 1) + (j + 1) * xvel0_sizex] +
+				                                                               xvel0[(i + 1) + (j + 0) * xvel0_sizex] +
+				                                                               xvel0[(i + 1) + (j + 1) * xvel0_sizex])) * 0.25 * dt * 0.5;
+				double bottom_flux = (yarea[i + j * yarea_sizex] * (yvel0[i + j * yvel0_sizex] +
+				                                                    yvel0[(i + 1) + (j + 0) * yvel0_sizex] +
+				                                                    yvel0[i + j * yvel0_sizex] +
+				                                                    yvel0[(i + 1) + (j + 0) * yvel0_sizex])) * 0.25 * dt * 0.5;
+				double top_flux = (yarea[(i + 0) + (j + 1) * yarea_sizex] * (yvel0[(i + 0) + (j + 1) * yvel0_sizex] +
+				                                                             yvel0[(i + 1) + (j + 1) * yvel0_sizex] +
+				                                                             yvel0[(i + 0) + (j + 1) * yvel0_sizex] +
+				                                                             yvel0[(i + 1) + (j + 1) * yvel0_sizex])) * 0.25 * dt * 0.5;
 				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
-				double volume_change_s = idx2f(field, volume, i, j) / (idx2f(field, volume, i, j) + total_flux);
-				double min_cell_volume = fmin(fmin(idx2f(field, volume, i, j) + right_flux - left_flux + top_flux - bottom_flux, idx2f(field, volume, i, j) + right_flux - left_flux),
-				                              idx2f(field, volume, i, j) + top_flux - bottom_flux);
-				double recip_volume = 1.0 / idx2f(field, volume, i, j);
-				double energy_change = (idx2f(field, pressure, i, j) / idx2f(field, density0, i, j) + idx2f(field, viscosity, i, j) / idx2f(field, density0, i, j)) * total_flux * recip_volume;
-				idx2f(field, energy1, i, j) = idx2f(field, energy0, i, j) - energy_change;
-				idx2f(field, density1, i, j) = idx2f(field, density0, i, j) * volume_change_s;
+				double volume_change_s = volume[i + j * volume_sizex] / (volume[i + j * volume_sizex] + total_flux);
+				double min_cell_volume = fmin(fmin(volume[i + j * volume_sizex] + right_flux - left_flux + top_flux - bottom_flux, volume[i + j * volume_sizex] + right_flux - left_flux),
+				                              volume[i + j * volume_sizex] + top_flux - bottom_flux);
+				double recip_volume = 1.0 / volume[i + j * volume_sizex];
+				double energy_change =
+						(pressure[i + j * pressure_sizex] / density0[i + j * density0_sizex] + viscosity[i + j * viscosity_sizex] / density0[i + j * density0_sizex]) * total_flux *
+						recip_volume;
+				energy1[i + j * energy1_sizex] = energy0[i + j * energy0_sizex] - energy_change;
+				density1[i + j * density1_sizex] = density0[i + j * density0_sizex] * volume_change_s;
 			}
 		}
 
 	} else {
 
-		mapToFrom2Df(field, xarea)
-		mapToFrom2Df(field, yarea)
-		mapToFrom2Df(field, volume)
-		mapToFrom2Df(field, density0)
-		mapToFrom2Df(field, density1)
-		mapToFrom2Df(field, energy0)
-		mapToFrom2Df(field, energy1)
-		mapToFrom2Df(field, pressure)
-		mapToFrom2Df(field, viscosity)
-		mapToFrom2Df(field, xvel0)
-		mapToFrom2Df(field, xvel1)
-		mapToFrom2Df(field, yvel0)
-		mapToFrom2Df(field, yvel1)
-		mapToFrom2Dfn(field, work_array1, volume_change)
+		double *xarea = field.xarea.data;
+		const int xarea_sizex = field.xarea.sizeX;
+		double *yarea = field.yarea.data;
+		const int yarea_sizex = field.yarea.sizeX;
+		double *volume = field.volume.data;
+		const int volume_sizex = field.volume.sizeX;
+		double *density0 = field.density0.data;
+		const int density0_sizex = field.density0.sizeX;
+		double *density1 = field.density1.data;
+		const int density1_sizex = field.density1.sizeX;
+		double *energy0 = field.energy0.data;
+		const int energy0_sizex = field.energy0.sizeX;
+		double *energy1 = field.energy1.data;
+		const int energy1_sizex = field.energy1.sizeX;
+		double *pressure = field.pressure.data;
+		const int pressure_sizex = field.pressure.sizeX;
+		double *viscosity = field.viscosity.data;
+		const int viscosity_sizex = field.viscosity.sizeX;
+		double *xvel0 = field.xvel0.data;
+		const int xvel0_sizex = field.xvel0.sizeX;
+		double *xvel1 = field.xvel1.data;
+		const int xvel1_sizex = field.xvel1.sizeX;
+		double *yvel0 = field.yvel0.data;
+		const int yvel0_sizex = field.yvel0.sizeX;
+		double *yvel1 = field.yvel1.data;
+		const int yvel1_sizex = field.yvel1.sizeX;
+		double *volume_change = field.work_array1.data;
+		const int volume_change_sizex = field.work_array1.sizeX;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double left_flux = (idx2f(field, xarea, i, j) * (idx2f(field, xvel0, i, j) +
-				                                                 idx2f(field, xvel0, i + 0, j + 1) +
-				                                                 idx2f(field, xvel1, i, j) +
-				                                                 idx2f(field, xvel1, i + 0, j + 1))) * 0.25 * dt;
-				double right_flux = (idx2f(field, xarea, i + 1, j + 0) * (idx2f(field, xvel0, i + 1, j + 0) +
-				                                                          idx2f(field, xvel0, i + 1, j + 1) +
-				                                                          idx2f(field, xvel1, i + 1, j + 0) +
-				                                                          idx2f(field, xvel1, i + 1, j + 1))) * 0.25 * dt;
-				double bottom_flux = (idx2f(field, yarea, i, j) * (idx2f(field, yvel0, i, j) +
-				                                                   idx2f(field, yvel0, i + 1, j + 0) +
-				                                                   idx2f(field, yvel1, i, j) +
-				                                                   idx2f(field, yvel1, i + 1, j + 0))) * 0.25 * dt;
-				double top_flux = (idx2f(field, yarea, i + 0, j + 1) * (idx2f(field, yvel0, i + 0, j + 1) +
-				                                                        idx2f(field, yvel0, i + 1, j + 1) +
-				                                                        idx2f(field, yvel1, i + 0, j + 1) + idx2f(field, yvel1, i + 1, j + 1))) * 0.25 * dt;
+				double left_flux = (xarea[i + j * xarea_sizex] * (xvel0[i + j * xvel0_sizex] +
+				                                                  xvel0[(i + 0) + (j + 1) * xvel0_sizex] +
+				                                                  xvel1[i + j * xvel1_sizex] +
+				                                                  xvel1[(i + 0) + (j + 1) * xvel1_sizex])) * 0.25 * dt;
+				double right_flux = (xarea[(i + 1) + (j + 0) * xarea_sizex] * (xvel0[(i + 1) + (j + 0) * xvel0_sizex] +
+				                                                               xvel0[(i + 1) + (j + 1) * xvel0_sizex] +
+				                                                               xvel1[(i + 1) + (j + 0) * xvel1_sizex] +
+				                                                               xvel1[(i + 1) + (j + 1) * xvel1_sizex])) * 0.25 * dt;
+				double bottom_flux = (yarea[i + j * yarea_sizex] * (yvel0[i + j * yvel0_sizex] +
+				                                                    yvel0[(i + 1) + (j + 0) * yvel0_sizex] +
+				                                                    yvel1[i + j * yvel1_sizex] +
+				                                                    yvel1[(i + 1) + (j + 0) * yvel1_sizex])) * 0.25 * dt;
+				double top_flux = (yarea[(i + 0) + (j + 1) * yarea_sizex] * (yvel0[(i + 0) + (j + 1) * yvel0_sizex] +
+				                                                             yvel0[(i + 1) + (j + 1) * yvel0_sizex] +
+				                                                             yvel1[(i + 0) + (j + 1) * yvel1_sizex] + yvel1[(i + 1) + (j + 1) * yvel1_sizex])) * 0.25 * dt;
 				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
-				double volume_change_s = idx2f(field, volume, i, j) / (idx2f(field, volume, i, j) + total_flux);
+				double volume_change_s = volume[i + j * volume_sizex] / (volume[i + j * volume_sizex] + total_flux);
 				double min_cell_volume = fmin(fmin(
-						idx2f(field, volume, i, j) + right_flux - left_flux + top_flux - bottom_flux, idx2f(field, volume, i, j) + right_flux - left_flux),
-				                              idx2f(field, volume, i, j) + top_flux - bottom_flux);
-				double recip_volume = 1.0 / idx2f(field, volume, i, j);
-				double energy_change = (idx2f(field, pressure, i, j) / idx2f(field, density0, i, j) + idx2f(field, viscosity, i, j) / idx2f(field, density0, i, j)) * total_flux * recip_volume;
-				idx2f(field, energy1, i, j) = idx2f(field, energy0, i, j) - energy_change;
-				idx2f(field, density1, i, j) = idx2f(field, density0, i, j) * volume_change_s;
+						volume[i + j * volume_sizex] + right_flux - left_flux + top_flux - bottom_flux, volume[i + j * volume_sizex] + right_flux - left_flux),
+				                              volume[i + j * volume_sizex] + top_flux - bottom_flux);
+				double recip_volume = 1.0 / volume[i + j * volume_sizex];
+				double energy_change =
+						(pressure[i + j * pressure_sizex] / density0[i + j * density0_sizex] + viscosity[i + j * viscosity_sizex] / density0[i + j * density0_sizex]) * total_flux *
+						recip_volume;
+				energy1[i + j * energy1_sizex] = energy0[i + j * energy0_sizex] - energy_change;
+				density1[i + j * density1_sizex] = density0[i + j * density0_sizex] * volume_change_s;
 			}
 		}
 	}

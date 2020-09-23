@@ -147,125 +147,150 @@ void build_field(global_variables &globals) {
 
 
 
-		mapToFrom2Df(field, work_array1)
-		mapToFrom2Df(field, work_array2)
-		mapToFrom2Df(field, work_array3)
-		mapToFrom2Df(field, work_array4)
-		mapToFrom2Df(field, work_array5)
-		mapToFrom2Df(field, work_array6)
-		mapToFrom2Df(field, work_array7)
-		mapToFrom2Df(field, xvel0)
-		mapToFrom2Df(field, xvel1)
-		mapToFrom2Df(field, yvel0)
-		mapToFrom2Df(field, yvel1)
+		double *work_array1 = field.work_array1.data;
+		const int work_array1_sizex = field.work_array1.sizeX;
+		double *work_array2 = field.work_array2.data;
+		const int work_array2_sizex = field.work_array2.sizeX;
+		double *work_array3 = field.work_array3.data;
+		const int work_array3_sizex = field.work_array3.sizeX;
+		double *work_array4 = field.work_array4.data;
+		const int work_array4_sizex = field.work_array4.sizeX;
+		double *work_array5 = field.work_array5.data;
+		const int work_array5_sizex = field.work_array5.sizeX;
+		double *work_array6 = field.work_array6.data;
+		const int work_array6_sizex = field.work_array6.sizeX;
+		double *work_array7 = field.work_array7.data;
+		const int work_array7_sizex = field.work_array7.sizeX;
+		double *xvel0 = field.xvel0.data;
+		const int xvel0_sizex = field.xvel0.sizeX;
+		double *xvel1 = field.xvel1.data;
+		const int xvel1_sizex = field.xvel1.sizeX;
+		double *yvel0 = field.yvel0.data;
+		const int yvel0_sizex = field.yvel0.sizeX;
+		double *yvel1 = field.yvel1.data;
+		const int yvel1_sizex = field.yvel1.sizeX;
 
-		omp(parallel(2) enable_target(globals.use_target))
-		for (int j = (0); j < (yrange + 1); j++) {
-			for (int i = (0); i < (xrange + 1); i++) {
-				idx2f(field, work_array1, i, j) = 0.0;
-				idx2f(field, work_array2, i, j) = 0.0;
-				idx2f(field, work_array3, i, j) = 0.0;
-				idx2f(field, work_array4, i, j) = 0.0;
-				idx2f(field, work_array5, i, j) = 0.0;
-				idx2f(field, work_array6, i, j) = 0.0;
-				idx2f(field, work_array7, i, j) = 0.0;
-				idx2f(field, xvel0, i, j) = 0.0;
-				idx2f(field, xvel1, i, j) = 0.0;
-				idx2f(field, yvel0, i, j) = 0.0;
-				idx2f(field, yvel1, i, j) = 0.0;
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+		for (int j = 0; j < (yrange + 1); j++) {
+			for (int i = 0; i < (xrange + 1); i++) {
+				work_array1[i + j * work_array1_sizex] = 0.0;
+				work_array2[i + j * work_array2_sizex] = 0.0;
+				work_array3[i + j * work_array3_sizex] = 0.0;
+				work_array4[i + j * work_array4_sizex] = 0.0;
+				work_array5[i + j * work_array5_sizex] = 0.0;
+				work_array6[i + j * work_array6_sizex] = 0.0;
+				work_array7[i + j * work_array7_sizex] = 0.0;
+				xvel0[i + j * xvel0_sizex] = 0.0;
+				xvel1[i + j * xvel1_sizex] = 0.0;
+				yvel0[i + j * yvel0_sizex] = 0.0;
+				yvel1[i + j * yvel1_sizex] = 0.0;
 			}
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-		mapToFrom2Df(field, density0)
-		mapToFrom2Df(field, density1)
-		mapToFrom2Df(field, energy0)
-		mapToFrom2Df(field, energy1)
-		mapToFrom2Df(field, pressure)
-		mapToFrom2Df(field, viscosity)
-		mapToFrom2Df(field, soundspeed)
-		mapToFrom2Df(field, volume)
+		double *density0 = field.density0.data;
+		const int density0_sizex = field.density0.sizeX;
+		double *density1 = field.density1.data;
+		const int density1_sizex = field.density1.sizeX;
+		double *energy0 = field.energy0.data;
+		const int energy0_sizex = field.energy0.sizeX;
+		double *energy1 = field.energy1.data;
+		const int energy1_sizex = field.energy1.sizeX;
+		double *pressure = field.pressure.data;
+		const int pressure_sizex = field.pressure.sizeX;
+		double *viscosity = field.viscosity.data;
+		const int viscosity_sizex = field.viscosity.sizeX;
+		double *soundspeed = field.soundspeed.data;
+		const int soundspeed_sizex = field.soundspeed.sizeX;
+		double *volume = field.volume.data;
+		const int volume_sizex = field.volume.sizeX;
 
-		omp(parallel(2) enable_target(globals.use_target))
-		for (int j = (0); j < (yrange); j++) {
-			for (int i = (0); i < (xrange); i++) {
-				idx2f(field, density0, i, j) = 0.0;
-				idx2f(field, density1, i, j) = 0.0;
-				idx2f(field, energy0, i, j) = 0.0;
-				idx2f(field, energy1, i, j) = 0.0;
-				idx2f(field, pressure, i, j) = 0.0;
-				idx2f(field, viscosity, i, j) = 0.0;
-				idx2f(field, soundspeed, i, j) = 0.0;
-				idx2f(field, volume, i, j) = 0.0;
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+		for (int j = 0; j < (yrange); j++) {
+			for (int i = 0; i < (xrange); i++) {
+				density0[i + j * density0_sizex] = 0.0;
+				density1[i + j * density1_sizex] = 0.0;
+				energy0[i + j * energy0_sizex] = 0.0;
+				energy1[i + j * energy1_sizex] = 0.0;
+				pressure[i + j * pressure_sizex] = 0.0;
+				viscosity[i + j * viscosity_sizex] = 0.0;
+				soundspeed[i + j * soundspeed_sizex] = 0.0;
+				volume[i + j * volume_sizex] = 0.0;
 			}
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-		mapToFrom2Df(field, vol_flux_x)
-		mapToFrom2Df(field, mass_flux_x)
-		mapToFrom2Df(field, xarea)
+		double *vol_flux_x = field.vol_flux_x.data;
+		const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
+		double *mass_flux_x = field.mass_flux_x.data;
+		const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
+		double *xarea = field.xarea.data;
+		const int xarea_sizex = field.xarea.sizeX;
 
-		omp(parallel(2) enable_target(globals.use_target))
-		for (int j = (0); j < (yrange); j++) {
-			for (int i = (0); i < (xrange); i++) {
-				idx2f(field, vol_flux_x, i, j) = 0.0;
-				idx2f(field, mass_flux_x, i, j) = 0.0;
-				idx2f(field, xarea, i, j) = 0.0;
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+		for (int j = 0; j < (yrange); j++) {
+			for (int i = 0; i < (xrange); i++) {
+				vol_flux_x[i + j * vol_flux_x_sizex] = 0.0;
+				mass_flux_x[i + j * mass_flux_x_sizex] = 0.0;
+				xarea[i + j * xarea_sizex] = 0.0;
 			}
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-		mapToFrom2Df(field, vol_flux_y)
-		mapToFrom2Df(field, mass_flux_y)
-		mapToFrom2Df(field, yarea)
+		double *vol_flux_y = field.vol_flux_y.data;
+		const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
+		double *mass_flux_y = field.mass_flux_y.data;
+		const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
+		double *yarea = field.yarea.data;
+		const int yarea_sizex = field.yarea.sizeX;
 
-		omp(parallel(2) enable_target(globals.use_target))
-		for (int j = (0); j < (yrange + 1); j++) {
-			for (int i = (0); i < (xrange); i++) {
-				idx2f(field, vol_flux_y, i, j) = 0.0;
-				idx2f(field, mass_flux_y, i, j) = 0.0;
-				idx2f(field, yarea, i, j) = 0.0;
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+		for (int j = 0; j < (yrange + 1); j++) {
+			for (int i = 0; i < (xrange); i++) {
+				vol_flux_y[i + j * vol_flux_y_sizex] = 0.0;
+				mass_flux_y[i + j * mass_flux_y_sizex] = 0.0;
+				yarea[i + j * yarea_sizex] = 0.0;
 			}
 		}
 
 		// (t_xmin-2:t_xmax+2) inclusive
-		mapToFrom1Df(field, cellx)
-		mapToFrom1Df(field, celldx)
+		double *cellx = field.cellx.data;
+		double *celldx = field.celldx.data;
 
-		omp(parallel(1) enable_target(globals.use_target))
-		for (int id = (0); id < (xrange); id++) {
-			idx1f(field, cellx, id) = 0.0;
-			idx1f(field, celldx, id) = 0.0;
+		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+		for (int id = 0; id < (xrange); id++) {
+			cellx[id] = 0.0;
+			celldx[id] = 0.0;
 		}
 
 		// (t_ymin-2:t_ymax+2) inclusive
-		mapToFrom1Df(field, celly)
-		mapToFrom1Df(field, celldy)
+		double *celly = field.celly.data;
+		double *celldy = field.celldy.data;
 
-		omp(parallel(1) enable_target(globals.use_target))
-		for (int id = (0); id < (yrange); id++) {
-			idx1f(field, celly, id) = 0.0;
-			idx1f(field, celldy, id) = 0.0;
+		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+		for (int id = 0; id < (yrange); id++) {
+			celly[id] = 0.0;
+			celldy[id] = 0.0;
 		}
 
 		// (t_xmin-2:t_xmax+3) inclusive
-		mapToFrom1Df(field, vertexx)
-		mapToFrom1Df(field, vertexdx)
+		double *vertexx = field.vertexx.data;
+		double *vertexdx = field.vertexdx.data;
 
-		omp(parallel(1) enable_target(globals.use_target))
-		for (int id = (0); id < (xrange + 1); id++) {
-			idx1f(field, vertexx, id) = 0.0;
-			idx1f(field, vertexdx, id) = 0.0;
+		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+		for (int id = 0; id < (xrange + 1); id++) {
+			vertexx[id] = 0.0;
+			vertexdx[id] = 0.0;
 		}
 
 		// (t_ymin-2:t_ymax+3) inclusive
-		mapToFrom1Df(field, vertexy)
-		mapToFrom1Df(field, vertexdy)
+		double *vertexy = field.vertexy.data;
+		double *vertexdy = field.vertexdy.data;
 
-		omp(parallel(1) enable_target(globals.use_target))
-		for (int id = (0); id < (yrange + 1); id++) {
-			idx1f(field, vertexy, id) = 0.0;
-			idx1f(field, vertexdy, id) = 0.0;
+		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+		for (int id = 0; id < (yrange + 1); id++) {
+			vertexy[id] = 0.0;
+			vertexdy[id] = 0.0;
 		}
 
 

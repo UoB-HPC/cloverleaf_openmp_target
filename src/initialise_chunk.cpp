@@ -56,59 +56,60 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
+	double *vertexx = field.vertexx.data;
+	double *vertexdx = field.vertexdx.data;
 
-
-	mapToFrom1Df(field, vertexx)
-	mapToFrom1Df(field, vertexdx)
-
-	omp(parallel(1) enable_target(globals.use_target))
-	for (int j = (0); j < (xrange); j++) {
-		idx1f(field, vertexx, j) = xmin + dx * (j - 1 - x_min);
-		idx1f(field, vertexdx, j) = dx;
+	#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+	for (int j = 0; j < (xrange); j++) {
+		vertexx[j] = xmin + dx * (j - 1 - x_min);
+		vertexdx[j] = dx;
 	}
 
 
-	mapToFrom1Df(field, vertexy)
-	mapToFrom1Df(field, vertexdy)
+	double *vertexy = field.vertexy.data;
+	double *vertexdy = field.vertexdy.data;
 
-	omp(parallel(1) enable_target(globals.use_target))
-	for (int k = (0); k < (yrange); k++) {
-		idx1f(field, vertexy, k) = ymin + dy * (k - 1 - y_min);
-		idx1f(field, vertexdy, k) = dy;
+	#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+	for (int k = 0; k < (yrange); k++) {
+		vertexy[k] = ymin + dy * (k - 1 - y_min);
+		vertexdy[k] = dy;
 	}
 
 
 	const int xrange1 = (x_max + 2) - (x_min - 2) + 1;
 	const int yrange1 = (y_max + 2) - (y_min - 2) + 1;
 
-	mapToFrom1Df(field, cellx)
-	mapToFrom1Df(field, celldx)
-	omp(parallel(1) enable_target(globals.use_target))
-	for (int j = (0); j < (xrange1); j++) {
-		idx1f(field, cellx, j) = 0.5 * (idx1f(field, vertexx, j) + idx1f(field, vertexx, j + 1));
-		idx1f(field, celldx, j) = dx;
+	double *cellx = field.cellx.data;
+	double *celldx = field.celldx.data;
+	#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+	for (int j = 0; j < (xrange1); j++) {
+		cellx[j] = 0.5 * (vertexx[j] + vertexx[j + 1]);
+		celldx[j] = dx;
 	}
 
 
-	mapToFrom1Df(field, celly)
-	mapToFrom1Df(field, celldy)
-	omp(parallel(1) enable_target(globals.use_target))
-	for (int k = (0); k < (yrange1); k++) {
-		idx1f(field, celly, k) = 0.5 * (idx1f(field, vertexy, k) + idx1f(field, vertexy, k + 1));
-		idx1f(field, celldy, k) = dy;
+	double *celly = field.celly.data;
+	double *celldy = field.celldy.data;
+	#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+	for (int k = 0; k < (yrange1); k++) {
+		celly[k] = 0.5 * (vertexy[k] + vertexy[k + 1]);
+		celldy[k] = dy;
 	}
 
 
-	mapToFrom2Df(field, volume)
-	mapToFrom2Df(field, xarea)
-	mapToFrom2Df(field, yarea)
+	double *volume = field.volume.data;
+	const int volume_sizex = field.volume.sizeX;
+	double *xarea = field.xarea.data;
+	const int xarea_sizex = field.xarea.sizeX;
+	double *yarea = field.yarea.data;
+	const int yarea_sizex = field.yarea.sizeX;
 
-	omp(parallel(2) enable_target(globals.use_target))
-	for (int j = (0); j < (yrange1); j++) {
-		for (int i = (0); i < (xrange1); i++) {
-			idx2f(field, volume, i, j) = dx * dy;
-			idx2f(field, xarea, i, j) = idx1f(field, celldy, j);
-			idx2f(field, yarea, i, j) = idx1f(field, celldx, i);
+	#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+	for (int j = 0; j < (yrange1); j++) {
+		for (int i = 0; i < (xrange1); i++) {
+			volume[i + j * volume_sizex] = dx * dy;
+			xarea[i + j * xarea_sizex] = celldy[j];
+			yarea[i + j * yarea_sizex] = celldx[i];
 		}
 	}
 

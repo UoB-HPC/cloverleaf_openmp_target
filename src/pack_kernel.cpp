@@ -57,13 +57,14 @@ void clover_pack_message_left(bool use_target, int x_min, int x_max, int y_min, 
 	// DO k=y_min-depth,y_max+y_inc+depth
 
 
-	mapToFrom1Dfe(left_snd_buffer, left_snd)
-	mapToFrom2Dfe(field_buffer, field)
-	omp(parallel(1) enable_target(use_target))
+	double *left_snd = left_snd_buffer.data;
+	double *field = field_buffer.data;
+	const int field_sizex = field_buffer.sizeX;
+	#pragma omp target teams distribute parallel for simd if(target: use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			idx1f(, left_snd, index) = idx2f(, field, x_min + x_inc - 1 + j, k);
+			left_snd[index] = field[(x_min + x_inc - 1 + j) + (k) * field_sizex];
 		}
 	}
 
@@ -100,13 +101,14 @@ void clover_unpack_message_left(bool use_target, int x_min, int x_max, int y_min
 
 
 
-	mapToFrom2Dfe(field_buffer, field)
-	mapToFrom1Dfe(left_rcv_buffer, left_rcv)
-	omp(parallel(1) enable_target(use_target))
+	double *field = field_buffer.data;
+	const int field_sizex = field_buffer.sizeX;
+	double *left_rcv = left_rcv_buffer.data;
+	#pragma omp target teams distribute parallel for simd if(target: use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			idx2f(, field, x_min - j, k) = idx1f(, left_rcv, index);
+			field[(x_min - j) + (k) * field_sizex] = left_rcv[index];
 		}
 	}
 
@@ -139,13 +141,14 @@ void clover_pack_message_right(bool use_target, int x_min, int x_max, int y_min,
 	}
 
 	// DO k=y_min-depth,y_max+y_inc+depth
-	mapToFrom1Dfe(right_snd_buffer, right_snd)
-	mapToFrom2Dfe(field_buffer, field)
-	omp(parallel(1) enable_target(use_target))
+	double *right_snd = right_snd_buffer.data;
+	double *field = field_buffer.data;
+	const int field_sizex = field_buffer.sizeX;
+	#pragma omp target teams distribute parallel for simd if(target: use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			idx1f(, right_snd, index) = idx2f(, field, x_min + 1 + j, k);
+			right_snd[index] = field[(x_min + 1 + j) + (k) * field_sizex];
 		}
 	}
 
@@ -182,13 +185,14 @@ void clover_unpack_message_right(bool use_target, int x_min, int x_max, int y_mi
 	}
 
 	// DO k=y_min-depth,y_max+y_inc+depth
-	mapToFrom1Dfe(right_rcv_buffer, right_rcv)
-	mapToFrom2Dfe(field_buffer, field)
-	omp(parallel(1) enable_target(use_target))
+	double *right_rcv = right_rcv_buffer.data;
+	double *field = field_buffer.data;
+	const int field_sizex = field_buffer.sizeX;
+	#pragma omp target teams distribute parallel for simd if(target: use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			idx1f(, right_rcv, index) = idx2f(, field, x_max + x_inc + j, k);
+			right_rcv[index] = field[(x_max + x_inc + j) + (k) * field_sizex];
 		}
 	}
 
@@ -222,12 +226,13 @@ void clover_pack_message_top(bool use_target, int x_min, int x_max, int y_min, i
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		mapToFrom1Dfe(top_snd_buffer, top_snd)
-		mapToFrom2Dfe(field_buffer, field)
-		omp(parallel(1) enable_target(use_target))
+		double *top_snd = top_snd_buffer.data;
+		double *field = field_buffer.data;
+		const int field_sizex = field_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			idx1f(, top_snd, index) = idx2f(, field, j, y_max + 1 - k);
+			top_snd[index] = field[j + (y_max + 1 - k) * field_sizex];
 		}
 	}
 }
@@ -264,12 +269,13 @@ void clover_unpack_message_top(bool use_target, int x_min, int x_max, int y_min,
 		// DO j=x_min-depth,x_max+x_inc+depth
 
 
-		mapToFrom2Dfe(field_buffer, field)
-		mapToFrom1Dfe(top_rcv_buffer, top_rcv)
-		omp(parallel(1) enable_target(use_target))
+		double *field = field_buffer.data;
+		const int field_sizex = field_buffer.sizeX;
+		double *top_rcv = top_rcv_buffer.data;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			idx2f(, field, j, y_max + y_inc + k) = idx1f(, top_rcv, index);
+			field[j + (y_max + y_inc + k) * field_sizex] = top_rcv[index];
 		}
 	}
 }
@@ -306,12 +312,13 @@ void clover_pack_message_bottom(bool use_target, int x_min, int x_max, int y_min
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		mapToFrom1Dfe(bottom_snd_buffer, bottom_snd)
-		mapToFrom2Dfe(field_buffer, field)
-		omp(parallel(1) enable_target(use_target))
+		double *bottom_snd = bottom_snd_buffer.data;
+		double *field = field_buffer.data;
+		const int field_sizex = field_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			idx1f(, bottom_snd, index) = idx2f(, field, j, y_min + y_inc - 1 + k);
+			bottom_snd[index] = field[j + (y_min + y_inc - 1 + k) * field_sizex];
 		}
 	}
 }
@@ -343,12 +350,13 @@ void clover_unpack_message_bottom(bool use_target, int x_min, int x_max, int y_m
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		mapToFrom2Dfe(field_buffer, field)
-		mapToFrom1Dfe(bottom_rcv_buffer, bottom_rcv)
-		omp(parallel(1) enable_target(use_target))
+		double *field = field_buffer.data;
+		const int field_sizex = field_buffer.sizeX;
+		double *bottom_rcv = bottom_rcv_buffer.data;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			idx2f(, field, j, y_min - k) = idx1f(, bottom_rcv, index);
+			field[j + (y_min - k) * field_sizex] = bottom_rcv[index];
 		}
 	}
 }

@@ -36,39 +36,39 @@ void finalise_field(global_variables &globals) {
 		field_type &field = t.field;
 
 		#pragma omp target exit data \
-                map(from: field.density0.data[:field.density0.N()]) \
-                map(from: field.density1.data[:field.density1.N()]) \
-                map(from: field.energy0.data[:field.energy0.N()]) \
-                map(from: field.energy1.data[:field.energy1.N()]) \
-                map(from: field.pressure.data[:field.pressure.N()]) \
-                map(from: field.viscosity.data[:field.viscosity.N()]) \
-                map(from: field.soundspeed.data[:field.soundspeed.N()]) \
-                map(from: field.yvel0.data[:field.yvel0.N()]) \
-                map(from: field.yvel1.data[:field.yvel1.N()]) \
-                map(from: field.xvel0.data[:field.xvel0.N()]) \
-                map(from: field.xvel1.data[:field.xvel1.N()]) \
-                map(from: field.vol_flux_x.data[:field.vol_flux_x.N()]) \
-                map(from: field.vol_flux_y.data[:field.vol_flux_y.N()]) \
-                map(from: field.mass_flux_x.data[:field.mass_flux_x.N()]) \
-                map(from: field.mass_flux_y.data[:field.mass_flux_y.N()]) \
-                map(from: field.work_array1.data[:field.work_array1.N()]) \
-                map(from: field.work_array2.data[:field.work_array2.N()]) \
-                map(from: field.work_array3.data[:field.work_array3.N()]) \
-                map(from: field.work_array4.data[:field.work_array4.N()]) \
-                map(from: field.work_array5.data[:field.work_array5.N()]) \
-                map(from: field.work_array6.data[:field.work_array6.N()]) \
-                map(from: field.work_array7.data[:field.work_array7.N()]) \
-                map(from: field.cellx.data[:field.cellx.N()]) \
-                map(from: field.celldx.data[:field.celldx.N()]) \
-                map(from: field.celly.data[:field.celly.N()]) \
-                map(from: field.celldy.data[:field.celldy.N()]) \
-                map(from: field.vertexx.data[:field.vertexx.N()]) \
-                map(from: field.vertexdx.data[:field.vertexdx.N()]) \
-                map(from: field.vertexy.data[:field.vertexy.N()]) \
-                map(from: field.vertexdy.data[:field.vertexdy.N()]) \
-                map(from: field.volume.data[:field.volume.N()]) \
-                map(from: field.xarea.data[:field.xarea.N()]) \
-                map(from: field.yarea.data[:field.yarea.N()])
+                map(release: field.density0.data[:0]) \
+                map(release: field.density1.data[:0]) \
+                map(release: field.energy0.data[:0]) \
+                map(release: field.energy1.data[:0]) \
+                map(release: field.pressure.data[:0]) \
+                map(release: field.viscosity.data[:0]) \
+                map(release: field.soundspeed.data[:0]) \
+                map(release: field.yvel0.data[:0]) \
+                map(release: field.yvel1.data[:0]) \
+                map(release: field.xvel0.data[:0]) \
+                map(release: field.xvel1.data[:0]) \
+                map(release: field.vol_flux_x.data[:0]) \
+                map(release: field.vol_flux_y.data[:0]) \
+                map(release: field.mass_flux_x.data[:0]) \
+                map(release: field.mass_flux_y.data[:0]) \
+                map(release: field.work_array1.data[:0]) \
+                map(release: field.work_array2.data[:0]) \
+                map(release: field.work_array3.data[:0]) \
+                map(release: field.work_array4.data[:0]) \
+                map(release: field.work_array5.data[:0]) \
+                map(release: field.work_array6.data[:0]) \
+                map(release: field.work_array7.data[:0]) \
+                map(release: field.cellx.data[:0]) \
+                map(release: field.celldx.data[:0]) \
+                map(release: field.celly.data[:0]) \
+                map(release: field.celldy.data[:0]) \
+                map(release: field.vertexx.data[:0]) \
+                map(release: field.vertexdx.data[:0]) \
+                map(release: field.vertexy.data[:0]) \
+                map(release: field.vertexdy.data[:0]) \
+                map(release: field.volume.data[:0]) \
+                map(release: field.xarea.data[:0]) \
+                map(release: field.yarea.data[:0])
 
 	}
 

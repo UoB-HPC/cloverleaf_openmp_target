@@ -58,40 +58,45 @@ void calc_dt_kernel(
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
 
-	mapToFrom2Df(field, xarea)
-	mapToFrom2Df(field, yarea)
-	mapToFrom1Df(field, celldx)
-	mapToFrom1Df(field, celldy)
-	mapToFrom2Df(field, volume)
-	mapToFrom2Df(field, density0)
-	mapToFrom2Df(field, viscosity)
-	mapToFrom2Df(field, soundspeed)
-	mapToFrom2Df(field, xvel0)
-	mapToFrom2Df(field, yvel0)
+	double *xarea = field.xarea.data;
+	const int xarea_sizex = field.xarea.sizeX;
+	double *yarea = field.yarea.data;
+	const int yarea_sizex = field.yarea.sizeX;
+	double *celldx = field.celldx.data;
+	double *celldy = field.celldy.data;
+	double *volume = field.volume.data;
+	const int volume_sizex = field.volume.sizeX;
+	double *density0 = field.density0.data;
+	const int density0_sizex = field.density0.sizeX;
+	double *viscosity = field.viscosity.data;
+	const int viscosity_sizex = field.viscosity.sizeX;
+	double *soundspeed = field.soundspeed.data;
+	const int soundspeed_sizex = field.soundspeed.sizeX;
+	double *xvel0 = field.xvel0.data;
+	const int xvel0_sizex = field.xvel0.sizeX;
+	double *yvel0 = field.yvel0.data;
+	const int yvel0_sizex = field.yvel0.sizeX;
 
 
-	omp(parallel(2) enable_target(use_target)
-			    map(tofrom:dt_min_val)
-			    reduction(min:dt_min_val)
-	)
+	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target) map(tofrom:dt_min_val) reduction(min:dt_min_val)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			double dsx = idx1f(field, celldx, i);
-			double dsy = idx1f(field, celldy, j);
-			double cc = idx2f(field, soundspeed, i, j) * idx2f(field, soundspeed, i, j);
-			cc = cc + 2.0 * idx2f(field, viscosity, i, j) / idx2f(field, density0, i, j);
+			double dsx = celldx[i];
+			double dsy = celldy[j];
+			double cc = soundspeed[i + j * soundspeed_sizex] * soundspeed[i + j * soundspeed_sizex];
+			cc = cc + 2.0 * viscosity[i + j * viscosity_sizex] / density0[i + j * density0_sizex];
 			cc = fmax(sqrt(cc), g_small);
 			double dtct = dtc_safe * fmin(dsx, dsy) / cc;
 			double div = 0.0;
-			double dv1 = (idx2f(field, xvel0, i, j) + idx2f(field, xvel0, i + 0, j + 1)) * idx2f(field, xarea, i, j);
-			double dv2 = (idx2f(field, xvel0, i + 1, j + 0) + idx2f(field, xvel0, i + 1, j + 1)) * idx2f(field, xarea, i + 1, j + 0);
+			double dv1 = (xvel0[i + j * xvel0_sizex] + xvel0[(i + 0) + (j + 1) * xvel0_sizex]) * xarea[i + j * xarea_sizex];
+			double dv2 = (xvel0[(i + 1) + (j + 0) * xvel0_sizex] + xvel0[(i + 1) + (j + 1) * xvel0_sizex]) * xarea[(i + 1) + (j + 0) * xarea_sizex];
 			div = div + dv2 - dv1;
-			double dtut = dtu_safe * 2.0 * idx2f(field, volume, i, j) / fmax(fmax(fabs(dv1), fabs(dv2)), g_small * idx2f(field, volume, i, j));
-			dv1 = (idx2f(field, yvel0, i, j) + idx2f(field, yvel0, i + 1, j + 0)) * idx2f(field, yarea, i, j);
-			dv2 = (idx2f(field, yvel0, i + 0, j + 1) + idx2f(field, yvel0, i + 1, j + 1)) * idx2f(field, yarea, i + 0, j + 1);
+			double dtut = dtu_safe * 2.0 * volume[i + j * volume_sizex] / fmax(fmax(fabs(dv1), fabs(dv2)), g_small * volume[i + j * volume_sizex]);
+			dv1 = (yvel0[i + j * yvel0_sizex] + yvel0[(i + 1) + (j + 0) * yvel0_sizex]) * yarea[i + j * yarea_sizex];
+			dv2 = (yvel0[(i + 0) + (j + 1) * yvel0_sizex] + yvel0[(i + 1) + (j + 1) * yvel0_sizex]) * yarea[(i + 0) + (j + 1) * yarea_sizex];
 			div = div + dv2 - dv1;
-			double dtvt = dtv_safe * 2.0 * idx2f(field, volume, i, j) / fmax(fmax(fabs(dv1), fabs(dv2)), g_small * idx2f(field, volume, i, j));
-			div = div / (2.0 * idx2f(field, volume, i, j));
+			double dtvt = dtv_safe * 2.0 * volume[i + j * volume_sizex] / fmax(fmax(fabs(dv1), fabs(dv2)), g_small * volume[i + j * volume_sizex]);
+			div = div / (2.0 * volume[i + j * volume_sizex]);
 			double dtdivt;
 			if (div < -g_small) {
 				dtdivt = dtdiv_safe * (-1.0 / div);
@@ -126,19 +131,19 @@ void calc_dt_kernel(
 		std::cout
 				<< "Timestep information:" << std::endl
 				<< "j, k                 : " << jldt << " " << kldt << std::endl
-				<< "x, y                 : " << idx1(cellx_acc, jldt) << " " << idx1(celly_acc, kldt)
+				<< "x, y                 : " << hostidx1(cellx_acc, jldt) << " " << hostidx1(celly_acc, kldt)
 				<< std::endl
 				<< "timestep : " << dt_min_val << std::endl
 				<< "Cell velocities;" << std::endl
-				<< idx2(xvel0_acc, jldt, kldt) << " " << idx2(yvel0_acc, jldt, kldt) << std::endl
-				<< idx2(xvel0_acc, jldt + 1, kldt) << " " << idx2(yvel0_acc, jldt + 1, kldt) << std::endl
-				<< idx2(xvel0_acc, jldt + 1, kldt + 1) << " " << idx2(yvel0_acc, jldt + 1, kldt + 1)
+				<< hostidx2(xvel0_acc, jldt, kldt) << " " << hostidx2(yvel0_acc, jldt, kldt) << std::endl
+				<< hostidx2(xvel0_acc, jldt + 1, kldt) << " " << hostidx2(yvel0_acc, jldt + 1, kldt) << std::endl
+				<< hostidx2(xvel0_acc, jldt + 1, kldt + 1) << " " << hostidx2(yvel0_acc, jldt + 1, kldt + 1)
 				<< std::endl
-				<< idx2(xvel0_acc, jldt, kldt + 1) << " " << idx2(yvel0_acc, jldt, kldt + 1) << std::endl
+				<< hostidx2(xvel0_acc, jldt, kldt + 1) << " " << hostidx2(yvel0_acc, jldt, kldt + 1) << std::endl
 				<< "density, energy, pressure, soundspeed " << std::endl
-				<< idx2(density0_acc, jldt, kldt) << " " << idx2(energy0_acc, jldt, kldt) << " "
-				<< idx2(pressure_acc, jldt, kldt)
-				<< " " << idx2(soundspeed_acc, jldt, kldt) << std::endl;
+				<< hostidx2(density0_acc, jldt, kldt) << " " << hostidx2(energy0_acc, jldt, kldt) << " "
+				<< hostidx2(pressure_acc, jldt, kldt)
+				<< " " << hostidx2(soundspeed_acc, jldt, kldt) << std::endl;
 	}
 
 

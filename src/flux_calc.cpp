@@ -37,22 +37,32 @@ void flux_calc_kernel(
 	//   DO j=x_min,x_max+1
 // Note that the loops calculate one extra flux than required, but this
 	// allows loop fusion that improves performance
-	mapToFrom2Df(field, xarea)
-	mapToFrom2Df(field, yarea)
-	mapToFrom2Df(field, xvel0)
-	mapToFrom2Df(field, yvel0)
-	mapToFrom2Df(field, xvel1)
-	mapToFrom2Df(field, yvel1)
-	mapToFrom2Df(field, vol_flux_x)
-	mapToFrom2Df(field, vol_flux_y)
+	double *xarea = field.xarea.data;
+	const int xarea_sizex = field.xarea.sizeX;
+	double *yarea = field.yarea.data;
+	const int yarea_sizex = field.yarea.sizeX;
+	double *xvel0 = field.xvel0.data;
+	const int xvel0_sizex = field.xvel0.sizeX;
+	double *yvel0 = field.yvel0.data;
+	const int yvel0_sizex = field.yvel0.sizeX;
+	double *xvel1 = field.xvel1.data;
+	const int xvel1_sizex = field.xvel1.sizeX;
+	double *yvel1 = field.yvel1.data;
+	const int yvel1_sizex = field.yvel1.sizeX;
+	double *vol_flux_x = field.vol_flux_x.data;
+	const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
+	double *vol_flux_y = field.vol_flux_y.data;
+	const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
 
-	omp(parallel(2) enable_target(use_target))
+	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			idx2f(field, vol_flux_x, i, j) = 0.25 * dt * idx2f(field, xarea, i, j) *
-			                                 (idx2f(field, xvel0, i, j) + idx2f(field, xvel0, i + 0, j + 1) + idx2f(field, xvel1, i, j) + idx2f(field, xvel1, i + 0, j + 1));
-			idx2f(field, vol_flux_y, i, j) = 0.25 * dt * idx2f(field, yarea, i, j) *
-			                                 (idx2f(field, yvel0, i, j) + idx2f(field, yvel0, i + 1, j + 0) + idx2f(field, yvel1, i, j) + idx2f(field, yvel1, i + 1, j + 0));
+			vol_flux_x[i + j * vol_flux_x_sizex] = 0.25 * dt * xarea[i + j * xarea_sizex] *
+			                                       (xvel0[i + j * xvel0_sizex] + xvel0[(i + 0) + (j + 1) * xvel0_sizex] + xvel1[i + j * xvel1_sizex] +
+			                                        xvel1[(i + 0) + (j + 1) * xvel1_sizex]);
+			vol_flux_y[i + j * vol_flux_y_sizex] = 0.25 * dt * yarea[i + j * yarea_sizex] *
+			                                       (yvel0[i + j * yvel0_sizex] + yvel0[(i + 1) + (j + 0) * yvel0_sizex] + yvel1[i + j * yvel1_sizex] +
+			                                        yvel1[(i + 1) + (j + 0) * yvel1_sizex]);
 		}
 	}
 }

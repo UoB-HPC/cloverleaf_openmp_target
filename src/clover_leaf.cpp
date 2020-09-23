@@ -79,6 +79,8 @@ int main(int argc, char *argv[]) {
 	std::cout << "Launching hydro" << std::endl;
 	hydro(config, parallel);
 
+	finalise_field(config);
+
 
 
 	// Finilise programming models

@@ -59,12 +59,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_density0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(density0_buffer, density0)
-		mapToFrom2Dfe(left_density0_buffer, left_density0)
-		omp(parallel(1) enable_target(use_target))
+		double *density0 = density0_buffer.data;
+		const int density0_sizex = density0_buffer.sizeX;
+		double *left_density0 = left_density0_buffer.data;
+		const int left_density0_sizex = left_density0_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,density0, x_min - j, k) = idx2f(,left_density0, left_xmax + 1 - j, k);
+				density0[(x_min - j) + (k) * density0_sizex] = left_density0[(left_xmax + 1 - j) + (k) * left_density0_sizex];
 			}
 		}
 	}
@@ -73,12 +75,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_density1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(density1_buffer, density1)
-		mapToFrom2Dfe(left_density1_buffer, left_density1)
-		omp(parallel(1) enable_target(use_target))
+		double *density1 = density1_buffer.data;
+		const int density1_sizex = density1_buffer.sizeX;
+		double *left_density1 = left_density1_buffer.data;
+		const int left_density1_sizex = left_density1_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,density1, x_min - j, k) = idx2f(,left_density1, left_xmax + 1 - j, k);
+				density1[(x_min - j) + (k) * density1_sizex] = left_density1[(left_xmax + 1 - j) + (k) * left_density1_sizex];
 			}
 		}
 	}
@@ -87,12 +91,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_energy0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(energy0_buffer, energy0)
-		mapToFrom2Dfe(left_energy0_buffer, left_energy0)
-		omp(parallel(1) enable_target(use_target))
+		double *energy0 = energy0_buffer.data;
+		const int energy0_sizex = energy0_buffer.sizeX;
+		double *left_energy0 = left_energy0_buffer.data;
+		const int left_energy0_sizex = left_energy0_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,energy0, x_min - j, k) = idx2f(,left_energy0, left_xmax + 1 - j, k);
+				energy0[(x_min - j) + (k) * energy0_sizex] = left_energy0[(left_xmax + 1 - j) + (k) * left_energy0_sizex];
 			}
 		}
 	}
@@ -101,12 +107,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_energy1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(energy1_buffer, energy1)
-		mapToFrom2Dfe(left_energy1_buffer, left_energy1)
-		omp(parallel(1) enable_target(use_target))
+		double *energy1 = energy1_buffer.data;
+		const int energy1_sizex = energy1_buffer.sizeX;
+		double *left_energy1 = left_energy1_buffer.data;
+		const int left_energy1_sizex = left_energy1_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,energy1, x_min - j, k) = idx2f(,left_energy1, left_xmax + 1 - j, k);
+				energy1[(x_min - j) + (k) * energy1_sizex] = left_energy1[(left_xmax + 1 - j) + (k) * left_energy1_sizex];
 			}
 		}
 	}
@@ -115,12 +123,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_pressure] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(pressure_buffer, pressure)
-		mapToFrom2Dfe(left_pressure_buffer, left_pressure)
-		omp(parallel(1) enable_target(use_target))
+		double *pressure = pressure_buffer.data;
+		const int pressure_sizex = pressure_buffer.sizeX;
+		double *left_pressure = left_pressure_buffer.data;
+		const int left_pressure_sizex = left_pressure_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,pressure, x_min - j, k) = idx2f(,left_pressure, left_xmax + 1 - j, k);
+				pressure[(x_min - j) + (k) * pressure_sizex] = left_pressure[(left_xmax + 1 - j) + (k) * left_pressure_sizex];
 			}
 		}
 	}
@@ -129,12 +139,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_viscosity] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(viscosity_buffer, viscosity)
-		mapToFrom2Dfe(left_viscosity_buffer, left_viscosity)
-		omp(parallel(1) enable_target(use_target))
+		double *viscosity = viscosity_buffer.data;
+		const int viscosity_sizex = viscosity_buffer.sizeX;
+		double *left_viscosity = left_viscosity_buffer.data;
+		const int left_viscosity_sizex = left_viscosity_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,viscosity, x_min - j, k) = idx2f(,left_viscosity, left_xmax + 1 - j, k);
+				viscosity[(x_min - j) + (k) * viscosity_sizex] = left_viscosity[(left_xmax + 1 - j) + (k) * left_viscosity_sizex];
 			}
 		}
 	}
@@ -143,12 +155,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_soundspeed] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(soundspeed_buffer, soundspeed)
-		mapToFrom2Dfe(left_soundspeed_buffer, left_soundspeed)
-		omp(parallel(1) enable_target(use_target))
+		double *soundspeed = soundspeed_buffer.data;
+		const int soundspeed_sizex = soundspeed_buffer.sizeX;
+		double *left_soundspeed = left_soundspeed_buffer.data;
+		const int left_soundspeed_sizex = left_soundspeed_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,soundspeed, x_min - j, k) = idx2f(,left_soundspeed, left_xmax + 1 - j, k);
+				soundspeed[(x_min - j) + (k) * soundspeed_sizex] = left_soundspeed[(left_xmax + 1 - j) + (k) * left_soundspeed_sizex];
 			}
 		}
 	}
@@ -157,12 +171,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_xvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(xvel0_buffer, xvel0)
-		mapToFrom2Dfe(left_xvel0_buffer, left_xvel0)
-		omp(parallel(1) enable_target(use_target))
+		double *xvel0 = xvel0_buffer.data;
+		const int xvel0_sizex = xvel0_buffer.sizeX;
+		double *left_xvel0 = left_xvel0_buffer.data;
+		const int left_xvel0_sizex = left_xvel0_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,xvel0, x_min - j, k) = idx2f(,left_xvel0, left_xmax + 1 - j, k);
+				xvel0[(x_min - j) + (k) * xvel0_sizex] = left_xvel0[(left_xmax + 1 - j) + (k) * left_xvel0_sizex];
 			}
 		}
 	}
@@ -171,12 +187,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_xvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(xvel1_buffer, xvel1)
-		mapToFrom2Dfe(left_xvel1_buffer, left_xvel1)
-		omp(parallel(1) enable_target(use_target))
+		double *xvel1 = xvel1_buffer.data;
+		const int xvel1_sizex = xvel1_buffer.sizeX;
+		double *left_xvel1 = left_xvel1_buffer.data;
+		const int left_xvel1_sizex = left_xvel1_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,xvel1, x_min - j, k) = idx2f(,left_xvel1, left_xmax + 1 - j, k);
+				xvel1[(x_min - j) + (k) * xvel1_sizex] = left_xvel1[(left_xmax + 1 - j) + (k) * left_xvel1_sizex];
 			}
 		}
 	}
@@ -185,12 +203,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_yvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(yvel0_buffer, yvel0)
-		mapToFrom2Dfe(left_yvel0_buffer, left_yvel0)
-		omp(parallel(1) enable_target(use_target))
+		double *yvel0 = yvel0_buffer.data;
+		const int yvel0_sizex = yvel0_buffer.sizeX;
+		double *left_yvel0 = left_yvel0_buffer.data;
+		const int left_yvel0_sizex = left_yvel0_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,yvel0, x_min - j, k) = idx2f(,left_yvel0, left_xmax + 1 - j, k);
+				yvel0[(x_min - j) + (k) * yvel0_sizex] = left_yvel0[(left_xmax + 1 - j) + (k) * left_yvel0_sizex];
 			}
 		}
 	}
@@ -199,12 +219,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_yvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(yvel1_buffer, yvel1)
-		mapToFrom2Dfe(left_yvel1_buffer, left_yvel1)
-		omp(parallel(1) enable_target(use_target))
+		double *yvel1 = yvel1_buffer.data;
+		const int yvel1_sizex = yvel1_buffer.sizeX;
+		double *left_yvel1 = left_yvel1_buffer.data;
+		const int left_yvel1_sizex = left_yvel1_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,yvel1, x_min - j, k) = idx2f(,left_yvel1, left_xmax + 1 - j, k);
+				yvel1[(x_min - j) + (k) * yvel1_sizex] = left_yvel1[(left_xmax + 1 - j) + (k) * left_yvel1_sizex];
 			}
 		}
 	}
@@ -213,12 +235,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_vol_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(vol_flux_x_buffer, vol_flux_x)
-		mapToFrom2Dfe(left_vol_flux_x_buffer, left_vol_flux_x)
-		omp(parallel(1) enable_target(use_target))
+		double *vol_flux_x = vol_flux_x_buffer.data;
+		const int vol_flux_x_sizex = vol_flux_x_buffer.sizeX;
+		double *left_vol_flux_x = left_vol_flux_x_buffer.data;
+		const int left_vol_flux_x_sizex = left_vol_flux_x_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,vol_flux_x, x_min - j, k) = idx2f(,left_vol_flux_x, left_xmax + 1 - j, k);
+				vol_flux_x[(x_min - j) + (k) * vol_flux_x_sizex] = left_vol_flux_x[(left_xmax + 1 - j) + (k) * left_vol_flux_x_sizex];
 			}
 		}
 	}
@@ -227,12 +251,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_mass_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(mass_flux_x_buffer, mass_flux_x)
-		mapToFrom2Dfe(left_mass_flux_x_buffer, left_mass_flux_x)
-		omp(parallel(1) enable_target(use_target))
+		double *mass_flux_x = mass_flux_x_buffer.data;
+		const int mass_flux_x_sizex = mass_flux_x_buffer.sizeX;
+		double *left_mass_flux_x = left_mass_flux_x_buffer.data;
+		const int left_mass_flux_x_sizex = left_mass_flux_x_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,mass_flux_x, x_min - j, k) = idx2f(,left_mass_flux_x, left_xmax + 1 - j, k);
+				mass_flux_x[(x_min - j) + (k) * mass_flux_x_sizex] = left_mass_flux_x[(left_xmax + 1 - j) + (k) * left_mass_flux_x_sizex];
 			}
 		}
 	}
@@ -241,12 +267,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_vol_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(vol_flux_y_buffer, vol_flux_y)
-		mapToFrom2Dfe(left_vol_flux_y_buffer, left_vol_flux_y)
-		omp(parallel(1) enable_target(use_target))
+		double *vol_flux_y = vol_flux_y_buffer.data;
+		const int vol_flux_y_sizex = vol_flux_y_buffer.sizeX;
+		double *left_vol_flux_y = left_vol_flux_y_buffer.data;
+		const int left_vol_flux_y_sizex = left_vol_flux_y_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,vol_flux_y, x_min - j, k) = idx2f(,left_vol_flux_y, left_xmax + 1 - j, k);
+				vol_flux_y[(x_min - j) + (k) * vol_flux_y_sizex] = left_vol_flux_y[(left_xmax + 1 - j) + (k) * left_vol_flux_y_sizex];
 			}
 		}
 	}
@@ -255,12 +283,14 @@ void update_tile_halo_l_kernel(
 	if (fields[field_mass_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(mass_flux_y_buffer, mass_flux_y)
-		mapToFrom2Dfe(left_mass_flux_y_buffer, left_mass_flux_y)
-		omp(parallel(1) enable_target(use_target))
+		double *mass_flux_y = mass_flux_y_buffer.data;
+		const int mass_flux_y_sizex = mass_flux_y_buffer.sizeX;
+		double *left_mass_flux_y = left_mass_flux_y_buffer.data;
+		const int left_mass_flux_y_sizex = left_mass_flux_y_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,mass_flux_y, x_min - j, k) = idx2f(,left_mass_flux_y, left_xmax + 1 - j, k);
+				mass_flux_y[(x_min - j) + (k) * mass_flux_y_sizex] = left_mass_flux_y[(left_xmax + 1 - j) + (k) * left_mass_flux_y_sizex];
 			}
 		}
 	}
@@ -298,12 +328,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_density0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(density0_buffer, density0)
-		mapToFrom2Dfe(right_density0_buffer, right_density0)
-		omp(parallel(1) enable_target(use_target))
+		double *density0 = density0_buffer.data;
+		const int density0_sizex = density0_buffer.sizeX;
+		double *right_density0 = right_density0_buffer.data;
+		const int right_density0_sizex = right_density0_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,density0, x_max + 2 + j, k) = idx2f(,right_density0, right_xmin - 1 + 2 + j, k);
+				density0[(x_max + 2 + j) + (k) * density0_sizex] = right_density0[(right_xmin - 1 + 2 + j) + (k) * right_density0_sizex];
 			}
 		}
 	}
@@ -312,12 +344,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_density1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(density1_buffer, density1)
-		mapToFrom2Dfe(right_density1_buffer, right_density1)
-		omp(parallel(1) enable_target(use_target))
+		double *density1 = density1_buffer.data;
+		const int density1_sizex = density1_buffer.sizeX;
+		double *right_density1 = right_density1_buffer.data;
+		const int right_density1_sizex = right_density1_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,density1, x_max + 2 + j, k) = idx2f(,right_density1, right_xmin - 1 + 2 + j, k);
+				density1[(x_max + 2 + j) + (k) * density1_sizex] = right_density1[(right_xmin - 1 + 2 + j) + (k) * right_density1_sizex];
 			}
 		}
 	}
@@ -326,12 +360,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_energy0] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(energy0_buffer, energy0)
-		mapToFrom2Dfe(right_energy0_buffer, right_energy0)
-		omp(parallel(1) enable_target(use_target))
+		double *energy0 = energy0_buffer.data;
+		const int energy0_sizex = energy0_buffer.sizeX;
+		double *right_energy0 = right_energy0_buffer.data;
+		const int right_energy0_sizex = right_energy0_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,energy0, x_max + 2 + j, k) = idx2f(,right_energy0, right_xmin - 1 + 2 + j, k);
+				energy0[(x_max + 2 + j) + (k) * energy0_sizex] = right_energy0[(right_xmin - 1 + 2 + j) + (k) * right_energy0_sizex];
 			}
 		}
 	}
@@ -340,12 +376,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_energy1] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(energy1_buffer, energy1)
-		mapToFrom2Dfe(right_energy1_buffer, right_energy1)
-		omp(parallel(1) enable_target(use_target))
+		double *energy1 = energy1_buffer.data;
+		const int energy1_sizex = energy1_buffer.sizeX;
+		double *right_energy1 = right_energy1_buffer.data;
+		const int right_energy1_sizex = right_energy1_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,energy1, x_max + 2 + j, k) = idx2f(,right_energy1, right_xmin - 1 + 2 + j, k);
+				energy1[(x_max + 2 + j) + (k) * energy1_sizex] = right_energy1[(right_xmin - 1 + 2 + j) + (k) * right_energy1_sizex];
 			}
 		}
 	}
@@ -354,12 +392,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_pressure] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(pressure_buffer, pressure)
-		mapToFrom2Dfe(right_pressure_buffer, right_pressure)
-		omp(parallel(1) enable_target(use_target))
+		double *pressure = pressure_buffer.data;
+		const int pressure_sizex = pressure_buffer.sizeX;
+		double *right_pressure = right_pressure_buffer.data;
+		const int right_pressure_sizex = right_pressure_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,pressure, x_max + 2 + j, k) = idx2f(,right_pressure, right_xmin - 1 + 2 + j, k);
+				pressure[(x_max + 2 + j) + (k) * pressure_sizex] = right_pressure[(right_xmin - 1 + 2 + j) + (k) * right_pressure_sizex];
 			}
 		}
 	}
@@ -368,12 +408,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_viscosity] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(viscosity_buffer, viscosity)
-		mapToFrom2Dfe(right_viscosity_buffer, right_viscosity)
-		omp(parallel(1) enable_target(use_target))
+		double *viscosity = viscosity_buffer.data;
+		const int viscosity_sizex = viscosity_buffer.sizeX;
+		double *right_viscosity = right_viscosity_buffer.data;
+		const int right_viscosity_sizex = right_viscosity_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,viscosity, x_max + 2 + j, k) = idx2f(,right_viscosity, right_xmin - 1 + 2 + j, k);
+				viscosity[(x_max + 2 + j) + (k) * viscosity_sizex] = right_viscosity[(right_xmin - 1 + 2 + j) + (k) * right_viscosity_sizex];
 			}
 		}
 	}
@@ -382,12 +424,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_soundspeed] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(soundspeed_buffer, soundspeed)
-		mapToFrom2Dfe(right_soundspeed_buffer, right_soundspeed)
-		omp(parallel(1) enable_target(use_target))
+		double *soundspeed = soundspeed_buffer.data;
+		const int soundspeed_sizex = soundspeed_buffer.sizeX;
+		double *right_soundspeed = right_soundspeed_buffer.data;
+		const int right_soundspeed_sizex = right_soundspeed_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,soundspeed, x_max + 2 + j, k) = idx2f(,right_soundspeed, right_xmin - 1 + 2 + j, k);
+				soundspeed[(x_max + 2 + j) + (k) * soundspeed_sizex] = right_soundspeed[(right_xmin - 1 + 2 + j) + (k) * right_soundspeed_sizex];
 			}
 		}
 	}
@@ -396,12 +440,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_xvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(xvel0_buffer, xvel0)
-		mapToFrom2Dfe(right_xvel0_buffer, right_xvel0)
-		omp(parallel(1) enable_target(use_target))
+		double *xvel0 = xvel0_buffer.data;
+		const int xvel0_sizex = xvel0_buffer.sizeX;
+		double *right_xvel0 = right_xvel0_buffer.data;
+		const int right_xvel0_sizex = right_xvel0_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,xvel0, x_max + 1 + 2 + j, k) = idx2f(,right_xvel0, right_xmin + 1 - 1 + 2 + j, k);
+				xvel0[(x_max + 1 + 2 + j) + (k) * xvel0_sizex] = right_xvel0[(right_xmin + 1 - 1 + 2 + j) + (k) * right_xvel0_sizex];
 			}
 		}
 	}
@@ -410,12 +456,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_xvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(xvel1_buffer, xvel1)
-		mapToFrom2Dfe(right_xvel1_buffer, right_xvel1)
-		omp(parallel(1) enable_target(use_target))
+		double *xvel1 = xvel1_buffer.data;
+		const int xvel1_sizex = xvel1_buffer.sizeX;
+		double *right_xvel1 = right_xvel1_buffer.data;
+		const int right_xvel1_sizex = right_xvel1_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,xvel1, x_max + 1 + 2 + j, k) = idx2f(,right_xvel1, right_xmin + 1 - 1 + 2 + j, k);
+				xvel1[(x_max + 1 + 2 + j) + (k) * xvel1_sizex] = right_xvel1[(right_xmin + 1 - 1 + 2 + j) + (k) * right_xvel1_sizex];
 			}
 		}
 	}
@@ -424,12 +472,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_yvel0] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(yvel0_buffer, yvel0)
-		mapToFrom2Dfe(right_yvel0_buffer, right_yvel0)
-		omp(parallel(1) enable_target(use_target))
+		double *yvel0 = yvel0_buffer.data;
+		const int yvel0_sizex = yvel0_buffer.sizeX;
+		double *right_yvel0 = right_yvel0_buffer.data;
+		const int right_yvel0_sizex = right_yvel0_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,yvel0, x_max + 1 + 2 + j, k) = idx2f(,right_yvel0, right_xmin + 1 - 1 + 2 + j, k);
+				yvel0[(x_max + 1 + 2 + j) + (k) * yvel0_sizex] = right_yvel0[(right_xmin + 1 - 1 + 2 + j) + (k) * right_yvel0_sizex];
 			}
 		}
 	}
@@ -438,12 +488,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_yvel1] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(yvel1_buffer, yvel1)
-		mapToFrom2Dfe(right_yvel1_buffer, right_yvel1)
-		omp(parallel(1) enable_target(use_target))
+		double *yvel1 = yvel1_buffer.data;
+		const int yvel1_sizex = yvel1_buffer.sizeX;
+		double *right_yvel1 = right_yvel1_buffer.data;
+		const int right_yvel1_sizex = right_yvel1_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,yvel1, x_max + 1 + 2 + j, k) = idx2f(,right_yvel1, right_xmin + 1 - 1 + 2 + j, k);
+				yvel1[(x_max + 1 + 2 + j) + (k) * yvel1_sizex] = right_yvel1[(right_xmin + 1 - 1 + 2 + j) + (k) * right_yvel1_sizex];
 			}
 		}
 	}
@@ -452,12 +504,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_vol_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(vol_flux_x_buffer, vol_flux_x)
-		mapToFrom2Dfe(right_vol_flux_x_buffer, right_vol_flux_x)
-		omp(parallel(1) enable_target(use_target))
+		double *vol_flux_x = vol_flux_x_buffer.data;
+		const int vol_flux_x_sizex = vol_flux_x_buffer.sizeX;
+		double *right_vol_flux_x = right_vol_flux_x_buffer.data;
+		const int right_vol_flux_x_sizex = right_vol_flux_x_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,vol_flux_x, x_max + 1 + 2 + j, k) = idx2f(,right_vol_flux_x, right_xmin + 1 - 1 + 2 + j, k);
+				vol_flux_x[(x_max + 1 + 2 + j) + (k) * vol_flux_x_sizex] = right_vol_flux_x[(right_xmin + 1 - 1 + 2 + j) + (k) * right_vol_flux_x_sizex];
 			}
 		}
 	}
@@ -466,12 +520,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_mass_flux_x] == 1) {
 		// DO k=y_min-depth,y_max+depth
 
-		mapToFrom2Dfe(mass_flux_x_buffer, mass_flux_x)
-		mapToFrom2Dfe(right_mass_flux_x_buffer, right_mass_flux_x)
-		omp(parallel(1) enable_target(use_target))
+		double *mass_flux_x = mass_flux_x_buffer.data;
+		const int mass_flux_x_sizex = mass_flux_x_buffer.sizeX;
+		double *right_mass_flux_x = right_mass_flux_x_buffer.data;
+		const int right_mass_flux_x_sizex = right_mass_flux_x_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,mass_flux_x, x_max + 1 + 2 + j, k) = idx2f(,right_mass_flux_x, right_xmin + 1 - 1 + 2 + j, k);
+				mass_flux_x[(x_max + 1 + 2 + j) + (k) * mass_flux_x_sizex] = right_mass_flux_x[(right_xmin + 1 - 1 + 2 + j) + (k) * right_mass_flux_x_sizex];
 			}
 		}
 	}
@@ -480,12 +536,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_vol_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(vol_flux_y_buffer, vol_flux_y)
-		mapToFrom2Dfe(right_vol_flux_y_buffer, right_vol_flux_y)
-		omp(parallel(1) enable_target(use_target))
+		double *vol_flux_y = vol_flux_y_buffer.data;
+		const int vol_flux_y_sizex = vol_flux_y_buffer.sizeX;
+		double *right_vol_flux_y = right_vol_flux_y_buffer.data;
+		const int right_vol_flux_y_sizex = right_vol_flux_y_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,vol_flux_y, x_max + 2 + j, k) = idx2f(,right_vol_flux_y, right_xmin - 1 + 2 + j, k);
+				vol_flux_y[(x_max + 2 + j) + (k) * vol_flux_y_sizex] = right_vol_flux_y[(right_xmin - 1 + 2 + j) + (k) * right_vol_flux_y_sizex];
 			}
 		}
 	}
@@ -494,12 +552,14 @@ void update_tile_halo_r_kernel(
 	if (fields[field_mass_flux_y] == 1) {
 		// DO k=y_min-depth,y_max+1+depth
 
-		mapToFrom2Dfe(mass_flux_y_buffer, mass_flux_y)
-		mapToFrom2Dfe(right_mass_flux_y_buffer, right_mass_flux_y)
-		omp(parallel(1) enable_target(use_target))
+		double *mass_flux_y = mass_flux_y_buffer.data;
+		const int mass_flux_y_sizex = mass_flux_y_buffer.sizeX;
+		double *right_mass_flux_y = right_mass_flux_y_buffer.data;
+		const int right_mass_flux_y_sizex = right_mass_flux_y_buffer.sizeX;
+		#pragma omp target teams distribute parallel for simd if(target: use_target)
 		for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 			for (int j = 0; j < depth; ++j) {
-				idx2f(,mass_flux_y, x_max + 2 + j, k) = idx2f(,right_mass_flux_y, right_xmin - 1 + 2 + j, k);
+				mass_flux_y[(x_max + 2 + j) + (k) * mass_flux_y_sizex] = right_mass_flux_y[(right_xmin - 1 + 2 + j) + (k) * right_mass_flux_y_sizex];
 			}
 		}
 	}
@@ -540,11 +600,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(density0_buffer, density0)
-			mapToFrom2Dfe(top_density0_buffer, top_density0)
-			omp(parallel(1) enable_target(use_target))
+			double *density0 = density0_buffer.data;
+			const int density0_sizex = density0_buffer.sizeX;
+			double *top_density0 = top_density0_buffer.data;
+			const int top_density0_sizex = top_density0_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,density0, j, y_max + 2 + k) = idx2f(,top_density0, j, top_ymin - 1 + 2 + k);
+				density0[j + (y_max + 2 + k) * density0_sizex] = top_density0[j + (top_ymin - 1 + 2 + k) * top_density0_sizex];
 			}
 		}
 	}
@@ -554,11 +616,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(density1_buffer, density1)
-			mapToFrom2Dfe(top_density1_buffer, top_density1)
-			omp(parallel(1) enable_target(use_target))
+			double *density1 = density1_buffer.data;
+			const int density1_sizex = density1_buffer.sizeX;
+			double *top_density1 = top_density1_buffer.data;
+			const int top_density1_sizex = top_density1_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,density1, j, y_max + 2 + k) = idx2f(,top_density1, j, top_ymin - 1 + 2 + k);
+				density1[j + (y_max + 2 + k) * density1_sizex] = top_density1[j + (top_ymin - 1 + 2 + k) * top_density1_sizex];
 			}
 		}
 	}
@@ -568,11 +632,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(energy0_buffer, energy0)
-			mapToFrom2Dfe(top_energy0_buffer, top_energy0)
-			omp(parallel(1) enable_target(use_target))
+			double *energy0 = energy0_buffer.data;
+			const int energy0_sizex = energy0_buffer.sizeX;
+			double *top_energy0 = top_energy0_buffer.data;
+			const int top_energy0_sizex = top_energy0_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,energy0, j, y_max + 2 + k) = idx2f(,top_energy0, j, top_ymin - 1 + 2 + k);
+				energy0[j + (y_max + 2 + k) * energy0_sizex] = top_energy0[j + (top_ymin - 1 + 2 + k) * top_energy0_sizex];
 			}
 		}
 	}
@@ -582,11 +648,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(energy1_buffer, energy1)
-			mapToFrom2Dfe(top_energy1_buffer, top_energy1)
-			omp(parallel(1) enable_target(use_target))
+			double *energy1 = energy1_buffer.data;
+			const int energy1_sizex = energy1_buffer.sizeX;
+			double *top_energy1 = top_energy1_buffer.data;
+			const int top_energy1_sizex = top_energy1_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,energy1, j, y_max + 2 + k) = idx2f(,top_energy1, j, top_ymin - 1 + 2 + k);
+				energy1[j + (y_max + 2 + k) * energy1_sizex] = top_energy1[j + (top_ymin - 1 + 2 + k) * top_energy1_sizex];
 			}
 		}
 	}
@@ -596,11 +664,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(pressure_buffer, pressure)
-			mapToFrom2Dfe(top_pressure_buffer, top_pressure)
-			omp(parallel(1) enable_target(use_target))
+			double *pressure = pressure_buffer.data;
+			const int pressure_sizex = pressure_buffer.sizeX;
+			double *top_pressure = top_pressure_buffer.data;
+			const int top_pressure_sizex = top_pressure_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,pressure, j, y_max + 2 + k) = idx2f(,top_pressure, j, top_ymin - 1 + 2 + k);
+				pressure[j + (y_max + 2 + k) * pressure_sizex] = top_pressure[j + (top_ymin - 1 + 2 + k) * top_pressure_sizex];
 			}
 		}
 	}
@@ -610,11 +680,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(viscosity_buffer, viscosity)
-			mapToFrom2Dfe(top_viscosity_buffer, top_viscosity)
-			omp(parallel(1) enable_target(use_target))
+			double *viscosity = viscosity_buffer.data;
+			const int viscosity_sizex = viscosity_buffer.sizeX;
+			double *top_viscosity = top_viscosity_buffer.data;
+			const int top_viscosity_sizex = top_viscosity_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,viscosity, j, y_max + 2 + k) = idx2f(,top_viscosity, j, top_ymin - 1 + 2 + k);
+				viscosity[j + (y_max + 2 + k) * viscosity_sizex] = top_viscosity[j + (top_ymin - 1 + 2 + k) * top_viscosity_sizex];
 			}
 		}
 	}
@@ -624,11 +696,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(soundspeed_buffer, soundspeed)
-			mapToFrom2Dfe(top_soundspeed_buffer, top_soundspeed)
-			omp(parallel(1) enable_target(use_target))
+			double *soundspeed = soundspeed_buffer.data;
+			const int soundspeed_sizex = soundspeed_buffer.sizeX;
+			double *top_soundspeed = top_soundspeed_buffer.data;
+			const int top_soundspeed_sizex = top_soundspeed_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,soundspeed, j, y_max + 2 + k) = idx2f(,top_soundspeed, j, top_ymin - 1 + 2 + k);
+				soundspeed[j + (y_max + 2 + k) * soundspeed_sizex] = top_soundspeed[j + (top_ymin - 1 + 2 + k) * top_soundspeed_sizex];
 			}
 		}
 	}
@@ -638,11 +712,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(xvel0_buffer, xvel0)
-			mapToFrom2Dfe(top_xvel0_buffer, top_xvel0)
-			omp(parallel(1) enable_target(use_target))
+			double *xvel0 = xvel0_buffer.data;
+			const int xvel0_sizex = xvel0_buffer.sizeX;
+			double *top_xvel0 = top_xvel0_buffer.data;
+			const int top_xvel0_sizex = top_xvel0_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,xvel0, j, y_max + 1 + 2 + k) = idx2f(,top_xvel0, j, top_ymin + 1 - 1 + 2 + k);
+				xvel0[j + (y_max + 1 + 2 + k) * xvel0_sizex] = top_xvel0[j + (top_ymin + 1 - 1 + 2 + k) * top_xvel0_sizex];
 			}
 		}
 	}
@@ -652,11 +728,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(xvel1_buffer, xvel1)
-			mapToFrom2Dfe(top_xvel1_buffer, top_xvel1)
-			omp(parallel(1) enable_target(use_target))
+			double *xvel1 = xvel1_buffer.data;
+			const int xvel1_sizex = xvel1_buffer.sizeX;
+			double *top_xvel1 = top_xvel1_buffer.data;
+			const int top_xvel1_sizex = top_xvel1_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,xvel1, j, y_max + 1 + 2 + k) = idx2f(,top_xvel1, j, top_ymin + 1 - 1 + 2 + k);
+				xvel1[j + (y_max + 1 + 2 + k) * xvel1_sizex] = top_xvel1[j + (top_ymin + 1 - 1 + 2 + k) * top_xvel1_sizex];
 			}
 		}
 	}
@@ -666,11 +744,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(yvel0_buffer, yvel0)
-			mapToFrom2Dfe(top_yvel0_buffer, top_yvel0)
-			omp(parallel(1) enable_target(use_target))
+			double *yvel0 = yvel0_buffer.data;
+			const int yvel0_sizex = yvel0_buffer.sizeX;
+			double *top_yvel0 = top_yvel0_buffer.data;
+			const int top_yvel0_sizex = top_yvel0_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,yvel0, j, y_max + 1 + 2 + k) = idx2f(,top_yvel0, j, top_ymin + 1 - 1 + 2 + k);
+				yvel0[j + (y_max + 1 + 2 + k) * yvel0_sizex] = top_yvel0[j + (top_ymin + 1 - 1 + 2 + k) * top_yvel0_sizex];
 			}
 		}
 	}
@@ -680,11 +760,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(yvel1_buffer, yvel1)
-			mapToFrom2Dfe(top_yvel1_buffer, top_yvel1)
-			omp(parallel(1) enable_target(use_target))
+			double *yvel1 = yvel1_buffer.data;
+			const int yvel1_sizex = yvel1_buffer.sizeX;
+			double *top_yvel1 = top_yvel1_buffer.data;
+			const int top_yvel1_sizex = top_yvel1_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,yvel1, j, y_max + 1 + 2 + k) = idx2f(,top_yvel1, j, top_ymin + 1 - 1 + 2 + k);
+				yvel1[j + (y_max + 1 + 2 + k) * yvel1_sizex] = top_yvel1[j + (top_ymin + 1 - 1 + 2 + k) * top_yvel1_sizex];
 			}
 		}
 	}
@@ -694,11 +776,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(vol_flux_x_buffer, vol_flux_x)
-			mapToFrom2Dfe(top_vol_flux_x_buffer, top_vol_flux_x)
-			omp(parallel(1) enable_target(use_target))
+			double *vol_flux_x = vol_flux_x_buffer.data;
+			const int vol_flux_x_sizex = vol_flux_x_buffer.sizeX;
+			double *top_vol_flux_x = top_vol_flux_x_buffer.data;
+			const int top_vol_flux_x_sizex = top_vol_flux_x_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,vol_flux_x, j, y_max + 2 + k) = idx2f(,top_vol_flux_x, j, top_ymin - 1 + 2 + k);
+				vol_flux_x[j + (y_max + 2 + k) * vol_flux_x_sizex] = top_vol_flux_x[j + (top_ymin - 1 + 2 + k) * top_vol_flux_x_sizex];
 			}
 		}
 	}
@@ -708,11 +792,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(mass_flux_x_buffer, mass_flux_x)
-			mapToFrom2Dfe(top_mass_flux_x_buffer, top_mass_flux_x)
-			omp(parallel(1) enable_target(use_target))
+			double *mass_flux_x = mass_flux_x_buffer.data;
+			const int mass_flux_x_sizex = mass_flux_x_buffer.sizeX;
+			double *top_mass_flux_x = top_mass_flux_x_buffer.data;
+			const int top_mass_flux_x_sizex = top_mass_flux_x_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,mass_flux_x, j, y_max + 2 + k) = idx2f(,top_mass_flux_x, j, top_ymin - 1 + 2 + k);
+				mass_flux_x[j + (y_max + 2 + k) * mass_flux_x_sizex] = top_mass_flux_x[j + (top_ymin - 1 + 2 + k) * top_mass_flux_x_sizex];
 			}
 		}
 	}
@@ -722,11 +808,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(vol_flux_y_buffer, vol_flux_y)
-			mapToFrom2Dfe(top_vol_flux_y_buffer, top_vol_flux_y)
-			omp(parallel(1) enable_target(use_target))
+			double *vol_flux_y = vol_flux_y_buffer.data;
+			const int vol_flux_y_sizex = vol_flux_y_buffer.sizeX;
+			double *top_vol_flux_y = top_vol_flux_y_buffer.data;
+			const int top_vol_flux_y_sizex = top_vol_flux_y_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,vol_flux_y, j, y_max + 1 + 2 + k) = idx2f(,top_vol_flux_y, j, top_ymin + 1 - 1 + 2 + k);
+				vol_flux_y[j + (y_max + 1 + 2 + k) * vol_flux_y_sizex] = top_vol_flux_y[j + (top_ymin + 1 - 1 + 2 + k) * top_vol_flux_y_sizex];
 			}
 		}
 	}
@@ -736,11 +824,13 @@ void update_tile_halo_t_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(mass_flux_y_buffer, mass_flux_y)
-			mapToFrom2Dfe(top_mass_flux_y_buffer, top_mass_flux_y)
-			omp(parallel(1) enable_target(use_target))
+			double *mass_flux_y = mass_flux_y_buffer.data;
+			const int mass_flux_y_sizex = mass_flux_y_buffer.sizeX;
+			double *top_mass_flux_y = top_mass_flux_y_buffer.data;
+			const int top_mass_flux_y_sizex = top_mass_flux_y_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,mass_flux_y, j, y_max + 1 + 2 + k) = idx2f(,top_mass_flux_y, j, top_ymin + 1 - 1 + 2 + k);
+				mass_flux_y[j + (y_max + 1 + 2 + k) * mass_flux_y_sizex] = top_mass_flux_y[j + (top_ymin + 1 - 1 + 2 + k) * top_mass_flux_y_sizex];
 			}
 		}
 	}
@@ -780,11 +870,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(density0_buffer, density0)
-			mapToFrom2Dfe(bottom_density0_buffer, bottom_density0)
-			omp(parallel(1) enable_target(use_target))
+			double *density0 = density0_buffer.data;
+			const int density0_sizex = density0_buffer.sizeX;
+			double *bottom_density0 = bottom_density0_buffer.data;
+			const int bottom_density0_sizex = bottom_density0_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,density0, j, y_min - k) = idx2f(,bottom_density0, j, bottom_ymax + 1 - k);
+				density0[j + (y_min - k) * density0_sizex] = bottom_density0[j + (bottom_ymax + 1 - k) * bottom_density0_sizex];
 			}
 		}
 	}
@@ -794,11 +886,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(density1_buffer, density1)
-			mapToFrom2Dfe(bottom_density1_buffer, bottom_density1)
-			omp(parallel(1) enable_target(use_target))
+			double *density1 = density1_buffer.data;
+			const int density1_sizex = density1_buffer.sizeX;
+			double *bottom_density1 = bottom_density1_buffer.data;
+			const int bottom_density1_sizex = bottom_density1_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,density1, j, y_min - k) = idx2f(,bottom_density1, j, bottom_ymax + 1 - k);
+				density1[j + (y_min - k) * density1_sizex] = bottom_density1[j + (bottom_ymax + 1 - k) * bottom_density1_sizex];
 			}
 		}
 	}
@@ -808,11 +902,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(energy0_buffer, energy0)
-			mapToFrom2Dfe(bottom_energy0_buffer, bottom_energy0)
-			omp(parallel(1) enable_target(use_target))
+			double *energy0 = energy0_buffer.data;
+			const int energy0_sizex = energy0_buffer.sizeX;
+			double *bottom_energy0 = bottom_energy0_buffer.data;
+			const int bottom_energy0_sizex = bottom_energy0_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,energy0, j, y_min - k) = idx2f(,bottom_energy0, j, bottom_ymax + 1 - k);
+				energy0[j + (y_min - k) * energy0_sizex] = bottom_energy0[j + (bottom_ymax + 1 - k) * bottom_energy0_sizex];
 			}
 		}
 	}
@@ -822,11 +918,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(energy1_buffer, energy1)
-			mapToFrom2Dfe(bottom_energy1_buffer, bottom_energy1)
-			omp(parallel(1) enable_target(use_target))
+			double *energy1 = energy1_buffer.data;
+			const int energy1_sizex = energy1_buffer.sizeX;
+			double *bottom_energy1 = bottom_energy1_buffer.data;
+			const int bottom_energy1_sizex = bottom_energy1_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,energy1, j, y_min - k) = idx2f(,bottom_energy1, j, bottom_ymax + 1 - k);
+				energy1[j + (y_min - k) * energy1_sizex] = bottom_energy1[j + (bottom_ymax + 1 - k) * bottom_energy1_sizex];
 			}
 		}
 	}
@@ -836,11 +934,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(pressure_buffer, pressure)
-			mapToFrom2Dfe(bottom_pressure_buffer, bottom_pressure)
-			omp(parallel(1) enable_target(use_target))
+			double *pressure = pressure_buffer.data;
+			const int pressure_sizex = pressure_buffer.sizeX;
+			double *bottom_pressure = bottom_pressure_buffer.data;
+			const int bottom_pressure_sizex = bottom_pressure_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,pressure, j, y_min - k) = idx2f(,bottom_pressure, j, bottom_ymax + 1 - k);
+				pressure[j + (y_min - k) * pressure_sizex] = bottom_pressure[j + (bottom_ymax + 1 - k) * bottom_pressure_sizex];
 			}
 		}
 	}
@@ -850,11 +950,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(viscosity_buffer, viscosity)
-			mapToFrom2Dfe(bottom_viscosity_buffer, bottom_viscosity)
-			omp(parallel(1) enable_target(use_target))
+			double *viscosity = viscosity_buffer.data;
+			const int viscosity_sizex = viscosity_buffer.sizeX;
+			double *bottom_viscosity = bottom_viscosity_buffer.data;
+			const int bottom_viscosity_sizex = bottom_viscosity_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,viscosity, j, y_min - k) = idx2f(,bottom_viscosity, j, bottom_ymax + 1 - k);
+				viscosity[j + (y_min - k) * viscosity_sizex] = bottom_viscosity[j + (bottom_ymax + 1 - k) * bottom_viscosity_sizex];
 			}
 		}
 	}
@@ -864,11 +966,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			//  DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(soundspeed_buffer, soundspeed)
-			mapToFrom2Dfe(bottom_soundspeed_buffer, bottom_soundspeed)
-			omp(parallel(1) enable_target(use_target))
+			double *soundspeed = soundspeed_buffer.data;
+			const int soundspeed_sizex = soundspeed_buffer.sizeX;
+			double *bottom_soundspeed = bottom_soundspeed_buffer.data;
+			const int bottom_soundspeed_sizex = bottom_soundspeed_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,soundspeed, j, y_min - k) = idx2f(,bottom_soundspeed, j, bottom_ymax + 1 - k);
+				soundspeed[j + (y_min - k) * soundspeed_sizex] = bottom_soundspeed[j + (bottom_ymax + 1 - k) * bottom_soundspeed_sizex];
 			}
 		}
 	}
@@ -878,11 +982,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(xvel0_buffer, xvel0)
-			mapToFrom2Dfe(bottom_xvel0_buffer, bottom_xvel0)
-			omp(parallel(1) enable_target(use_target))
+			double *xvel0 = xvel0_buffer.data;
+			const int xvel0_sizex = xvel0_buffer.sizeX;
+			double *bottom_xvel0 = bottom_xvel0_buffer.data;
+			const int bottom_xvel0_sizex = bottom_xvel0_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,xvel0, j, y_min - k) = idx2f(,bottom_xvel0, j, bottom_ymax + 1 - k);
+				xvel0[j + (y_min - k) * xvel0_sizex] = bottom_xvel0[j + (bottom_ymax + 1 - k) * bottom_xvel0_sizex];
 			}
 		}
 	}
@@ -892,11 +998,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(xvel1_buffer, xvel1)
-			mapToFrom2Dfe(bottom_xvel1_buffer, bottom_xvel1)
-			omp(parallel(1) enable_target(use_target))
+			double *xvel1 = xvel1_buffer.data;
+			const int xvel1_sizex = xvel1_buffer.sizeX;
+			double *bottom_xvel1 = bottom_xvel1_buffer.data;
+			const int bottom_xvel1_sizex = bottom_xvel1_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,xvel1, j, y_min - k) = idx2f(,bottom_xvel1, j, bottom_ymax + 1 - k);
+				xvel1[j + (y_min - k) * xvel1_sizex] = bottom_xvel1[j + (bottom_ymax + 1 - k) * bottom_xvel1_sizex];
 			}
 		}
 	}
@@ -906,11 +1014,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(yvel0_buffer, yvel0)
-			mapToFrom2Dfe(bottom_yvel0_buffer, bottom_yvel0)
-			omp(parallel(1) enable_target(use_target))
+			double *yvel0 = yvel0_buffer.data;
+			const int yvel0_sizex = yvel0_buffer.sizeX;
+			double *bottom_yvel0 = bottom_yvel0_buffer.data;
+			const int bottom_yvel0_sizex = bottom_yvel0_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,yvel0, j, y_min - k) = idx2f(,bottom_yvel0, j, bottom_ymax + 1 - k);
+				yvel0[j + (y_min - k) * yvel0_sizex] = bottom_yvel0[j + (bottom_ymax + 1 - k) * bottom_yvel0_sizex];
 			}
 		}
 	}
@@ -920,11 +1030,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(yvel1_buffer, yvel1)
-			mapToFrom2Dfe(bottom_yvel1_buffer, bottom_yvel1)
-			omp(parallel(1) enable_target(use_target))
+			double *yvel1 = yvel1_buffer.data;
+			const int yvel1_sizex = yvel1_buffer.sizeX;
+			double *bottom_yvel1 = bottom_yvel1_buffer.data;
+			const int bottom_yvel1_sizex = bottom_yvel1_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,yvel1, j, y_min - k) = idx2f(,bottom_yvel1, j, bottom_ymax + 1 - k);
+				yvel1[j + (y_min - k) * yvel1_sizex] = bottom_yvel1[j + (bottom_ymax + 1 - k) * bottom_yvel1_sizex];
 			}
 		}
 	}
@@ -934,11 +1046,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(vol_flux_x_buffer, vol_flux_x)
-			mapToFrom2Dfe(bottom_vol_flux_x_buffer, bottom_vol_flux_x)
-			omp(parallel(1) enable_target(use_target))
+			double *vol_flux_x = vol_flux_x_buffer.data;
+			const int vol_flux_x_sizex = vol_flux_x_buffer.sizeX;
+			double *bottom_vol_flux_x = bottom_vol_flux_x_buffer.data;
+			const int bottom_vol_flux_x_sizex = bottom_vol_flux_x_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,vol_flux_x, j, y_min - k) = idx2f(,bottom_vol_flux_x, j, bottom_ymax + 1 - k);
+				vol_flux_x[j + (y_min - k) * vol_flux_x_sizex] = bottom_vol_flux_x[j + (bottom_ymax + 1 - k) * bottom_vol_flux_x_sizex];
 			}
 		}
 	}
@@ -948,11 +1062,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+1+depth
 
-			mapToFrom2Dfe(mass_flux_x_buffer, mass_flux_x)
-			mapToFrom2Dfe(bottom_mass_flux_x_buffer, bottom_mass_flux_x)
-			omp(parallel(1) enable_target(use_target))
+			double *mass_flux_x = mass_flux_x_buffer.data;
+			const int mass_flux_x_sizex = mass_flux_x_buffer.sizeX;
+			double *bottom_mass_flux_x = bottom_mass_flux_x_buffer.data;
+			const int bottom_mass_flux_x_sizex = bottom_mass_flux_x_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
-				idx2f(,mass_flux_x, j, y_min - k) = idx2f(,bottom_mass_flux_x, j, bottom_ymax + 1 - k);
+				mass_flux_x[j + (y_min - k) * mass_flux_x_sizex] = bottom_mass_flux_x[j + (bottom_ymax + 1 - k) * bottom_mass_flux_x_sizex];
 			}
 		}
 	}
@@ -962,11 +1078,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(vol_flux_y_buffer, vol_flux_y)
-			mapToFrom2Dfe(bottom_vol_flux_y_buffer, bottom_vol_flux_y)
-			omp(parallel(1) enable_target(use_target))
+			double *vol_flux_y = vol_flux_y_buffer.data;
+			const int vol_flux_y_sizex = vol_flux_y_buffer.sizeX;
+			double *bottom_vol_flux_y = bottom_vol_flux_y_buffer.data;
+			const int bottom_vol_flux_y_sizex = bottom_vol_flux_y_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,vol_flux_y, j, y_min - k) = idx2f(,bottom_vol_flux_y, j, bottom_ymax + 1 - k);
+				vol_flux_y[j + (y_min - k) * vol_flux_y_sizex] = bottom_vol_flux_y[j + (bottom_ymax + 1 - k) * bottom_vol_flux_y_sizex];
 			}
 		}
 	}
@@ -976,11 +1094,13 @@ void update_tile_halo_b_kernel(
 		for (int k = 0; k < depth; ++k) {
 			// DO j=x_min-depth, x_max+depth
 
-			mapToFrom2Dfe(mass_flux_y_buffer, mass_flux_y)
-			mapToFrom2Dfe(bottom_mass_flux_y_buffer, bottom_mass_flux_y)
-			omp(parallel(1) enable_target(use_target))
+			double *mass_flux_y = mass_flux_y_buffer.data;
+			const int mass_flux_y_sizex = mass_flux_y_buffer.sizeX;
+			double *bottom_mass_flux_y = bottom_mass_flux_y_buffer.data;
+			const int bottom_mass_flux_y_sizex = bottom_mass_flux_y_buffer.sizeX;
+			#pragma omp target teams distribute parallel for simd if(target: use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
-				idx2f(,mass_flux_y, j, y_min - k) = idx2f(,bottom_mass_flux_y, j, bottom_ymax + 1 - k);
+				mass_flux_y[j + (y_min - k) * mass_flux_y_sizex] = bottom_mass_flux_y[j + (bottom_ymax + 1 - k) * bottom_mass_flux_y_sizex];
 			}
 		}
 	}

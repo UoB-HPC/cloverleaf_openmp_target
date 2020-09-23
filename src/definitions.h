@@ -63,10 +63,6 @@ namespace clover {
 			std::swap(data, other.data);
 			return *this;
 		}
-		#if USE_CXX_OPERATORS
-		[[nodiscard]] constexpr T operator[](size_t i) const { return data[i]; }
-		[[nodiscard]] constexpr T &operator[](size_t i) { return data[i]; }
-		#endif
 
 
 		[[nodiscard]] constexpr size_t N() const { return size; }
@@ -102,12 +98,6 @@ namespace clover {
 		Buffer2D(Buffer2D &&other) noexcept: sizeX(other.sizeX), sizeY(other.sizeY), data(std::exchange(other.data, nullptr)) {}
 
 
-		#if USE_CXX_OPERATORS
-		[[nodiscard]] constexpr T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
-		[[nodiscard]] constexpr T const &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
-		#endif
-
-
 		[[nodiscard]] constexpr size_t N() const { return sizeX * sizeY; }
 
 
@@ -125,56 +115,15 @@ namespace clover {
 		}
 
 
-		~Buffer2D() { delete[] data; }
+		~Buffer2D() {
+			std::cout << "Delet buffer" << std::endl;
+			delete[] data;
+		}
 
 	};
 
-	#if USE_CXX_OPERATORS
-	#define idx1(xs, i)    xs[i]
-	#define idx2(xs, i, j) xs(i,j)
-	#else
-	#define idx1(xs, i) xs.data[i]
-	#define idx2(xs, i, j) xs.data[(i) + (j) * xs.sizeX]
-	#endif
-
-
-	#define _xstr(s) _str(s)
-	#define _str(s) #s
-
-	#define parallel(n) omp target teams distribute parallel for simd collapse(n) device(0)
-	#define enable_target(enable) if(target: (enable))
-
-
-//	#define mapToFrom1D(xs) map(tofrom: xs.data[:0])
-//	#define mapToFrom2D(xs) map(tofrom: xs.data[:0]) map(from: xs.sizeX)
-//
-////	#define mapTo(xs) map(to: xs.data[:xs.N()])
-//	#define mapTo1D(xs) map(to: xs.data[:xs.N()])
-
-
-
-
-	#define mapToFrom2Df(f, xs) double * xs = f.xs.data; const int xs##_sizex = f.xs.sizeX;
-	#define mapToFrom1Df(f, xs) double * xs = f.xs.data;
-
-
-
-	#define mapToFrom2Dfn(f, xs, name) double * name = f.xs.data; const int name##_sizex = f.xs.sizeX;
-
-	#define mapToFrom2Dfe( xs, name) double * name = xs.data; const int name##_sizex = xs.sizeX;
-	#define mapToFrom1Dfe(xs, name) double * name = xs.data;
-//	#define idx2fn(f, xs, i, j) xs[(i) + (j) * f.xs.sizeX]
-
-
-
-	#define idx1f(f, xs, i) xs[i]
-	#define idx2f(f, xs, i, j) xs[(i) + (j) * xs##_sizex]
-
-	#define mapTo1D(xs)
-
-
-	#define omp(xs) _Pragma(_xstr(xs))
-
+	#define hostidx1(xs, i) xs.data[i]
+	#define hostidx2(xs, i, j) xs.data[i + j * xs.sizeX]
 
 }
 
@@ -206,7 +155,7 @@ show(std::ostream &out, const std::string &name, const clover::Buffer1D<double> 
 	out << name << "(" << 1 << ") [" << buffer.size << "]" << std::endl;
 	out << "\t";
 	for (size_t i = 0; i < buffer.size; ++i) {
-		out << idx1(buffer, i) << ", ";
+		out << hostidx1(buffer, i) << ", ";
 	}
 	out << std::endl;
 }
@@ -218,7 +167,7 @@ show(std::ostream &out, const std::string &name, clover::Buffer2D<double> &buffe
 	for (size_t i = 0; i < buffer.sizeX; ++i) {
 		out << "\t";
 		for (size_t j = 0; j < buffer.sizeY; ++j) {
-			out << idx2(buffer, i, j) << ", ";
+			out << hostidx2(buffer, i, j) << ", ";
 		}
 		out << std::endl;
 	}

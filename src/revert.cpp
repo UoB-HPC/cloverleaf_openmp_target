@@ -34,16 +34,20 @@ void revert_kernel(
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	mapToFrom2Df(field, density0)
-	mapToFrom2Df(field, density1)
-	mapToFrom2Df(field, energy0)
-	mapToFrom2Df(field, energy1)
+	double *density0 = field.density0.data;
+	const int density0_sizex = field.density0.sizeX;
+	double *density1 = field.density1.data;
+	const int density1_sizex = field.density1.sizeX;
+	double *energy0 = field.energy0.data;
+	const int energy0_sizex = field.energy0.sizeX;
+	double *energy1 = field.energy1.data;
+	const int energy1_sizex = field.energy1.sizeX;
 
-	omp(parallel(2) enable_target(use_target))
+	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			idx2f(field, density1, i, j) = idx2f(field, density0, i, j);
-			idx2f(field, energy1, i, j) = idx2f(field, energy0, i, j);
+			density1[i + j * density1_sizex] = density0[i + j * density0_sizex];
+			energy1[i + j * energy1_sizex] = energy0[i + j * energy0_sizex];
 		}
 	}
 

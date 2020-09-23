@@ -46,63 +46,81 @@ void advec_mom_kernel(
 	if (mom_sweep == 1) { // x 1
 
 
-		mapToFrom2Df(field, vol_flux_y)
-		mapToFrom2Df(field, vol_flux_x)
-		mapToFrom2Df(field, volume)
-		mapToFrom2Dfn(field, work_array5, pre_vol)
-		mapToFrom2Dfn(field, work_array6, post_vol)
+		double *vol_flux_y = field.vol_flux_y.data;
+		const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
+		double *vol_flux_x = field.vol_flux_x.data;
+		const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
+		double *volume = field.volume.data;
+		const int volume_sizex = field.volume.sizeX;
+		double *pre_vol = field.work_array5.data;
+		const int pre_vol_sizex = field.work_array5.sizeX;
+		double *post_vol = field.work_array6.data;
+		const int post_vol_sizex = field.work_array6.sizeX;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-				idx2f(, post_vol, i, j) = idx2f(, volume, i, j) + idx2f(, vol_flux_y, i + 0, j + 1) - idx2f(, vol_flux_y, i, j);
-				idx2f(, pre_vol, i, j) = idx2f(, post_vol, i, j) + idx2f(, vol_flux_x, i + 1, j + 0) - idx2f(, vol_flux_x, i, j);
+				post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex] + vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] - vol_flux_y[i + j * vol_flux_y_sizex];
+				pre_vol[i + j * pre_vol_sizex] = post_vol[i + j * post_vol_sizex] + vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] - vol_flux_x[i + j * vol_flux_x_sizex];
 			}
 		}
 	} else if (mom_sweep == 2) { // y 1
 
 
-		mapToFrom2Df(field, vol_flux_y)
-		mapToFrom2Df(field, vol_flux_x)
-		mapToFrom2Df(field, volume)
-		mapToFrom2Dfn(field, work_array5, pre_vol)
-		mapToFrom2Dfn(field, work_array6, post_vol)
+		double *vol_flux_y = field.vol_flux_y.data;
+		const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
+		double *vol_flux_x = field.vol_flux_x.data;
+		const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
+		double *volume = field.volume.data;
+		const int volume_sizex = field.volume.sizeX;
+		double *pre_vol = field.work_array5.data;
+		const int pre_vol_sizex = field.work_array5.sizeX;
+		double *post_vol = field.work_array6.data;
+		const int post_vol_sizex = field.work_array6.sizeX;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-				idx2f(, post_vol, i, j) = idx2f(, volume, i, j) + idx2f(, vol_flux_x, i + 1, j + 0) - idx2f(, vol_flux_x, i, j);
-				idx2f(, pre_vol, i, j) = idx2f(, post_vol, i, j) + idx2f(, vol_flux_y, i + 0, j + 1) - idx2f(, vol_flux_y, i, j);
+				post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex] + vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] - vol_flux_x[i + j * vol_flux_x_sizex];
+				pre_vol[i + j * pre_vol_sizex] = post_vol[i + j * post_vol_sizex] + vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] - vol_flux_y[i + j * vol_flux_y_sizex];
 			}
 		}
 	} else if (mom_sweep == 3) { // x 2
 
 
-		mapToFrom2Df(field, vol_flux_y)
-		mapToFrom2Df(field, volume)
-		mapToFrom2Dfn(field, work_array5, pre_vol)
-		mapToFrom2Dfn(field, work_array6, post_vol)
+		double *vol_flux_y = field.vol_flux_y.data;
+		const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
+		double *volume = field.volume.data;
+		const int volume_sizex = field.volume.sizeX;
+		double *pre_vol = field.work_array5.data;
+		const int pre_vol_sizex = field.work_array5.sizeX;
+		double *post_vol = field.work_array6.data;
+		const int post_vol_sizex = field.work_array6.sizeX;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-				idx2f(, post_vol, i, j) = idx2f(, volume, i, j);
-				idx2f(, pre_vol, i, j) = idx2f(, post_vol, i, j) + idx2f(, vol_flux_y, i + 0, j + 1) - idx2f(, vol_flux_y, i, j);
+				post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex];
+				pre_vol[i + j * pre_vol_sizex] = post_vol[i + j * post_vol_sizex] + vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] - vol_flux_y[i + j * vol_flux_y_sizex];
 			}
 		}
 	} else if (mom_sweep == 4) { // y 2
 
 
-		mapToFrom2Df(field, vol_flux_x)
-		mapToFrom2Df(field, volume)
-		mapToFrom2Dfn(field, work_array5, pre_vol)
-		mapToFrom2Dfn(field, work_array6, post_vol)
+		double *vol_flux_x = field.vol_flux_x.data;
+		const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
+		double *volume = field.volume.data;
+		const int volume_sizex = field.volume.sizeX;
+		double *pre_vol = field.work_array5.data;
+		const int pre_vol_sizex = field.work_array5.sizeX;
+		double *post_vol = field.work_array6.data;
+		const int post_vol_sizex = field.work_array6.sizeX;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-				idx2f(, post_vol, i, j) = idx2f(, volume, i, j);
-				idx2f(, pre_vol, i, j) = idx2f(, post_vol, i, j) + idx2f(, vol_flux_x, i + 1, j + 0) - idx2f(, vol_flux_x, i, j);
+				post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex];
+				pre_vol[i + j * pre_vol_sizex] = post_vol[i + j * post_vol_sizex] + vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] - vol_flux_x[i + j * vol_flux_x_sizex];
 			}
 		}
 	}
@@ -114,14 +132,16 @@ void advec_mom_kernel(
 
 
 
-			mapToFrom2Df(field, mass_flux_x)
-			mapToFrom2Dfn(field, work_array1, node_flux)
+			double *mass_flux_x = field.mass_flux_x.data;
+			const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
+			double *node_flux = field.work_array1.data;
+			const int node_flux_sizex = field.work_array1.sizeX;
 
-			omp(parallel(2) enable_target(use_target))
+			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					idx2f(, node_flux, i, j) = 0.25 * (idx2f(, mass_flux_x, i + 0, j - 1) + idx2f(, mass_flux_x, i, j) +
-					                                   idx2f(, mass_flux_x, i + 1, j - 1) + idx2f(, mass_flux_x, i + 1, j + 0));
+					node_flux[i + j * node_flux_sizex] = 0.25 * (mass_flux_x[(i + 0) + (j - 1) * mass_flux_x_sizex] + mass_flux_x[i + j * mass_flux_x_sizex] +
+					                                             mass_flux_x[(i + 1) + (j - 1) * mass_flux_x_sizex] + mass_flux_x[(i + 1) + (j + 0) * mass_flux_x_sizex]);
 				}
 			}
 
@@ -129,22 +149,27 @@ void advec_mom_kernel(
 			//   DO j=x_min-1,x_max+2
 
 
-			mapToFrom2Df(field, density1)
-			mapToFrom2Dfn(field, work_array2, node_mass_post)
-			mapToFrom2Dfn(field, work_array3, node_mass_pre)
-			mapToFrom2Dfn(field, work_array6, post_vol)
+			double *density1 = field.density1.data;
+			const int density1_sizex = field.density1.sizeX;
+			double *node_mass_post = field.work_array2.data;
+			const int node_mass_post_sizex = field.work_array2.sizeX;
+			double *node_mass_pre = field.work_array3.data;
+			const int node_mass_pre_sizex = field.work_array3.sizeX;
+			double *post_vol = field.work_array6.data;
+			const int post_vol_sizex = field.work_array6.sizeX;
 
-			omp(parallel(2) enable_target(use_target))
+			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 				for (int i = (x_min - 1 + 1); i < (x_max + 2 + 2); i++) {
-					idx2f(, node_mass_post, i, j) = 0.25 * (idx2f(, density1, i + 0, j - 1) *
-					                                        idx2f(, post_vol, i + 0, j - 1) +
-					                                        idx2f(, density1, i, j) *
-					                                        idx2f(, post_vol, i, j) +
-					                                        idx2f(, density1, i - 1, j - 1) *
-					                                        idx2f(, post_vol, i - 1, j - 1) +
-					                                        idx2f(, density1, i - 1, j + 0) * idx2f(, post_vol, i - 1, j + 0));
-					idx2f(, node_mass_pre, i, j) = idx2f(, node_mass_post, i, j) - idx2f(, node_flux, i - 1, j + 0) + idx2f(, node_flux, i, j);
+					node_mass_post[i + j * node_mass_post_sizex] = 0.25 * (density1[(i + 0) + (j - 1) * density1_sizex] *
+					                                                       post_vol[(i + 0) + (j - 1) * post_vol_sizex] +
+					                                                       density1[i + j * density1_sizex] *
+					                                                       post_vol[i + j * post_vol_sizex] +
+					                                                       density1[(i - 1) + (j - 1) * density1_sizex] *
+					                                                       post_vol[(i - 1) + (j - 1) * post_vol_sizex] +
+					                                                       density1[(i - 1) + (j + 0) * density1_sizex] * post_vol[(i - 1) + (j + 0) * post_vol_sizex]);
+					node_mass_pre[i + j * node_mass_pre_sizex] =
+							node_mass_post[i + j * node_mass_post_sizex] - node_flux[(i - 1) + (j + 0) * node_flux_sizex] + node_flux[i + j * node_flux_sizex];
 				}
 			}
 		}
@@ -154,19 +179,23 @@ void advec_mom_kernel(
 
 
 
-		mapToFrom2Dfe(vel1_buffer, vel1)
-		mapToFrom2Dfn(field, work_array1, node_flux)
-		mapToFrom2Dfn(field, work_array3, node_mass_pre)
-		mapToFrom2Dfn(field, work_array4, mom_flux)
-		mapToFrom1Df(field, celldx)
+		double *vel1 = vel1_buffer.data;
+		const int vel1_sizex = vel1_buffer.sizeX;
+		double *node_flux = field.work_array1.data;
+		const int node_flux_sizex = field.work_array1.sizeX;
+		double *node_mass_pre = field.work_array3.data;
+		const int node_mass_pre_sizex = field.work_array3.sizeX;
+		double *mom_flux = field.work_array4.data;
+		const int mom_flux_sizex = field.work_array4.sizeX;
+		double *celldx = field.celldx.data;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min - 1 + 1); i < (x_max + 1 + 2); i++)
 				({
 					int upwind, donor, downwind, dif;
 					double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
-					if (idx2f(, node_flux, i, j) < 0.0) {
+					if (node_flux[i + j * node_flux_sizex] < 0.0) {
 						upwind = i + 2;
 						donor = i + 1;
 						downwind = i;
@@ -177,10 +206,10 @@ void advec_mom_kernel(
 						downwind = i + 1;
 						dif = upwind;
 					}
-					sigma = fabs(idx2f(, node_flux, i, j)) / (idx2f(, node_mass_pre, donor, j));
-					width = idx1f(, celldx, i);
-					vdiffuw = idx2f(, vel1, donor, j) - idx2f(, vel1, upwind, j);
-					vdiffdw = idx2f(, vel1, downwind, j) - idx2f(, vel1, donor, j);
+					sigma = fabs(node_flux[i + j * node_flux_sizex]) / (node_mass_pre[donor + j * node_mass_pre_sizex]);
+					width = celldx[i];
+					vdiffuw = vel1[donor + j * vel1_sizex] - vel1[upwind + j * vel1_sizex];
+					vdiffdw = vel1[downwind + j * vel1_sizex] - vel1[donor + j * vel1_sizex];
 					limiter = 0.0;
 					if (vdiffuw * vdiffdw > 0.0) {
 						auw = fabs(vdiffuw);
@@ -188,10 +217,10 @@ void advec_mom_kernel(
 						wind = 1.0;
 						if (vdiffdw <= 0.0)wind = -1.0;
 						limiter = wind * fmin(fmin(
-								width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / idx1f(, celldx, dif)) / 6.0, auw), adw);
+								width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / celldx[dif]) / 6.0, auw), adw);
 					}
-					advec_vel_s = idx2f(, vel1, donor, j) + (1.0 - sigma) * limiter;
-					idx2f(, mom_flux, i, j) = advec_vel_s * idx2f(, node_flux, i, j);
+					advec_vel_s = vel1[donor + j * vel1_sizex] + (1.0 - sigma) * limiter;
+					mom_flux[i + j * mom_flux_sizex] = advec_vel_s * node_flux[i + j * node_flux_sizex];
 				});
 		}
 
@@ -200,13 +229,15 @@ void advec_mom_kernel(
 
 
 
-		mapToFrom2Dfn(field, work_array2, node_mass_post)
+		double *node_mass_post = field.work_array2.data;
+		const int node_mass_post_sizex = field.work_array2.sizeX;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-				idx2f(, vel1, i, j) =
-						(idx2f(, vel1, i, j) * idx2f(, node_mass_pre, i, j) + idx2f(, mom_flux, i - 1, j + 0) - idx2f(, mom_flux, i, j)) / idx2f(, node_mass_post, i, j);
+				vel1[i + j * vel1_sizex] =
+						(vel1[i + j * vel1_sizex] * node_mass_pre[i + j * node_mass_pre_sizex] + mom_flux[(i - 1) + (j + 0) * mom_flux_sizex] - mom_flux[i + j * mom_flux_sizex]) /
+						node_mass_post[i + j * node_mass_post_sizex];
 			}
 		}
 	} else if (direction == 2) {
@@ -216,14 +247,16 @@ void advec_mom_kernel(
 
 
 
-			mapToFrom2Dfn(field, work_array1, node_flux)
-			mapToFrom2Df(field, mass_flux_y)
+			double *node_flux = field.work_array1.data;
+			const int node_flux_sizex = field.work_array1.sizeX;
+			double *mass_flux_y = field.mass_flux_y.data;
+			const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
 
-			omp(parallel(2) enable_target(use_target))
+			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-					idx2f(, node_flux, i, j) = 0.25 * (idx2f(, mass_flux_y, i - 1, j + 0) + idx2f(, mass_flux_y, i, j) +
-					                                   idx2f(, mass_flux_y, i - 1, j + 1) + idx2f(, mass_flux_y, i + 0, j + 1));
+					node_flux[i + j * node_flux_sizex] = 0.25 * (mass_flux_y[(i - 1) + (j + 0) * mass_flux_y_sizex] + mass_flux_y[i + j * mass_flux_y_sizex] +
+					                                             mass_flux_y[(i - 1) + (j + 1) * mass_flux_y_sizex] + mass_flux_y[(i + 0) + (j + 1) * mass_flux_y_sizex]);
 				}
 			}
 
@@ -231,23 +264,28 @@ void advec_mom_kernel(
 			// DO k=y_min-1,y_max+2
 			//   DO j=x_min,x_max+1
 
-			mapToFrom2Df(field, density1)
-			mapToFrom2Dfn(field, work_array2, node_mass_post)
-			mapToFrom2Dfn(field, work_array3, node_mass_pre)
-			mapToFrom2Dfn(field, work_array6, post_vol)
+			double *density1 = field.density1.data;
+			const int density1_sizex = field.density1.sizeX;
+			double *node_mass_post = field.work_array2.data;
+			const int node_mass_post_sizex = field.work_array2.sizeX;
+			double *node_mass_pre = field.work_array3.data;
+			const int node_mass_pre_sizex = field.work_array3.sizeX;
+			double *post_vol = field.work_array6.data;
+			const int post_vol_sizex = field.work_array6.sizeX;
 
-			omp(parallel(2) enable_target(use_target))
+			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 			for (int j = (y_min - 1 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-					idx2f(, node_mass_post, i, j) = 0.25 * (idx2f(, density1, i + 0, j - 1) *
-					                                        idx2f(, post_vol, i + 0, j - 1) +
-					                                        idx2f(, density1, i, j) *
-					                                        idx2f(, post_vol, i, j) +
-					                                        idx2f(, density1, i - 1, j - 1) *
-					                                        idx2f(, post_vol, i - 1, j - 1) +
-					                                        idx2f(, density1, i - 1, j + 0) *
-					                                        idx2f(, post_vol, i - 1, j + 0));
-					idx2f(, node_mass_pre, i, j) = idx2f(, node_mass_post, i, j) - idx2f(, node_flux, i + 0, j - 1) + idx2f(, node_flux, i, j);
+					node_mass_post[i + j * node_mass_post_sizex] = 0.25 * (density1[(i + 0) + (j - 1) * density1_sizex] *
+					                                                       post_vol[(i + 0) + (j - 1) * post_vol_sizex] +
+					                                                       density1[i + j * density1_sizex] *
+					                                                       post_vol[i + j * post_vol_sizex] +
+					                                                       density1[(i - 1) + (j - 1) * density1_sizex] *
+					                                                       post_vol[(i - 1) + (j - 1) * post_vol_sizex] +
+					                                                       density1[(i - 1) + (j + 0) * density1_sizex] *
+					                                                       post_vol[(i - 1) + (j + 0) * post_vol_sizex]);
+					node_mass_pre[i + j * node_mass_pre_sizex] =
+							node_mass_post[i + j * node_mass_post_sizex] - node_flux[(i + 0) + (j - 1) * node_flux_sizex] + node_flux[i + j * node_flux_sizex];
 				}
 			}
 		}
@@ -255,19 +293,23 @@ void advec_mom_kernel(
 		// DO k=y_min-1,y_max+1
 		//   DO j=x_min,x_max+1
 
-		mapToFrom2Dfe(vel1_buffer, vel1)
-		mapToFrom2Dfn(field, work_array1, node_flux)
-		mapToFrom2Dfn(field, work_array3, node_mass_pre)
-		mapToFrom2Dfn(field, work_array4, mom_flux)
-		mapToFrom1Df(field, celldy)
+		double *vel1 = vel1_buffer.data;
+		const int vel1_sizex = vel1_buffer.sizeX;
+		double *node_flux = field.work_array1.data;
+		const int node_flux_sizex = field.work_array1.sizeX;
+		double *node_mass_pre = field.work_array3.data;
+		const int node_mass_pre_sizex = field.work_array3.sizeX;
+		double *mom_flux = field.work_array4.data;
+		const int mom_flux_sizex = field.work_array4.sizeX;
+		double *celldy = field.celldy.data;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min - 1 + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++)
 				({
 					int upwind, donor, downwind, dif;
 					double sigma, width, limiter, vdiffuw, vdiffdw, auw, adw, wind, advec_vel_s;
-					if (idx2f(, node_flux, i, j) < 0.0) {
+					if (node_flux[i + j * node_flux_sizex] < 0.0) {
 						upwind = j + 2;
 						donor = j + 1;
 						downwind = j;
@@ -278,10 +320,10 @@ void advec_mom_kernel(
 						downwind = j + 1;
 						dif = upwind;
 					}
-					sigma = fabs(idx2f(, node_flux, i, j)) / (idx2f(, node_mass_pre, i, donor));
-					width = idx1f(, celldy, j);
-					vdiffuw = idx2f(, vel1, i, donor) - idx2f(, vel1, i, upwind);
-					vdiffdw = idx2f(, vel1, i, downwind) - idx2f(, vel1, i, donor);
+					sigma = fabs(node_flux[i + j * node_flux_sizex]) / (node_mass_pre[i + donor * node_mass_pre_sizex]);
+					width = celldy[j];
+					vdiffuw = vel1[i + donor * vel1_sizex] - vel1[i + upwind * vel1_sizex];
+					vdiffdw = vel1[i + downwind * vel1_sizex] - vel1[i + donor * vel1_sizex];
 					limiter = 0.0;
 					if (vdiffuw * vdiffdw > 0.0) {
 						auw = fabs(vdiffuw);
@@ -289,10 +331,10 @@ void advec_mom_kernel(
 						wind = 1.0;
 						if (vdiffdw <= 0.0)wind = -1.0;
 						limiter = wind * fmin(fmin(
-								width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / idx1f(, celldy, dif)) / 6.0, auw), adw);
+								width * ((2.0 - sigma) * adw / width + (1.0 + sigma) * auw / celldy[dif]) / 6.0, auw), adw);
 					}
-					advec_vel_s = idx2f(, vel1, i, donor) + (1.0 - sigma) * limiter;
-					idx2f(, mom_flux, i, j) = advec_vel_s * idx2f(, node_flux, i, j);
+					advec_vel_s = vel1[i + donor * vel1_sizex] + (1.0 - sigma) * limiter;
+					mom_flux[i + j * mom_flux_sizex] = advec_vel_s * node_flux[i + j * node_flux_sizex];
 				});
 		}
 
@@ -302,13 +344,15 @@ void advec_mom_kernel(
 
 
 
-		mapToFrom2Dfn(field, work_array2, node_mass_post)
+		double *node_mass_post = field.work_array2.data;
+		const int node_mass_post_sizex = field.work_array2.sizeX;
 
-		omp(parallel(2) enable_target(use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-				idx2f(, vel1, i, j) =
-						(idx2f(, vel1, i, j) * idx2f(, node_mass_pre, i, j) + idx2f(, mom_flux, i + 0, j - 1) - idx2f(, mom_flux, i, j)) / idx2f(, node_mass_post, i, j);
+				vel1[i + j * vel1_sizex] =
+						(vel1[i + j * vel1_sizex] * node_mass_pre[i + j * node_mass_pre_sizex] + mom_flux[(i + 0) + (j - 1) * mom_flux_sizex] - mom_flux[i + j * mom_flux_sizex]) /
+						node_mass_post[i + j * node_mass_post_sizex];
 			}
 		}
 	}
