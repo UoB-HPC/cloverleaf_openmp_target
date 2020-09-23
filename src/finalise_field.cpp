@@ -30,47 +30,53 @@
 // Allocate Kokkos Views for the data arrays
 void finalise_field(global_variables &globals) {
 
+	// XXX GCC 10 crashes with target exit data call, so the program terminates with a
+	// non zero exit code, event if correct results are produced
+	// only destroy context for non GCC compilers now
+	#if !defined(__GNUC__) || !defined(__GNUG__)
+
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
 		tile_type &t = globals.chunk.tiles[tile];
 		field_type &field = t.field;
 
 		#pragma omp target exit data \
-                map(release: field.density0.data[:0]) \
-                map(release: field.density1.data[:0]) \
-                map(release: field.energy0.data[:0]) \
-                map(release: field.energy1.data[:0]) \
-                map(release: field.pressure.data[:0]) \
-                map(release: field.viscosity.data[:0]) \
-                map(release: field.soundspeed.data[:0]) \
-                map(release: field.yvel0.data[:0]) \
-                map(release: field.yvel1.data[:0]) \
-                map(release: field.xvel0.data[:0]) \
-                map(release: field.xvel1.data[:0]) \
-                map(release: field.vol_flux_x.data[:0]) \
-                map(release: field.vol_flux_y.data[:0]) \
-                map(release: field.mass_flux_x.data[:0]) \
-                map(release: field.mass_flux_y.data[:0]) \
-                map(release: field.work_array1.data[:0]) \
-                map(release: field.work_array2.data[:0]) \
-                map(release: field.work_array3.data[:0]) \
-                map(release: field.work_array4.data[:0]) \
-                map(release: field.work_array5.data[:0]) \
-                map(release: field.work_array6.data[:0]) \
-                map(release: field.work_array7.data[:0]) \
-                map(release: field.cellx.data[:0]) \
-                map(release: field.celldx.data[:0]) \
-                map(release: field.celly.data[:0]) \
-                map(release: field.celldy.data[:0]) \
-                map(release: field.vertexx.data[:0]) \
-                map(release: field.vertexdx.data[:0]) \
-                map(release: field.vertexy.data[:0]) \
-                map(release: field.vertexdy.data[:0]) \
-                map(release: field.volume.data[:0]) \
-                map(release: field.xarea.data[:0]) \
-                map(release: field.yarea.data[:0])
+				map(release: field.density0.data[:0]) \
+				map(release: field.density1.data[:0]) \
+				map(release: field.energy0.data[:0]) \
+				map(release: field.energy1.data[:0]) \
+				map(release: field.pressure.data[:0]) \
+				map(release: field.viscosity.data[:0]) \
+				map(release: field.soundspeed.data[:0]) \
+				map(release: field.yvel0.data[:0]) \
+				map(release: field.yvel1.data[:0]) \
+				map(release: field.xvel0.data[:0]) \
+				map(release: field.xvel1.data[:0]) \
+				map(release: field.vol_flux_x.data[:0]) \
+				map(release: field.vol_flux_y.data[:0]) \
+				map(release: field.mass_flux_x.data[:0]) \
+				map(release: field.mass_flux_y.data[:0]) \
+				map(release: field.work_array1.data[:0]) \
+				map(release: field.work_array2.data[:0]) \
+				map(release: field.work_array3.data[:0]) \
+				map(release: field.work_array4.data[:0]) \
+				map(release: field.work_array5.data[:0]) \
+				map(release: field.work_array6.data[:0]) \
+				map(release: field.work_array7.data[:0]) \
+				map(release: field.cellx.data[:0]) \
+				map(release: field.celldx.data[:0]) \
+				map(release: field.celly.data[:0]) \
+				map(release: field.celldy.data[:0]) \
+				map(release: field.vertexx.data[:0]) \
+				map(release: field.vertexdx.data[:0]) \
+				map(release: field.vertexy.data[:0]) \
+				map(release: field.vertexdy.data[:0]) \
+				map(release: field.volume.data[:0]) \
+				map(release: field.xarea.data[:0]) \
+				map(release: field.yarea.data[:0])
 
 	}
+	#endif
 
 }
 

@@ -115,10 +115,7 @@ namespace clover {
 		}
 
 
-		~Buffer2D() {
-			std::cout << "Delet buffer" << std::endl;
-			delete[] data;
-		}
+		~Buffer2D() { delete[] data; }
 
 	};
 
