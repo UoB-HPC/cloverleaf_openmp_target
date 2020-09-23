@@ -52,7 +52,8 @@ Proceed with compiling:
 
 ## Known issues
 
- * ICC 2021.1 Beta 20200602 requires `-DOMP_OFFLOAD_FLAGS=OFF`
+ * ICC 2021.1 Beta 20200602 requires `-DOMP_ALLOW_HOST=OFF`
+ 
 
 ## Running
 

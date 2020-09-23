@@ -6,54 +6,9 @@ project(cloverleaf_sycl)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#
-#set (OpenMP_CXX_FLAGS "-fiopenmp -qnextgen")
-#set (OpenMP_CXX_LIB_NAMES "libiomp5")
-#set (OpenMP_libiomp5_LIBRARY
-#        /opt/intel/oneapi/compiler/2021.1-beta08/linux/compiler/lib/intel64_lin/libiomp5.so
-#        )
 find_package(OpenMP REQUIRED)
 
 set(CMAKE_VERBOSE_MAKEFILE YES)
-
-#set(SYCL_RUNTIME DPCPP)
-#set(HIPSYCL_INSTALL_DIR /home/tom/hypsycl_dist)
-
-
-#if (SYCL_RUNTIME)
-#
-#    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
-#
-#    if (${SYCL_RUNTIME} STREQUAL "HIPSYCL")
-#
-#        if (NOT HIPSYCL_INSTALL_DIR)
-#            message(FATAL_ERROR "HIPSYCL_INSTALL_DIR is undefined")
-#        endif ()
-#
-#        set(hipSYCL_DIR ${HIPSYCL_INSTALL_DIR}/lib/cmake)
-#        find_package(hipSYCL CONFIG REQUIRED)
-#        set(EXTRA_FLAGS -Wno-sign-compare -Wno-stringop-truncation)
-#    elseif (${SYCL_RUNTIME} STREQUAL "COMPUTECPP")
-#
-#        if (NOT ComputeCpp_DIR)
-#            message(FATAL_ERROR "ComputeCpp_DIR is undefined")
-#        endif ()
-#        add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-#        set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
-#        find_package(ComputeCpp REQUIRED)
-#        #        set(EXTRA_FLAGS  -pedantic)
-#    elseif (${SYCL_RUNTIME} STREQUAL "DPCPP")
-#
-#        set(CMAKE_CXX_STANDARD 17)
-#        set(CMAKE_CXX_COMPILER "dpcpp")
-#        set(EXTRA_FLAGS -pedantic)
-#        include_directories(/opt/intel/oneapi/compiler/2021.1-beta08/linux/compiler/include/)
-#    else ()
-#        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HIPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
-#    endif ()
-#else ()
-#    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HIPSYCL|COMPUTECPP|DPCPP")
-#endif ()
 
 
 if (MPI_AS_LIBRARY)
@@ -135,9 +90,7 @@ separate_arguments(CXX_EXTRA_FLAGS)
 separate_arguments(CXX_EXTRA_LINKER_FLAGS)
 
 
-#set(OMP_OFFLOAD_FLAGS -foffload=nvptx-none -foffload=-lm  -fno-fast-math -fno-associative-math)
-#set(OMP_OFFLOAD_FLAGS -foffload=amdgcn-amdhsa="-march=gfx906" -foffload=-lm  -fno-fast-math -fno-associative-math)
-option(OMP_ALLOW_HOST "Whether the OMP clause `if(target: <bool>` is included at compile time ), some compilers may not support this feature" ON)
+option(OMP_ALLOW_HOST "Whether the OMP clause `if(target: <bool>)` is included at compile time, some compilers may not support this feature" ON)
 
 if (OMP_ALLOW_HOST)
     add_definitions(-DOMP_ALLOW_HOST)
