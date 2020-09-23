@@ -54,7 +54,7 @@ void update_halo_kernel(
 
 			double *density0 = field.density0.data;
 			const int density0_sizex = field.density0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					density0[j + (1 - k) * density0_sizex] = density0[j + (2 + k) * density0_sizex];
@@ -69,7 +69,7 @@ void update_halo_kernel(
 
 			double *density0 = field.density0.data;
 			const int density0_sizex = field.density0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					density0[j + (y_max + 2 + k) * density0_sizex] = density0[j + (y_max + 1 - k) * density0_sizex];
@@ -84,7 +84,7 @@ void update_halo_kernel(
 
 			double *density0 = field.density0.data;
 			const int density0_sizex = field.density0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					density0[(1 - j) + (k) * density0_sizex] = density0[(2 + j) + (k) * density0_sizex];
@@ -99,7 +99,7 @@ void update_halo_kernel(
 
 			double *density0 = field.density0.data;
 			const int density0_sizex = field.density0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					density0[(x_max + 2 + j) + (k) * density0_sizex] = density0[(x_max + 1 - j) + (k) * density0_sizex];
@@ -118,7 +118,7 @@ void update_halo_kernel(
 
 			double *density1 = field.density1.data;
 			const int density1_sizex = field.density1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					density1[j + (1 - k) * density1_sizex] = density1[j + (2 + k) * density1_sizex];
@@ -133,7 +133,7 @@ void update_halo_kernel(
 
 			double *density1 = field.density1.data;
 			const int density1_sizex = field.density1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					density1[j + (y_max + 2 + k) * density1_sizex] = density1[j + (y_max + 1 - k) * density1_sizex];
@@ -148,7 +148,7 @@ void update_halo_kernel(
 
 			double *density1 = field.density1.data;
 			const int density1_sizex = field.density1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					density1[(1 - j) + (k) * density1_sizex] = density1[(2 + j) + (k) * density1_sizex];
@@ -163,7 +163,7 @@ void update_halo_kernel(
 
 			double *density1 = field.density1.data;
 			const int density1_sizex = field.density1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					density1[(x_max + 2 + j) + (k) * density1_sizex] = density1[(x_max + 1 - j) + (k) * density1_sizex];
@@ -180,7 +180,7 @@ void update_halo_kernel(
 
 			double *energy0 = field.energy0.data;
 			const int energy0_sizex = field.energy0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					energy0[j + (1 - k) * energy0_sizex] = energy0[j + (2 + k) * energy0_sizex];
@@ -194,7 +194,7 @@ void update_halo_kernel(
 
 			double *energy0 = field.energy0.data;
 			const int energy0_sizex = field.energy0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					energy0[j + (y_max + 2 + k) * energy0_sizex] = energy0[j + (y_max + 1 - k) * energy0_sizex];
@@ -208,7 +208,7 @@ void update_halo_kernel(
 
 			double *energy0 = field.energy0.data;
 			const int energy0_sizex = field.energy0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					energy0[(1 - j) + (k) * energy0_sizex] = energy0[(2 + j) + (k) * energy0_sizex];
@@ -222,7 +222,7 @@ void update_halo_kernel(
 
 			double *energy0 = field.energy0.data;
 			const int energy0_sizex = field.energy0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					energy0[(x_max + 2 + j) + (k) * energy0_sizex] = energy0[(x_max + 1 - j) + (k) * energy0_sizex];
@@ -241,7 +241,7 @@ void update_halo_kernel(
 
 			double *energy1 = field.energy1.data;
 			const int energy1_sizex = field.energy1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					energy1[j + (1 - k) * energy1_sizex] = energy1[j + (2 + k) * energy1_sizex];
@@ -256,7 +256,7 @@ void update_halo_kernel(
 
 			double *energy1 = field.energy1.data;
 			const int energy1_sizex = field.energy1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					energy1[j + (y_max + 2 + k) * energy1_sizex] = energy1[j + (y_max + 1 - k) * energy1_sizex];
@@ -271,7 +271,7 @@ void update_halo_kernel(
 
 			double *energy1 = field.energy1.data;
 			const int energy1_sizex = field.energy1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					energy1[(1 - j) + (k) * energy1_sizex] = energy1[(2 + j) + (k) * energy1_sizex];
@@ -286,7 +286,7 @@ void update_halo_kernel(
 
 			double *energy1 = field.energy1.data;
 			const int energy1_sizex = field.energy1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					energy1[(x_max + 2 + j) + (k) * energy1_sizex] = energy1[(x_max + 1 - j) + (k) * energy1_sizex];
@@ -304,7 +304,7 @@ void update_halo_kernel(
 
 			double *pressure = field.pressure.data;
 			const int pressure_sizex = field.pressure.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					pressure[j + (1 - k) * pressure_sizex] = pressure[j + (2 + k) * pressure_sizex];
@@ -319,7 +319,7 @@ void update_halo_kernel(
 
 			double *pressure = field.pressure.data;
 			const int pressure_sizex = field.pressure.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					pressure[j + (y_max + 2 + k) * pressure_sizex] = pressure[j + (y_max + 1 - k) * pressure_sizex];
@@ -334,7 +334,7 @@ void update_halo_kernel(
 
 			double *pressure = field.pressure.data;
 			const int pressure_sizex = field.pressure.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					pressure[(1 - j) + (k) * pressure_sizex] = pressure[(2 + j) + (k) * pressure_sizex];
@@ -349,7 +349,7 @@ void update_halo_kernel(
 
 			double *pressure = field.pressure.data;
 			const int pressure_sizex = field.pressure.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					pressure[(x_max + 2 + j) + (k) * pressure_sizex] = pressure[(x_max + 1 - j) + (k) * pressure_sizex];
@@ -367,7 +367,7 @@ void update_halo_kernel(
 
 			double *viscosity = field.viscosity.data;
 			const int viscosity_sizex = field.viscosity.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					viscosity[j + (1 - k) * viscosity_sizex] = viscosity[j + (2 + k) * viscosity_sizex];
@@ -382,7 +382,7 @@ void update_halo_kernel(
 
 			double *viscosity = field.viscosity.data;
 			const int viscosity_sizex = field.viscosity.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					viscosity[j + (y_max + 2 + k) * viscosity_sizex] = viscosity[j + (y_max + 1 - k) * viscosity_sizex];
@@ -397,7 +397,7 @@ void update_halo_kernel(
 
 			double *viscosity = field.viscosity.data;
 			const int viscosity_sizex = field.viscosity.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					viscosity[(1 - j) + (k) * viscosity_sizex] = viscosity[(2 + j) + (k) * viscosity_sizex];
@@ -412,7 +412,7 @@ void update_halo_kernel(
 
 			double *viscosity = field.viscosity.data;
 			const int viscosity_sizex = field.viscosity.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					viscosity[(x_max + 2 + j) + (k) * viscosity_sizex] = viscosity[(x_max + 1 - j) + (k) * viscosity_sizex];
@@ -430,7 +430,7 @@ void update_halo_kernel(
 
 			double *soundspeed = field.soundspeed.data;
 			const int soundspeed_sizex = field.soundspeed.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					soundspeed[j + (1 - k) * soundspeed_sizex] = soundspeed[j + (+k) * soundspeed_sizex];
@@ -445,7 +445,7 @@ void update_halo_kernel(
 
 			double *soundspeed = field.soundspeed.data;
 			const int soundspeed_sizex = field.soundspeed.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					soundspeed[j + (y_max + 2 + k) * soundspeed_sizex] = soundspeed[j + (y_max + 1 - k) * soundspeed_sizex];
@@ -460,7 +460,7 @@ void update_halo_kernel(
 
 			double *soundspeed = field.soundspeed.data;
 			const int soundspeed_sizex = field.soundspeed.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					soundspeed[(1 - j) + (k) * soundspeed_sizex] = soundspeed[(2 + j) + (k) * soundspeed_sizex];
@@ -475,7 +475,7 @@ void update_halo_kernel(
 
 			double *soundspeed = field.soundspeed.data;
 			const int soundspeed_sizex = field.soundspeed.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					soundspeed[(x_max + 2 + j) + (k) * soundspeed_sizex] = soundspeed[(x_max + 1 - j) + (k) * soundspeed_sizex];
@@ -494,7 +494,7 @@ void update_halo_kernel(
 
 			double *xvel0 = field.xvel0.data;
 			const int xvel0_sizex = field.xvel0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					xvel0[j + (1 - k) * xvel0_sizex] = xvel0[j + (1 + 2 + k) * xvel0_sizex];
@@ -509,7 +509,7 @@ void update_halo_kernel(
 
 			double *xvel0 = field.xvel0.data;
 			const int xvel0_sizex = field.xvel0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					xvel0[j + (y_max + 1 + 2 + k) * xvel0_sizex] = xvel0[j + (y_max + 1 - k) * xvel0_sizex];
@@ -524,7 +524,7 @@ void update_halo_kernel(
 
 			double *xvel0 = field.xvel0.data;
 			const int xvel0_sizex = field.xvel0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					xvel0[(1 - j) + (k) * xvel0_sizex] = -xvel0[(1 + 2 + j) + (k) * xvel0_sizex];
@@ -539,7 +539,7 @@ void update_halo_kernel(
 
 			double *xvel0 = field.xvel0.data;
 			const int xvel0_sizex = field.xvel0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					xvel0[(x_max + 2 + 1 + j) + (k) * xvel0_sizex] = -xvel0[(x_max + 1 - j) + (k) * xvel0_sizex];
@@ -557,7 +557,7 @@ void update_halo_kernel(
 
 			double *xvel1 = field.xvel1.data;
 			const int xvel1_sizex = field.xvel1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					xvel1[j + (1 - k) * xvel1_sizex] = xvel1[j + (1 + 2 + k) * xvel1_sizex];
@@ -572,7 +572,7 @@ void update_halo_kernel(
 
 			double *xvel1 = field.xvel1.data;
 			const int xvel1_sizex = field.xvel1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					xvel1[j + (y_max + 1 + 2 + k) * xvel1_sizex] = xvel1[j + (y_max + 1 - k) * xvel1_sizex];
@@ -587,7 +587,7 @@ void update_halo_kernel(
 
 			double *xvel1 = field.xvel1.data;
 			const int xvel1_sizex = field.xvel1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					xvel1[(1 - j) + (k) * xvel1_sizex] = -xvel1[(1 + 2 + j) + (k) * xvel1_sizex];
@@ -602,7 +602,7 @@ void update_halo_kernel(
 
 			double *xvel1 = field.xvel1.data;
 			const int xvel1_sizex = field.xvel1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					xvel1[(x_max + 2 + 1 + j) + (k) * xvel1_sizex] = -xvel1[(x_max + 1 - j) + (k) * xvel1_sizex];
@@ -620,7 +620,7 @@ void update_halo_kernel(
 
 			double *yvel0 = field.yvel0.data;
 			const int yvel0_sizex = field.yvel0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					yvel0[j + (1 - k) * yvel0_sizex] = -yvel0[j + (1 + 2 + k) * yvel0_sizex];
@@ -635,7 +635,7 @@ void update_halo_kernel(
 
 			double *yvel0 = field.yvel0.data;
 			const int yvel0_sizex = field.yvel0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					yvel0[j + (y_max + 1 + 2 + k) * yvel0_sizex] = -yvel0[j + (y_max + 1 - k) * yvel0_sizex];
@@ -650,7 +650,7 @@ void update_halo_kernel(
 
 			double *yvel0 = field.yvel0.data;
 			const int yvel0_sizex = field.yvel0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					yvel0[(1 - j) + (k) * yvel0_sizex] = yvel0[(1 + 2 + j) + (k) * yvel0_sizex];
@@ -665,7 +665,7 @@ void update_halo_kernel(
 
 			double *yvel0 = field.yvel0.data;
 			const int yvel0_sizex = field.yvel0.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					yvel0[(x_max + 2 + 1 + j) + (k) * yvel0_sizex] = yvel0[(x_max + 1 - j) + (k) * yvel0_sizex];
@@ -683,7 +683,7 @@ void update_halo_kernel(
 
 			double *yvel1 = field.yvel1.data;
 			const int yvel1_sizex = field.yvel1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					yvel1[j + (1 - k) * yvel1_sizex] = -yvel1[j + (1 + 2 + k) * yvel1_sizex];
@@ -698,7 +698,7 @@ void update_halo_kernel(
 
 			double *yvel1 = field.yvel1.data;
 			const int yvel1_sizex = field.yvel1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					yvel1[j + (y_max + 1 + 2 + k) * yvel1_sizex] = -yvel1[j + (y_max + 1 - k) * yvel1_sizex];
@@ -713,7 +713,7 @@ void update_halo_kernel(
 
 			double *yvel1 = field.yvel1.data;
 			const int yvel1_sizex = field.yvel1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					yvel1[(1 - j) + (k) * yvel1_sizex] = yvel1[(1 + 2 + j) + (k) * yvel1_sizex];
@@ -728,7 +728,7 @@ void update_halo_kernel(
 
 			double *yvel1 = field.yvel1.data;
 			const int yvel1_sizex = field.yvel1.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					yvel1[(x_max + 2 + 1 + j) + (k) * yvel1_sizex] = yvel1[(x_max + 1 - j) + (k) * yvel1_sizex];
@@ -747,7 +747,7 @@ void update_halo_kernel(
 
 			double *vol_flux_x = field.vol_flux_x.data;
 			const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					vol_flux_x[j + (1 - k) * vol_flux_x_sizex] = vol_flux_x[j + (1 + 2 + k) * vol_flux_x_sizex];
@@ -762,7 +762,7 @@ void update_halo_kernel(
 
 			double *vol_flux_x = field.vol_flux_x.data;
 			const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					vol_flux_x[j + (y_max + 2 + k) * vol_flux_x_sizex] = vol_flux_x[j + (y_max - k) * vol_flux_x_sizex];
@@ -777,7 +777,7 @@ void update_halo_kernel(
 
 			double *vol_flux_x = field.vol_flux_x.data;
 			const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					vol_flux_x[(1 - j) + (k) * vol_flux_x_sizex] = -vol_flux_x[(1 + 2 + j) + (k) * vol_flux_x_sizex];
@@ -792,7 +792,7 @@ void update_halo_kernel(
 
 			double *vol_flux_x = field.vol_flux_x.data;
 			const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					vol_flux_x[(x_max + j + 1 + 2) + (k) * vol_flux_x_sizex] = -vol_flux_x[(x_max + 1 - j) + (k) * vol_flux_x_sizex];
@@ -811,7 +811,7 @@ void update_halo_kernel(
 
 			double *mass_flux_x = field.mass_flux_x.data;
 			const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					mass_flux_x[j + (1 - k) * mass_flux_x_sizex] = mass_flux_x[j + (1 + 2 + k) * mass_flux_x_sizex];
@@ -826,7 +826,7 @@ void update_halo_kernel(
 
 			double *mass_flux_x = field.mass_flux_x.data;
 			const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + 1 + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					mass_flux_x[j + (y_max + 2 + k) * mass_flux_x_sizex] = mass_flux_x[j + (y_max - k) * mass_flux_x_sizex];
@@ -841,7 +841,7 @@ void update_halo_kernel(
 
 			double *mass_flux_x = field.mass_flux_x.data;
 			const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					mass_flux_x[(1 - j) + (k) * mass_flux_x_sizex] = -mass_flux_x[(1 + 2 + j) + (k) * mass_flux_x_sizex];
@@ -856,7 +856,7 @@ void update_halo_kernel(
 
 			double *mass_flux_x = field.mass_flux_x.data;
 			const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					mass_flux_x[(x_max + j + 1 + 2) + (k) * mass_flux_x_sizex] = -mass_flux_x[(x_max + 1 - j) + (k) * mass_flux_x_sizex];
@@ -875,7 +875,7 @@ void update_halo_kernel(
 
 			double *vol_flux_y = field.vol_flux_y.data;
 			const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					vol_flux_y[j + (1 - k) * vol_flux_y_sizex] = -vol_flux_y[j + (1 + 2 + k) * vol_flux_y_sizex];
@@ -890,7 +890,7 @@ void update_halo_kernel(
 
 			double *vol_flux_y = field.vol_flux_y.data;
 			const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					vol_flux_y[j + (y_max + k + 1 + 2) * vol_flux_y_sizex] = -vol_flux_y[j + (y_max + 1 - k) * vol_flux_y_sizex];
@@ -905,7 +905,7 @@ void update_halo_kernel(
 
 			double *vol_flux_y = field.vol_flux_y.data;
 			const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					vol_flux_y[(1 - j) + (k) * vol_flux_y_sizex] = vol_flux_y[(1 + 2 + j) + (k) * vol_flux_y_sizex];
@@ -920,7 +920,7 @@ void update_halo_kernel(
 
 			double *vol_flux_y = field.vol_flux_y.data;
 			const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					vol_flux_y[(x_max + 2 + j) + (k) * vol_flux_y_sizex] = vol_flux_y[(x_max - j) + (k) * vol_flux_y_sizex];
@@ -938,7 +938,7 @@ void update_halo_kernel(
 
 			double *mass_flux_y = field.mass_flux_y.data;
 			const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					mass_flux_y[j + (1 - k) * mass_flux_y_sizex] = -mass_flux_y[j + (1 + 2 + k) * mass_flux_y_sizex];
@@ -953,7 +953,7 @@ void update_halo_kernel(
 
 			double *mass_flux_y = field.mass_flux_y.data;
 			const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int j = (x_min - depth + 1); j < (x_max + depth + 2); j++) {
 				for (int k = 0; k < depth; ++k) {
 					mass_flux_y[j + (y_max + k + 1 + 2) * mass_flux_y_sizex] = -mass_flux_y[j + (y_max + 1 - k) * mass_flux_y_sizex];
@@ -968,7 +968,7 @@ void update_halo_kernel(
 
 			double *mass_flux_y = field.mass_flux_y.data;
 			const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					mass_flux_y[(1 - j) + (k) * mass_flux_y_sizex] = mass_flux_y[(1 + 2 + j) + (k) * mass_flux_y_sizex];
@@ -983,7 +983,7 @@ void update_halo_kernel(
 
 			double *mass_flux_y = field.mass_flux_y.data;
 			const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
-			#pragma omp target teams distribute parallel for simd if(target: use_target)
+			#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 			for (int k = (y_min - depth + 1); k < (y_max + 1 + depth + 2); k++) {
 				for (int j = 0; j < depth; ++j) {
 					mass_flux_y[(x_max + 2 + j) + (k) * mass_flux_y_sizex] = mass_flux_y[(x_max - j) + (k) * mass_flux_y_sizex];

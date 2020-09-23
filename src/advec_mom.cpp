@@ -57,7 +57,7 @@ void advec_mom_kernel(
 		double *post_vol = field.work_array6.data;
 		const int post_vol_sizex = field.work_array6.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex] + vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] - vol_flux_y[i + j * vol_flux_y_sizex];
@@ -78,7 +78,7 @@ void advec_mom_kernel(
 		double *post_vol = field.work_array6.data;
 		const int post_vol_sizex = field.work_array6.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex] + vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] - vol_flux_x[i + j * vol_flux_x_sizex];
@@ -97,7 +97,7 @@ void advec_mom_kernel(
 		double *post_vol = field.work_array6.data;
 		const int post_vol_sizex = field.work_array6.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex];
@@ -116,7 +116,7 @@ void advec_mom_kernel(
 		double *post_vol = field.work_array6.data;
 		const int post_vol_sizex = field.work_array6.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex];
@@ -137,7 +137,7 @@ void advec_mom_kernel(
 			double *node_flux = field.work_array1.data;
 			const int node_flux_sizex = field.work_array1.sizeX;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					node_flux[i + j * node_flux_sizex] = 0.25 * (mass_flux_x[(i + 0) + (j - 1) * mass_flux_x_sizex] + mass_flux_x[i + j * mass_flux_x_sizex] +
@@ -158,7 +158,7 @@ void advec_mom_kernel(
 			double *post_vol = field.work_array6.data;
 			const int post_vol_sizex = field.work_array6.sizeX;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 				for (int i = (x_min - 1 + 1); i < (x_max + 2 + 2); i++) {
 					node_mass_post[i + j * node_mass_post_sizex] = 0.25 * (density1[(i + 0) + (j - 1) * density1_sizex] *
@@ -189,7 +189,7 @@ void advec_mom_kernel(
 		const int mom_flux_sizex = field.work_array4.sizeX;
 		double *celldx = field.celldx.data;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min - 1 + 1); i < (x_max + 1 + 2); i++)
 				({
@@ -232,7 +232,7 @@ void advec_mom_kernel(
 		double *node_mass_post = field.work_array2.data;
 		const int node_mass_post_sizex = field.work_array2.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 				vel1[i + j * vel1_sizex] =
@@ -252,7 +252,7 @@ void advec_mom_kernel(
 			double *mass_flux_y = field.mass_flux_y.data;
 			const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 					node_flux[i + j * node_flux_sizex] = 0.25 * (mass_flux_y[(i - 1) + (j + 0) * mass_flux_y_sizex] + mass_flux_y[i + j * mass_flux_y_sizex] +
@@ -273,7 +273,7 @@ void advec_mom_kernel(
 			double *post_vol = field.work_array6.data;
 			const int post_vol_sizex = field.work_array6.sizeX;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 1 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 					node_mass_post[i + j * node_mass_post_sizex] = 0.25 * (density1[(i + 0) + (j - 1) * density1_sizex] *
@@ -303,7 +303,7 @@ void advec_mom_kernel(
 		const int mom_flux_sizex = field.work_array4.sizeX;
 		double *celldy = field.celldy.data;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min - 1 + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++)
 				({
@@ -347,7 +347,7 @@ void advec_mom_kernel(
 		double *node_mass_post = field.work_array2.data;
 		const int node_mass_post_sizex = field.work_array2.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 				vel1[i + j * vel1_sizex] =

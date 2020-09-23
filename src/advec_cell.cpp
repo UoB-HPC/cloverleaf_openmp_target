@@ -60,7 +60,7 @@ void advec_cell_kernel(
 			double *post_vol = field.work_array2.data;
 			const int post_vol_sizex = field.work_array2.sizeX;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					pre_vol[i + j * pre_vol_sizex] = volume[i + j * volume_sizex] +
@@ -84,7 +84,7 @@ void advec_cell_kernel(
 			double *post_vol = field.work_array2.data;
 			const int post_vol_sizex = field.work_array2.sizeX;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					pre_vol[i + j * pre_vol_sizex] = volume[i + j * volume_sizex] + vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] - vol_flux_x[i + j * vol_flux_x_sizex];
@@ -110,7 +110,7 @@ void advec_cell_kernel(
 		double *ener_flux = field.work_array7.data;
 		const int ener_flux_sizex = field.work_array7.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2 + 2); i++)
 				({
@@ -172,7 +172,7 @@ void advec_cell_kernel(
 
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
 				double pre_mass_s = density1[i + j * density1_sizex] * pre_vol[i + j * pre_vol_sizex];
@@ -203,7 +203,7 @@ void advec_cell_kernel(
 			double *post_vol = field.work_array2.data;
 			const int post_vol_sizex = field.work_array2.sizeX;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					pre_vol[i + j * pre_vol_sizex] = volume[i + j * volume_sizex] +
@@ -227,7 +227,7 @@ void advec_cell_kernel(
 			double *post_vol = field.work_array2.data;
 			const int post_vol_sizex = field.work_array2.sizeX;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					pre_vol[i + j * pre_vol_sizex] = volume[i + j * volume_sizex] + vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] - vol_flux_y[i + j * vol_flux_y_sizex];
@@ -254,7 +254,7 @@ void advec_cell_kernel(
 		const int pre_vol_sizex = field.work_array1.sizeX;
 		double *ener_flux = field.work_array7.data;
 		const int ener_flux_sizex = field.work_array7.sizeX;
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++)
 				({
@@ -313,7 +313,7 @@ void advec_cell_kernel(
 		//   DO j=x_min,x_max
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
 				double pre_mass_s = density1[i + j * density1_sizex] * pre_vol[i + j * pre_vol_sizex];

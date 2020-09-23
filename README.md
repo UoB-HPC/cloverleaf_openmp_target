@@ -33,10 +33,9 @@ Flags:
     * GCC+NVIDIA - `"-foffload=nvptx-none -foffload=-lm  -fno-fast-math -fno-associative-math"`
     * GCC+Radeon - `"-foffload=amdgcn-amdhsa='-march=gfx906' -foffload=-lm  -fno-fast-math -fno-associative-math"`
     * LLVM+NVIDIA - `"-fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_75"`
-    
+    * ICC - `"-qnextgen -fiopenmp -fopenmp-targets=spir64"`
+ * `OMP_ALLOW_HOST` - `BOOL(ON|OFF)`, enabled by default, set to false if the compiler is unable to support dynamic selection of host/target devices. If disabled, running the binary with `--no-target` emits an error.
 
-
- 
 
 
 If parts of your toolchain are installed at different places, you'll have to specify it manually, for example:
@@ -50,7 +49,10 @@ If parts of your toolchain are installed at different places, you'll have to spe
 Proceed with compiling:
     
     cmake3 --build build --target clover_leaf --config Release -j $(nproc)
-   
+
+## Known issues
+
+ * ICC 2021.1 Beta 20200602 requires `-DOMP_OFFLOAD_FLAGS=OFF`
 
 ## Running
 

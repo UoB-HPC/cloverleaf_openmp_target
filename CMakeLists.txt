@@ -137,7 +137,11 @@ separate_arguments(CXX_EXTRA_LINKER_FLAGS)
 
 #set(OMP_OFFLOAD_FLAGS -foffload=nvptx-none -foffload=-lm  -fno-fast-math -fno-associative-math)
 #set(OMP_OFFLOAD_FLAGS -foffload=amdgcn-amdhsa="-march=gfx906" -foffload=-lm  -fno-fast-math -fno-associative-math)
+option(OMP_ALLOW_HOST "Whether the OMP clause `if(target: <bool>` is included at compile time ), some compilers may not support this feature" ON)
 
+if (OMP_ALLOW_HOST)
+    add_definitions(-DOMP_ALLOW_HOST)
+endif()
 
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
 set(RELEASE_OPTIONS -Ofast -march=native -mtune=native ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})

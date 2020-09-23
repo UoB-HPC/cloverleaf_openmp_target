@@ -44,7 +44,7 @@ void reset_field_kernel(
 	double *energy1 = field.energy1.data;
 	const int energy1_sizex = field.energy1.sizeX;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			density0[i + j * density0_sizex] = density1[i + j * density1_sizex];
@@ -66,7 +66,7 @@ void reset_field_kernel(
 	double *yvel1 = field.yvel1.data;
 	const int yvel1_sizex = field.yvel1.sizeX;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 			xvel0[i + j * xvel0_sizex] = xvel1[i + j * xvel1_sizex];

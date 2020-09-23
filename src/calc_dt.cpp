@@ -78,7 +78,7 @@ void calc_dt_kernel(
 	const int yvel0_sizex = field.yvel0.sizeX;
 
 
-	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target) map(tofrom:dt_min_val) reduction(min:dt_min_val)
+	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target) map(tofrom:dt_min_val) reduction(min:dt_min_val)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			double dsx = celldx[i];

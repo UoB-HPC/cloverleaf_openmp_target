@@ -90,7 +90,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 	double *yvel0 = field.yvel0.data;
 	const int yvel0_sizex = field.yvel0.sizeX;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 	for (int j = 0; j < (yrange); j++) {
 		for (int i = 0; i < (xrange); i++) {
 			energy0[i + j * energy0_sizex] = state_energy_0;
@@ -120,7 +120,7 @@ void generate_chunk(const int tile, global_variables &globals) {
 		const double *state_radius = state_radius_buffer.data;
 		const int *state_geometry = state_geometry_buffer.data;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target)) \
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target) \
         map(to : state_density[:state_density_buffer.N()]) \
         map(to : state_energy[:state_energy_buffer.N()]) \
         map(to : state_xvel[:state_xvel_buffer.N()]) \

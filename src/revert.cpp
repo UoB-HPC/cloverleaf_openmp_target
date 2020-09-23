@@ -43,7 +43,7 @@ void revert_kernel(
 	double *energy1 = field.energy1.data;
 	const int energy1_sizex = field.energy1.sizeX;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			density1[i + j * density1_sizex] = density0[i + j * density0_sizex];

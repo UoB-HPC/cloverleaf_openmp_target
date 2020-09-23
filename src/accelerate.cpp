@@ -65,7 +65,7 @@ void accelerate_kernel(
 	double *yvel1 = field.yvel1.data;
 	const int yvel1_sizex = field.yvel1.sizeX;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 			double stepbymass_s = halfdt / ((density0[(i - 1) + (j - 1) * density0_sizex] * volume[(i - 1) + (j - 1) * volume_sizex] +

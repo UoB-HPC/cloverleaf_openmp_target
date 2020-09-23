@@ -22,7 +22,6 @@
 
 #define DEBUG false
 #define FLUSH_BUFFER 0
-#define USE_CXX_OPERATORS 0
 
 
 #include <iostream>
@@ -38,6 +37,12 @@
 #define g_small (1.0e-16)
 #define g_big   (1.0e+21)
 #define NUM_FIELDS 15
+
+#ifdef OMP_ALLOW_HOST
+#define omp_use_target(cond) if(target: (cond))
+#else
+#define omp_use_target(cond) /*no-op*/
+#endif
 
 namespace clover {
 

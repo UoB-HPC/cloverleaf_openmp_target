@@ -54,7 +54,7 @@ void flux_calc_kernel(
 	double *vol_flux_y = field.vol_flux_y.data;
 	const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) if(target: use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 			vol_flux_x[i + j * vol_flux_x_sizex] = 0.25 * dt * xarea[i + j * xarea_sizex] *

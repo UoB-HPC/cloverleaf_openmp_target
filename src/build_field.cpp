@@ -170,7 +170,7 @@ void build_field(global_variables &globals) {
 		double *yvel1 = field.yvel1.data;
 		const int yvel1_sizex = field.yvel1.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 		for (int j = 0; j < (yrange + 1); j++) {
 			for (int i = 0; i < (xrange + 1); i++) {
 				work_array1[i + j * work_array1_sizex] = 0.0;
@@ -205,7 +205,7 @@ void build_field(global_variables &globals) {
 		double *volume = field.volume.data;
 		const int volume_sizex = field.volume.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 		for (int j = 0; j < (yrange); j++) {
 			for (int i = 0; i < (xrange); i++) {
 				density0[i + j * density0_sizex] = 0.0;
@@ -227,7 +227,7 @@ void build_field(global_variables &globals) {
 		double *xarea = field.xarea.data;
 		const int xarea_sizex = field.xarea.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 		for (int j = 0; j < (yrange); j++) {
 			for (int i = 0; i < (xrange); i++) {
 				vol_flux_x[i + j * vol_flux_x_sizex] = 0.0;
@@ -244,7 +244,7 @@ void build_field(global_variables &globals) {
 		double *yarea = field.yarea.data;
 		const int yarea_sizex = field.yarea.sizeX;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 		for (int j = 0; j < (yrange + 1); j++) {
 			for (int i = 0; i < (xrange); i++) {
 				vol_flux_y[i + j * vol_flux_y_sizex] = 0.0;
@@ -257,7 +257,7 @@ void build_field(global_variables &globals) {
 		double *cellx = field.cellx.data;
 		double *celldx = field.celldx.data;
 
-		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 		for (int id = 0; id < (xrange); id++) {
 			cellx[id] = 0.0;
 			celldx[id] = 0.0;
@@ -267,7 +267,7 @@ void build_field(global_variables &globals) {
 		double *celly = field.celly.data;
 		double *celldy = field.celldy.data;
 
-		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 		for (int id = 0; id < (yrange); id++) {
 			celly[id] = 0.0;
 			celldy[id] = 0.0;
@@ -277,7 +277,7 @@ void build_field(global_variables &globals) {
 		double *vertexx = field.vertexx.data;
 		double *vertexdx = field.vertexdx.data;
 
-		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 		for (int id = 0; id < (xrange + 1); id++) {
 			vertexx[id] = 0.0;
 			vertexdx[id] = 0.0;
@@ -287,7 +287,7 @@ void build_field(global_variables &globals) {
 		double *vertexy = field.vertexy.data;
 		double *vertexdy = field.vertexdy.data;
 
-		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 		for (int id = 0; id < (yrange + 1); id++) {
 			vertexy[id] = 0.0;
 			vertexdy[id] = 0.0;

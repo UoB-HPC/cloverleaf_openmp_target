@@ -59,7 +59,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	double *vertexx = field.vertexx.data;
 	double *vertexdx = field.vertexdx.data;
 
-	#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+	#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 	for (int j = 0; j < (xrange); j++) {
 		vertexx[j] = xmin + dx * (j - 1 - x_min);
 		vertexdx[j] = dx;
@@ -69,7 +69,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	double *vertexy = field.vertexy.data;
 	double *vertexdy = field.vertexdy.data;
 
-	#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+	#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 	for (int k = 0; k < (yrange); k++) {
 		vertexy[k] = ymin + dy * (k - 1 - y_min);
 		vertexdy[k] = dy;
@@ -81,7 +81,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 
 	double *cellx = field.cellx.data;
 	double *celldx = field.celldx.data;
-	#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+	#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 	for (int j = 0; j < (xrange1); j++) {
 		cellx[j] = 0.5 * (vertexx[j] + vertexx[j + 1]);
 		celldx[j] = dx;
@@ -90,7 +90,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 
 	double *celly = field.celly.data;
 	double *celldy = field.celldy.data;
-	#pragma omp target teams distribute parallel for simd if(target: (globals.use_target))
+	#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 	for (int k = 0; k < (yrange1); k++) {
 		celly[k] = 0.5 * (vertexy[k] + vertexy[k + 1]);
 		celldy[k] = dy;
@@ -104,7 +104,7 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	double *yarea = field.yarea.data;
 	const int yarea_sizex = field.yarea.sizeX;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) if(target: (globals.use_target))
+	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 	for (int j = 0; j < (yrange1); j++) {
 		for (int i = 0; i < (xrange1); i++) {
 			volume[i + j * volume_sizex] = dx * dy;

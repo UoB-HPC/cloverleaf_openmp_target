@@ -150,6 +150,13 @@ global_variables initialise(parallel_ &parallel, const std::vector<std::string> 
 
 	if (!useTarget) {
 		std::cout << "Using OMP device: (host fallback))" << std::endl;
+
+		#ifndef OMP_ALLOW_HOST
+		std::cerr << "Error: host fallback mode selected but OMP_ALLOW_HOST not enabled at compile time" << std::endl;
+		std::exit(EXIT_FAILURE);
+		#endif
+
+
 	} else {
 		std::cout << "Using OMP device: #" << selectedDevice << std::endl;
 		omp_set_default_device(selectedDevice);

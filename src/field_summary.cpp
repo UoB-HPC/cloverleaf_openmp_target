@@ -102,7 +102,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		const int yvel0_sizex = field.yvel0.sizeX;
 
 
-		#pragma omp target teams distribute parallel for simd if(target: (globals.use_target)) \
+		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target) \
         map(tofrom:vol) \
         map(tofrom:mass) \
         map(tofrom:ie) \
