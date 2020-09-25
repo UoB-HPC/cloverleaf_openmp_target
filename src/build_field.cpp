@@ -37,43 +37,75 @@ void build_field(global_variables &globals) {
 
 
 
+		double * density0 = field.density0.data;
+		double * density1 = field.density1.data;
+		double * energy0 = field.energy0.data;
+		double * energy1 = field.energy1.data;
+		double * pressure = field.pressure.data;
+		double * viscosity = field.viscosity.data;
+		double * soundspeed = field.soundspeed.data;
+		double * yvel0 = field.yvel0.data;
+		double * yvel1 = field.yvel1.data;
+		double * xvel0 = field.xvel0.data;
+		double * xvel1 = field.xvel1.data;
+		double * vol_flux_x = field.vol_flux_x.data;
+		double * vol_flux_y = field.vol_flux_y.data;
+		double * mass_flux_x = field.mass_flux_x.data;
+		double * mass_flux_y = field.mass_flux_y.data;
+		double * work_array1 = field.work_array1.data;
+		double * work_array2 = field.work_array2.data;
+		double * work_array3 = field.work_array3.data;
+		double * work_array4 = field.work_array4.data;
+		double * work_array5 = field.work_array5.data;
+		double * work_array6 = field.work_array6.data;
+		double * work_array7 = field.work_array7.data;
+		double * cellx = field.cellx.data;
+		double * celldx = field.celldx.data;
+		double * celly = field.celly.data;
+		double * celldy = field.celldy.data;
+		double * vertexx = field.vertexx.data;
+		double * vertexdx = field.vertexdx.data;
+		double * vertexy = field.vertexy.data;
+		double * vertexdy = field.vertexdy.data;
+		double * volume = field.volume.data;
+		double * xarea = field.xarea.data;
+		double * yarea = field.yarea.data;
 
 
-//
 		#pragma omp target enter data \
-                map(alloc: field.density0.data[:field.density0.N()])    \
-                map(alloc: field.density1.data[:field.density1.N()])    \
-                map(alloc: field.energy0.data[:field.energy0.N()])    \
-                map(alloc: field.energy1.data[:field.energy1.N()])    \
-                map(alloc: field.pressure.data[:field.pressure.N()])    \
-                map(alloc: field.viscosity.data[:field.viscosity.N()])    \
-                map(alloc: field.soundspeed.data[:field.soundspeed.N()])    \
-                map(alloc: field.yvel0.data[:field.yvel0.N()])    \
-                map(alloc: field.yvel1.data[:field.yvel1.N()])    \
-                map(alloc: field.xvel0.data[:field.xvel0.N()])    \
-                map(alloc: field.xvel1.data[:field.xvel1.N()])    \
-                map(alloc: field.vol_flux_x.data[:field.vol_flux_x.N()])    \
-                map(alloc: field.vol_flux_y.data[:field.vol_flux_y.N()])    \
-                map(alloc: field.mass_flux_x.data[:field.mass_flux_x.N()])    \
-                map(alloc: field.mass_flux_y.data[:field.mass_flux_y.N()])    \
-                map(alloc: field.work_array1.data[:field.work_array1.N()])    \
-                map(alloc: field.work_array2.data[:field.work_array2.N()])    \
-                map(alloc: field.work_array3.data[:field.work_array3.N()])    \
-                map(alloc: field.work_array4.data[:field.work_array4.N()])    \
-                map(alloc: field.work_array5.data[:field.work_array5.N()])    \
-                map(alloc: field.work_array6.data[:field.work_array6.N()])    \
-                map(alloc: field.work_array7.data[:field.work_array7.N()])    \
-                map(alloc: field.cellx.data[:field.cellx.N()]) \
-                map(alloc: field.celldx.data[:field.celldx.N()]) \
-                map(alloc: field.celly.data[:field.celly.N()]) \
-                map(alloc: field.celldy.data[:field.celldy.N()]) \
-                map(alloc: field.vertexx.data[:field.vertexx.N()]) \
-                map(alloc: field.vertexdx.data[:field.vertexdx.N()]) \
-                map(alloc: field.vertexy.data[:field.vertexy.N()]) \
-                map(alloc: field.vertexdy.data[:field.vertexdy.N()]) \
-                map(alloc: field.volume.data[:field.volume.N()])    \
-                map(alloc: field.xarea.data[:field.xarea.N()])    \
-                map(alloc: field.yarea.data[:field.yarea.N()])    \
+                map(alloc: density0[:field.density0.N()])    \
+                map(alloc: density1[:field.density1.N()])    \
+                map(alloc: energy0[:field.energy0.N()])    \
+                map(alloc: energy1[:field.energy1.N()])    \
+                map(alloc: pressure[:field.pressure.N()])    \
+                map(alloc: viscosity[:field.viscosity.N()])    \
+                map(alloc: soundspeed[:field.soundspeed.N()])    \
+                map(alloc: yvel0[:field.yvel0.N()])    \
+                map(alloc: yvel1[:field.yvel1.N()])    \
+                map(alloc: xvel0[:field.xvel0.N()])    \
+                map(alloc: xvel1[:field.xvel1.N()])    \
+                map(alloc: vol_flux_x[:field.vol_flux_x.N()])    \
+                map(alloc: vol_flux_y[:field.vol_flux_y.N()])    \
+                map(alloc: mass_flux_x[:field.mass_flux_x.N()])    \
+                map(alloc: mass_flux_y[:field.mass_flux_y.N()])    \
+                map(alloc: work_array1[:field.work_array1.N()])    \
+                map(alloc: work_array2[:field.work_array2.N()])    \
+                map(alloc: work_array3[:field.work_array3.N()])    \
+                map(alloc: work_array4[:field.work_array4.N()])    \
+                map(alloc: work_array5[:field.work_array5.N()])    \
+                map(alloc: work_array6[:field.work_array6.N()])    \
+                map(alloc: work_array7[:field.work_array7.N()])    \
+                map(alloc: cellx[:field.cellx.N()]) \
+                map(alloc: celldx[:field.celldx.N()]) \
+                map(alloc: celly[:field.celly.N()]) \
+                map(alloc: celldy[:field.celldy.N()]) \
+                map(alloc: vertexx[:field.vertexx.N()]) \
+                map(alloc: vertexdx[:field.vertexdx.N()]) \
+                map(alloc: vertexy[:field.vertexy.N()]) \
+                map(alloc: vertexdy[:field.vertexdy.N()]) \
+                map(alloc: volume[:field.volume.N()])    \
+                map(alloc: xarea[:field.xarea.N()])    \
+                map(alloc: yarea[:field.yarea.N()])    \
 
 		const int xrange = (t.info.t_xmax + 2) - (t.info.t_xmin - 2) + 1;
 		const int yrange = (t.info.t_ymax + 2) - (t.info.t_ymin - 2) + 1;
@@ -146,28 +178,16 @@ void build_field(global_variables &globals) {
 
 
 
-
-		double *work_array1 = field.work_array1.data;
 		const int work_array1_sizex = field.work_array1.sizeX;
-		double *work_array2 = field.work_array2.data;
 		const int work_array2_sizex = field.work_array2.sizeX;
-		double *work_array3 = field.work_array3.data;
 		const int work_array3_sizex = field.work_array3.sizeX;
-		double *work_array4 = field.work_array4.data;
 		const int work_array4_sizex = field.work_array4.sizeX;
-		double *work_array5 = field.work_array5.data;
 		const int work_array5_sizex = field.work_array5.sizeX;
-		double *work_array6 = field.work_array6.data;
 		const int work_array6_sizex = field.work_array6.sizeX;
-		double *work_array7 = field.work_array7.data;
 		const int work_array7_sizex = field.work_array7.sizeX;
-		double *xvel0 = field.xvel0.data;
 		const int xvel0_sizex = field.xvel0.sizeX;
-		double *xvel1 = field.xvel1.data;
 		const int xvel1_sizex = field.xvel1.sizeX;
-		double *yvel0 = field.yvel0.data;
 		const int yvel0_sizex = field.yvel0.sizeX;
-		double *yvel1 = field.yvel1.data;
 		const int yvel1_sizex = field.yvel1.sizeX;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
@@ -188,21 +208,13 @@ void build_field(global_variables &globals) {
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-		double *density0 = field.density0.data;
 		const int density0_sizex = field.density0.sizeX;
-		double *density1 = field.density1.data;
 		const int density1_sizex = field.density1.sizeX;
-		double *energy0 = field.energy0.data;
 		const int energy0_sizex = field.energy0.sizeX;
-		double *energy1 = field.energy1.data;
 		const int energy1_sizex = field.energy1.sizeX;
-		double *pressure = field.pressure.data;
 		const int pressure_sizex = field.pressure.sizeX;
-		double *viscosity = field.viscosity.data;
 		const int viscosity_sizex = field.viscosity.sizeX;
-		double *soundspeed = field.soundspeed.data;
 		const int soundspeed_sizex = field.soundspeed.sizeX;
-		double *volume = field.volume.data;
 		const int volume_sizex = field.volume.sizeX;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
@@ -220,11 +232,8 @@ void build_field(global_variables &globals) {
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-		double *vol_flux_x = field.vol_flux_x.data;
 		const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
-		double *mass_flux_x = field.mass_flux_x.data;
 		const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
-		double *xarea = field.xarea.data;
 		const int xarea_sizex = field.xarea.sizeX;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
@@ -237,11 +246,8 @@ void build_field(global_variables &globals) {
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-		double *vol_flux_y = field.vol_flux_y.data;
 		const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
-		double *mass_flux_y = field.mass_flux_y.data;
 		const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
-		double *yarea = field.yarea.data;
 		const int yarea_sizex = field.yarea.sizeX;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
@@ -254,9 +260,6 @@ void build_field(global_variables &globals) {
 		}
 
 		// (t_xmin-2:t_xmax+2) inclusive
-		double *cellx = field.cellx.data;
-		double *celldx = field.celldx.data;
-
 		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 		for (int id = 0; id < (xrange); id++) {
 			cellx[id] = 0.0;
@@ -264,9 +267,6 @@ void build_field(global_variables &globals) {
 		}
 
 		// (t_ymin-2:t_ymax+2) inclusive
-		double *celly = field.celly.data;
-		double *celldy = field.celldy.data;
-
 		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 		for (int id = 0; id < (yrange); id++) {
 			celly[id] = 0.0;
@@ -274,9 +274,6 @@ void build_field(global_variables &globals) {
 		}
 
 		// (t_xmin-2:t_xmax+3) inclusive
-		double *vertexx = field.vertexx.data;
-		double *vertexdx = field.vertexdx.data;
-
 		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 		for (int id = 0; id < (xrange + 1); id++) {
 			vertexx[id] = 0.0;
@@ -284,9 +281,6 @@ void build_field(global_variables &globals) {
 		}
 
 		// (t_ymin-2:t_ymax+3) inclusive
-		double *vertexy = field.vertexy.data;
-		double *vertexdy = field.vertexdy.data;
-
 		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
 		for (int id = 0; id < (yrange + 1); id++) {
 			vertexy[id] = 0.0;
