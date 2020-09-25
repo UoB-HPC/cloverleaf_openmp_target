@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(cloverleaf_sycl)
 
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenMP REQUIRED)
@@ -108,7 +108,19 @@ target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
 
-target_link_options(clover_leaf PUBLIC ${OpenMP_CXX_FLAGS} ${OMP_OFFLOAD_FLAGS})
+if (${CMAKE_VERSION} VERSION_LESS "3.13.0")
+    message(WARNING "target_link_options is only available in CMake >= 3.13.0, using fallback target_link_libraries, this may cause issues with some compilers")
 
-target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+    set(EXTRA_LINK_FLAGS ${OpenMP_CXX_FLAGS} ${OMP_OFFLOAD_FLAGS})
+
+    if (DEFINED CXX_EXTRA_LINKER_FLAGS)
+        list(APPEND EXTRA_LINK_FLAGS "-Wl,${CXX_EXTRA_LINKER_FLAGS}")
+    endif ()
+
+    target_link_libraries(clover_leaf PUBLIC ${EXTRA_LINK_FLAGS})
+
+else ()
+    target_link_options(clover_leaf PUBLIC ${OpenMP_CXX_FLAGS} ${OMP_OFFLOAD_FLAGS})
+    target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+endif ()
 

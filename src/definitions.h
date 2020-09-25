@@ -31,6 +31,7 @@
 #include <chrono>
 #include <functional>
 #include <cassert>
+#include <vector>
 
 
 #define g_ibig 640000
@@ -46,6 +47,12 @@
 
 namespace clover {
 
+	template<class T, class U = T>
+	static T cpp14_exchange(T& obj, U&& new_value) {
+		T old_value = std::move(obj);
+		obj = std::forward<U>(new_value);
+		return old_value;
+	}
 
 	template<typename T>
 	struct Buffer1D {
@@ -61,7 +68,7 @@ namespace clover {
 			std::copy(that.data, that.data + size, data);
 		}
 
-		Buffer1D(Buffer1D &&other) noexcept: size(other.size), data(std::exchange(other.data, nullptr)) {}
+		Buffer1D(Buffer1D &&other) noexcept: size(other.size), data(cpp14_exchange(other.data, nullptr)) {}
 
 		Buffer1D &operator=(Buffer1D &&other) noexcept {
 			size = other.size;
@@ -100,7 +107,7 @@ namespace clover {
 			std::copy(that.data, that.data + (sizeX * sizeY), data);
 		}
 
-		Buffer2D(Buffer2D &&other) noexcept: sizeX(other.sizeX), sizeY(other.sizeY), data(std::exchange(other.data, nullptr)) {}
+		Buffer2D(Buffer2D &&other) noexcept: sizeX(other.sizeX), sizeY(other.sizeY), data(cpp14_exchange(other.data, nullptr)) {}
 
 
 		[[nodiscard]] constexpr size_t N() const { return sizeX * sizeY; }

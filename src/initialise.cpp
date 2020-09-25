@@ -66,7 +66,9 @@ void printHelp(const std::string &name) {
 RunConfig parseArgs(const size_t num_devices,
                     const std::vector<std::string> &args) {
 
-	const auto readParam = [&args](size_t current, const std::string &emptyMessage, auto map) {
+	const auto readParam = [&args](size_t current,
+	                               const std::string &emptyMessage,
+	                               const std::function<void(std::string)> &map) {
 		if (current + 1 < args.size()) {
 			return map(args[current + 1]);
 		} else {
@@ -90,7 +92,7 @@ RunConfig parseArgs(const size_t num_devices,
 		} else if (arg == "--no-target") {
 			config.deviceIdx = -1;
 		} else if (arg == "--device") {
-			readParam(i, "--device specified but no index was given", [&](const auto &param) {
+			readParam(i, "--device specified but no index was given", [&](const std::string &param) {
 				auto selected = std::stoul(param);
 				if (selected < 0 || selected >= num_devices) {
 					std::cerr << "bad device index `" << param << "`" << std::endl;
@@ -99,7 +101,7 @@ RunConfig parseArgs(const size_t num_devices,
 				config.deviceIdx = selected;
 			});
 		} else if (arg == "--file") {
-			readParam(i, "--file specified but no file was given", [&config](const auto &param) {
+			readParam(i, "--file specified but no file was given", [&config](const std::string &param) {
 				config.file = param;
 			});
 		}
