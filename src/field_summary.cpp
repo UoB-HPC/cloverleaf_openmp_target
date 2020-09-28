@@ -88,18 +88,16 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int xmin = t.info.t_xmin;
 		field_type &field = t.field;
 
+
+		const int base_stride = field.base_stride;
+		const int vels_wk_stride = field.vels_wk_stride;
+
 		double *volume = field.volume.data;
-		const int volume_sizex = field.volume.sizeX;
 		double *density0 = field.density0.data;
-		const int density0_sizex = field.density0.sizeX;
 		double *energy0 = field.energy0.data;
-		const int energy0_sizex = field.energy0.sizeX;
 		double *pressure = field.pressure.data;
-		const int pressure_sizex = field.pressure.sizeX;
 		double *xvel0 = field.xvel0.data;
-		const int xvel0_sizex = field.xvel0.sizeX;
 		double *yvel0 = field.yvel0.data;
-		const int yvel0_sizex = field.yvel0.sizeX;
 
 
 		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target) \
@@ -115,16 +113,16 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 			double vsqrd = 0.0;
 			for (int kv = k; kv <= k + 1; ++kv) {
 				for (int jv = j; jv <= j + 1; ++jv) {
-					vsqrd += 0.25 * (xvel0[(jv) + (kv) * xvel0_sizex] * xvel0[(jv) + (kv) * xvel0_sizex] + yvel0[(jv) + (kv) * yvel0_sizex] * yvel0[(jv) + (kv) * yvel0_sizex]);
+					vsqrd += 0.25 * (xvel0[(jv) + (kv) * vels_wk_stride] * xvel0[(jv) + (kv) * vels_wk_stride] + yvel0[(jv) + (kv) * vels_wk_stride] * yvel0[(jv) + (kv) * vels_wk_stride]);
 				}
 			}
-			double cell_vol = volume[j + (k) * volume_sizex];
-			double cell_mass = cell_vol * density0[j + (k) * density0_sizex];
+			double cell_vol = volume[j + (k) * base_stride];
+			double cell_mass = cell_vol * density0[j + (k) * base_stride];
 			vol += cell_vol;
 			mass += cell_mass;
-			ie += cell_mass * energy0[j + (k) * energy0_sizex];
+			ie += cell_mass * energy0[j + (k) * base_stride];
 			ke += cell_mass * 0.5 * vsqrd;
-			press += cell_vol * pressure[j + (k) * pressure_sizex];
+			press += cell_vol * pressure[j + (k) * base_stride];
 		}
 
 

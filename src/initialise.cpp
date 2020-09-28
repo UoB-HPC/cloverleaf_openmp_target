@@ -94,7 +94,7 @@ RunConfig parseArgs(const size_t num_devices,
 		} else if (arg == "--device") {
 			readParam(i, "--device specified but no index was given", [&](const std::string &param) {
 				auto selected = std::stoul(param);
-				if (selected < 0 || selected >= num_devices) {
+				if (selected >= num_devices) {
 					std::cerr << "bad device index `" << param << "`" << std::endl;
 					std::exit(EXIT_FAILURE);
 				}

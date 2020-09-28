@@ -57,7 +57,10 @@ namespace clover {
 	template<typename T>
 	struct Buffer1D {
 
+	private:
 		const size_t size;
+
+	public:
 		T *data;
 
 		explicit Buffer1D(size_t size) : size(size), data(new T[size]) {
@@ -76,6 +79,8 @@ namespace clover {
 			return *this;
 		}
 
+		[[nodiscard]]   T &operator[](size_t i) { return data[i]; }
+		[[nodiscard]] T operator[](size_t i) const { return data[i]; }
 
 		[[nodiscard]] constexpr size_t N() const { return size; }
 
@@ -95,8 +100,10 @@ namespace clover {
 
 	template<typename T>
 	struct Buffer2D {
-
+	private:
 		const size_t sizeX, sizeY;
+	public:
+
 		T *data;
 
 		Buffer2D(size_t sizeX, size_t sizeY) : sizeX(sizeX), sizeY(sizeY), data(new T[sizeX * sizeY]) {
@@ -110,7 +117,11 @@ namespace clover {
 		Buffer2D(Buffer2D &&other) noexcept: sizeX(other.sizeX), sizeY(other.sizeY), data(cpp14_exchange(other.data, nullptr)) {}
 
 
+		[[nodiscard]] const T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
+		[[nodiscard]] T &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
 		[[nodiscard]] constexpr size_t N() const { return sizeX * sizeY; }
+		[[nodiscard]] constexpr size_t nX() const { return sizeX; }
+		[[nodiscard]] constexpr size_t nY() const { return sizeY; }
 
 
 		Buffer2D<T> &operator=(const Buffer2D<T> &other) {
@@ -130,9 +141,6 @@ namespace clover {
 		~Buffer2D() { delete[] data; }
 
 	};
-
-	#define hostidx1(xs, i) xs.data[i]
-	#define hostidx2(xs, i, j) xs.data[i + j * xs.sizeX]
 
 }
 
@@ -161,22 +169,22 @@ static inline void record(const std::string &name, const std::function<void(std:
 // formats and then dumps content of 1d double buffer to stream
 static inline void
 show(std::ostream &out, const std::string &name, const clover::Buffer1D<double> &buffer) {
-	out << name << "(" << 1 << ") [" << buffer.size << "]" << std::endl;
+	out << name << "(" << 1 << ") [" << buffer.N() << "]" << std::endl;
 	out << "\t";
-	for (size_t i = 0; i < buffer.size; ++i) {
-		out << hostidx1(buffer, i) << ", ";
+	for (size_t i = 0; i < buffer.N(); ++i) {
+		out << buffer[i] << ", ";
 	}
 	out << std::endl;
 }
 // formats and then dumps content of 2d double buffer to stream
 static inline void
 show(std::ostream &out, const std::string &name, clover::Buffer2D<double> &buffer) {
-	out << name << "(" << 2 << ") [" << buffer.sizeX << "x" << buffer.sizeY << "]"
+	out << name << "(" << 2 << ") [" << buffer.nX() << "x" << buffer.nY() << "]"
 	    << std::endl;
-	for (size_t i = 0; i < buffer.sizeX; ++i) {
+	for (size_t i = 0; i < buffer.nX(); ++i) {
 		out << "\t";
-		for (size_t j = 0; j < buffer.sizeY; ++j) {
-			out << hostidx2(buffer, i, j) << ", ";
+		for (size_t j = 0; j < buffer.nY(); ++j) {
+			out << buffer(i, j) << ", ";
 		}
 		out << std::endl;
 	}
@@ -277,17 +285,24 @@ struct profiler_type {
 
 struct field_type {
 
-	clover::Buffer2D<double> density0;
-	clover::Buffer2D<double> density1;
-	clover::Buffer2D<double> energy0;
-	clover::Buffer2D<double> energy1;
+	clover::Buffer2D<double> density0, density1;
+	clover::Buffer2D<double> energy0, energy1;
 	clover::Buffer2D<double> pressure;
 	clover::Buffer2D<double> viscosity;
+	clover::Buffer2D<double> volume;
 	clover::Buffer2D<double> soundspeed;
+
+
+	int density0_stride, density1_stride;
+	int energy0_stride, energy1_stride;
+	int pressure_stride;
+	int viscosity_stride;
+	int volume_stride;
+	int soundspeed_stride;
+
+
 	clover::Buffer2D<double> xvel0, xvel1;
 	clover::Buffer2D<double> yvel0, yvel1;
-	clover::Buffer2D<double> vol_flux_x, mass_flux_x;
-	clover::Buffer2D<double> vol_flux_y, mass_flux_y;
 
 	clover::Buffer2D<double> work_array1; // node_flux, stepbymass, volume_change, pre_vol
 	clover::Buffer2D<double> work_array2; // node_mass_post, post_vol
@@ -297,38 +312,33 @@ struct field_type {
 	clover::Buffer2D<double> work_array6; // pre_vol, post_ener
 	clover::Buffer2D<double> work_array7; // post_vol, ener_flux
 
-	clover::Buffer1D<double> cellx;
-	clover::Buffer1D<double> celldx;
-	clover::Buffer1D<double> celly;
-	clover::Buffer1D<double> celldy;
-	clover::Buffer1D<double> vertexx;
-	clover::Buffer1D<double> vertexdx;
-	clover::Buffer1D<double> vertexy;
-	clover::Buffer1D<double> vertexdy;
+	clover::Buffer2D<double> vol_flux_x, mass_flux_x;
+	clover::Buffer2D<double> vol_flux_y, mass_flux_y;
+	clover::Buffer2D<double> xarea, yarea;
 
-	clover::Buffer2D<double> volume;
-	clover::Buffer2D<double> xarea;
-	clover::Buffer2D<double> yarea;
+	clover::Buffer1D<double> cellx, celldx;
+	clover::Buffer1D<double> celly, celldy;
+
+	clover::Buffer1D<double> vertexx, vertexdx;
+	clover::Buffer1D<double> vertexy, vertexdy;
 
 
-	explicit field_type(const size_t xrange, const size_t yrange) :
-			density0(xrange, yrange),
-			density1(xrange, yrange),
-			energy0(xrange, yrange),
-			energy1(xrange, yrange),
+	int base_stride;
+	int vels_wk_stride;
+	int flux_x_stride, flux_y_stride;
+
+
+	explicit field_type(const int xrange, const int yrange) :
+
+			density0(xrange, yrange), density1(xrange, yrange),
+			energy0(xrange, yrange), energy1(xrange, yrange),
 			pressure(xrange, yrange),
 			viscosity(xrange, yrange),
+			volume(xrange, yrange),
 			soundspeed(xrange, yrange),
 
-			xvel0(xrange + 1, yrange + 1),
-			xvel1(xrange + 1, yrange + 1),
-			yvel0(xrange + 1, yrange + 1),
-			yvel1(xrange + 1, yrange + 1),
-			vol_flux_x(xrange + 1, yrange),
-			mass_flux_x(xrange + 1, yrange),
-			vol_flux_y(xrange, yrange + 1),
-			mass_flux_y(xrange, yrange + 1),
-
+			xvel0(xrange + 1, yrange + 1), xvel1(xrange + 1, yrange + 1),
+			yvel0(xrange + 1, yrange + 1), yvel1(xrange + 1, yrange + 1),
 			work_array1(xrange + 1, yrange + 1),
 			work_array2(xrange + 1, yrange + 1),
 			work_array3(xrange + 1, yrange + 1),
@@ -336,20 +346,22 @@ struct field_type {
 			work_array5(xrange + 1, yrange + 1),
 			work_array6(xrange + 1, yrange + 1),
 			work_array7(xrange + 1, yrange + 1),
-			cellx(xrange),
-			celldx(xrange),
-			celly(yrange),
-			celldy(yrange),
+
+			vol_flux_x(xrange + 1, yrange), mass_flux_x(xrange + 1, yrange),
+			vol_flux_y(xrange, yrange + 1), mass_flux_y(xrange, yrange + 1),
+			xarea(xrange + 1, yrange), yarea(xrange, yrange + 1),
+
+			cellx(xrange), celldx(xrange),
+			celly(yrange), celldy(yrange),
 
 			vertexx(xrange + 1),
 			vertexdx(xrange + 1),
 			vertexy(yrange + 1),
 			vertexdy(yrange + 1),
-			volume(xrange, yrange),
-			xarea(xrange + 1, yrange),
-			yarea(xrange, yrange + 1) {}
 
-
+			base_stride(xrange),
+			vels_wk_stride(xrange + 1),
+			flux_x_stride(xrange + 1), flux_y_stride(xrange) {}
 };
 
 

@@ -35,20 +35,17 @@ void reset_field_kernel(
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
+	const int base_stride = field.base_stride;
 	double *density0 = field.density0.data;
-	const int density0_sizex = field.density0.sizeX;
 	double *density1 = field.density1.data;
-	const int density1_sizex = field.density1.sizeX;
 	double *energy0 = field.energy0.data;
-	const int energy0_sizex = field.energy0.sizeX;
 	double *energy1 = field.energy1.data;
-	const int energy1_sizex = field.energy1.sizeX;
 
 	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			density0[i + j * density0_sizex] = density1[i + j * density1_sizex];
-			energy0[i + j * energy0_sizex] = energy1[i + j * energy1_sizex];
+			density0[i + j * base_stride] = density1[i + j * base_stride];
+			energy0[i + j * base_stride] = energy1[i + j * base_stride];
 		}
 	}
 
@@ -57,20 +54,17 @@ void reset_field_kernel(
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
+	const int vels_wk_stride = field.vels_wk_stride;
 	double *xvel0 = field.xvel0.data;
-	const int xvel0_sizex = field.xvel0.sizeX;
 	double *xvel1 = field.xvel1.data;
-	const int xvel1_sizex = field.xvel1.sizeX;
 	double *yvel0 = field.yvel0.data;
-	const int yvel0_sizex = field.yvel0.sizeX;
 	double *yvel1 = field.yvel1.data;
-	const int yvel1_sizex = field.yvel1.sizeX;
 
 	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			xvel0[i + j * xvel0_sizex] = xvel1[i + j * xvel1_sizex];
-			yvel0[i + j * yvel0_sizex] = yvel1[i + j * yvel1_sizex];
+			xvel0[i + j * vels_wk_stride] = xvel1[i + j * vels_wk_stride];
+			yvel0[i + j * vels_wk_stride] = yvel1[i + j * vels_wk_stride];
 		}
 	}
 

@@ -37,10 +37,9 @@ int N = 0;
 void ideal_gas_kernel(
 		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
+		field_type &field,
 		clover::Buffer2D<double> &density_buffer,
-		clover::Buffer2D<double> &energy_buffer,
-		clover::Buffer2D<double> &pressure_buffer,
-		clover::Buffer2D<double> &soundspeed_buffer) {
+		clover::Buffer2D<double> &energy_buffer) {
 
 	//std::cout <<" ideal_gas(" << x_min+1 << ","<< y_min+1<< ","<< x_max+2<< ","<< y_max +2  << ")" << std::endl;
 	// DO k=y_min,y_max
@@ -48,24 +47,22 @@ void ideal_gas_kernel(
 
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
+	const int base_stride = field.base_stride;
+
 	double *density = density_buffer.data;
-	const int density_sizex = density_buffer.sizeX;
 	double *energy = energy_buffer.data;
-	const int energy_sizex = energy_buffer.sizeX;
-	double *pressure = pressure_buffer.data;
-	const int pressure_sizex = pressure_buffer.sizeX;
-	double *soundspeed = soundspeed_buffer.data;
-	const int soundspeed_sizex = soundspeed_buffer.sizeX;
+	double *pressure = field.pressure.data;
+	double *soundspeed = field.soundspeed.data;
 
 	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			double v = 1.0 / density[i + j * density_sizex];
-			pressure[i + j * pressure_sizex] = (1.4 - 1.0) * density[i + j * density_sizex] * energy[i + j * energy_sizex];
-			double pressurebyenergy = (1.4 - 1.0) * density[i + j * density_sizex];
-			double pressurebyvolume = -density[i + j * density_sizex] * pressure[i + j * pressure_sizex];
-			double sound_speed_squared = v * v * (pressure[i + j * pressure_sizex] * pressurebyenergy - pressurebyvolume);
-			soundspeed[i + j * soundspeed_sizex] = std::sqrt(sound_speed_squared);
+			double v = 1.0 / density[i + j * base_stride];
+			pressure[i + j * base_stride] = (1.4 - 1.0) * density[i + j * base_stride] * energy[i + j * base_stride];
+			double pressurebyenergy = (1.4 - 1.0) * density[i + j * base_stride];
+			double pressurebyvolume = -density[i + j * base_stride] * pressure[i + j * base_stride];
+			double sound_speed_squared = v * v * (pressure[i + j * base_stride] * pressurebyenergy - pressurebyvolume);
+			soundspeed[i + j * base_stride] = std::sqrt(sound_speed_squared);
 		}
 	};
 
@@ -92,10 +89,9 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 				t.info.t_xmax,
 				t.info.t_ymin,
 				t.info.t_ymax,
+				t.field,
 				t.field.density0,
-				t.field.energy0,
-				t.field.pressure,
-				t.field.soundspeed
+				t.field.energy0
 		);
 	} else {
 		ideal_gas_kernel(
@@ -104,10 +100,9 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 				t.info.t_xmax,
 				t.info.t_ymin,
 				t.info.t_ymax,
+				t.field,
 				t.field.density1,
-				t.field.energy1,
-				t.field.pressure,
-				t.field.soundspeed
+				t.field.energy1
 		);
 	}
 

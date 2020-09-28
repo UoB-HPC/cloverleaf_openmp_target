@@ -59,7 +59,7 @@ void clover_pack_message_left(bool use_target, int x_min, int x_max, int y_min, 
 
 	double *left_snd = left_snd_buffer.data;
 	double *field = field_buffer.data;
-	const int field_sizex = field_buffer.sizeX;
+	const int field_sizex = field_buffer.nX();
 	#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
@@ -102,7 +102,7 @@ void clover_unpack_message_left(bool use_target, int x_min, int x_max, int y_min
 
 
 	double *field = field_buffer.data;
-	const int field_sizex = field_buffer.sizeX;
+	const int field_sizex = field_buffer.nX();
 	double *left_rcv = left_rcv_buffer.data;
 	#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
@@ -143,7 +143,7 @@ void clover_pack_message_right(bool use_target, int x_min, int x_max, int y_min,
 	// DO k=y_min-depth,y_max+y_inc+depth
 	double *right_snd = right_snd_buffer.data;
 	double *field = field_buffer.data;
-	const int field_sizex = field_buffer.sizeX;
+	const int field_sizex = field_buffer.nX();
 	#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
@@ -187,7 +187,7 @@ void clover_unpack_message_right(bool use_target, int x_min, int x_max, int y_mi
 	// DO k=y_min-depth,y_max+y_inc+depth
 	double *right_rcv = right_rcv_buffer.data;
 	double *field = field_buffer.data;
-	const int field_sizex = field_buffer.sizeX;
+	const int field_sizex = field_buffer.nX();
 	#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
@@ -228,7 +228,7 @@ void clover_pack_message_top(bool use_target, int x_min, int x_max, int y_min, i
 
 		double *top_snd = top_snd_buffer.data;
 		double *field = field_buffer.data;
-		const int field_sizex = field_buffer.sizeX;
+		const int field_sizex = field_buffer.nX();
 		#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
@@ -270,7 +270,7 @@ void clover_unpack_message_top(bool use_target, int x_min, int x_max, int y_min,
 
 
 		double *field = field_buffer.data;
-		const int field_sizex = field_buffer.sizeX;
+		const int field_sizex = field_buffer.nX();
 		double *top_rcv = top_rcv_buffer.data;
 		#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
@@ -314,7 +314,7 @@ void clover_pack_message_bottom(bool use_target, int x_min, int x_max, int y_min
 
 		double *bottom_snd = bottom_snd_buffer.data;
 		double *field = field_buffer.data;
-		const int field_sizex = field_buffer.sizeX;
+		const int field_sizex = field_buffer.nX();
 		#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
@@ -351,7 +351,7 @@ void clover_unpack_message_bottom(bool use_target, int x_min, int x_max, int y_m
 		// DO j=x_min-depth,x_max+x_inc+depth
 
 		double *field = field_buffer.data;
-		const int field_sizex = field_buffer.sizeX;
+		const int field_sizex = field_buffer.nX();
 		double *bottom_rcv = bottom_rcv_buffer.data;
 		#pragma omp target teams distribute parallel for simd omp_use_target(use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {

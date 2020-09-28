@@ -33,41 +33,41 @@ void viscosity_kernel(
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
+
+
+	const int base_stride = field.base_stride;
+	const int vels_wk_stride = field.vels_wk_stride;
+
 	double *celldx = field.celldx.data;
 	double *celldy = field.celldy.data;
 	double *density0 = field.density0.data;
-	const int density0_sizex = field.density0.sizeX;
 	double *pressure = field.pressure.data;
-	const int pressure_sizex = field.pressure.sizeX;
 	double *viscosity = field.viscosity.data;
-	const int viscosity_sizex = field.viscosity.sizeX;
 	double *xvel0 = field.xvel0.data;
-	const int xvel0_sizex = field.xvel0.sizeX;
 	double *yvel0 = field.yvel0.data;
-	const int yvel0_sizex = field.yvel0.sizeX;
 
 	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			double ugrad = (xvel0[(i + 1) + (j + 0) * xvel0_sizex] + xvel0[(i + 1) + (j + 1) * xvel0_sizex]) - (xvel0[i + j * xvel0_sizex] + xvel0[(i + 0) + (j + 1) * xvel0_sizex]);
-			double vgrad = (yvel0[(i + 0) + (j + 1) * yvel0_sizex] + yvel0[(i + 1) + (j + 1) * yvel0_sizex]) - (yvel0[i + j * yvel0_sizex] + yvel0[(i + 1) + (j + 0) * yvel0_sizex]);
+			double ugrad = (xvel0[(i + 1) + (j + 0) * vels_wk_stride] + xvel0[(i + 1) + (j + 1) * vels_wk_stride]) - (xvel0[i + j * vels_wk_stride] + xvel0[(i + 0) + (j + 1) * vels_wk_stride]);
+			double vgrad = (yvel0[(i + 0) + (j + 1) * vels_wk_stride] + yvel0[(i + 1) + (j + 1) * vels_wk_stride]) - (yvel0[i + j * vels_wk_stride] + yvel0[(i + 1) + (j + 0) * vels_wk_stride]);
 			double div = (celldx[i] * (ugrad) + celldy[j] * (vgrad));
-			double strain2 = 0.5 * (xvel0[(i + 0) + (j + 1) * xvel0_sizex] +
-			                        xvel0[(i + 1) + (j + 1) * xvel0_sizex] -
-			                        xvel0[i + j * xvel0_sizex] -
-			                        xvel0[(i + 1) + (j + 0) * xvel0_sizex]) / celldy[j] +
-			                 0.5 * (yvel0[(i + 1) + (j + 0) * yvel0_sizex] +
-			                        yvel0[(i + 1) + (j + 1) * yvel0_sizex] -
-			                        yvel0[i + j * yvel0_sizex] -
-			                        yvel0[(i + 0) + (j + 1) * yvel0_sizex]) / celldx[i];
-			double pgradx = (pressure[(i + 1) + (j + 0) * pressure_sizex] - pressure[(i - 1) + (j + 0) * pressure_sizex]) / (celldx[i] + celldx[i + 1]);
-			double pgrady = (pressure[(i + 0) + (j + 1) * pressure_sizex] - pressure[(i + 0) + (j - 1) * pressure_sizex]) / (celldy[j] + celldy[j + 2]);
+			double strain2 = 0.5 * (xvel0[(i + 0) + (j + 1) * vels_wk_stride] +
+			                        xvel0[(i + 1) + (j + 1) * vels_wk_stride] -
+			                        xvel0[i + j * vels_wk_stride] -
+			                        xvel0[(i + 1) + (j + 0) * vels_wk_stride]) / celldy[j] +
+			                 0.5 * (yvel0[(i + 1) + (j + 0) * vels_wk_stride] +
+			                        yvel0[(i + 1) + (j + 1) * vels_wk_stride] -
+			                        yvel0[i + j * vels_wk_stride] -
+			                        yvel0[(i + 0) + (j + 1) * vels_wk_stride]) / celldx[i];
+			double pgradx = (pressure[(i + 1) + (j + 0) * base_stride] - pressure[(i - 1) + (j + 0) * base_stride]) / (celldx[i] + celldx[i + 1]);
+			double pgrady = (pressure[(i + 0) + (j + 1) * base_stride] - pressure[(i + 0) + (j - 1) * base_stride]) / (celldy[j] + celldy[j + 2]);
 			double pgradx2 = pgradx * pgradx;
 			double pgrady2 = pgrady * pgrady;
 			double limiter = ((0.5 * (ugrad) / celldx[i]) * pgradx2 +
 			                  (0.5 * (vgrad) / celldy[j]) * pgrady2 + strain2 * pgradx * pgrady) /
 			                 fmax(pgradx2 + pgrady2, g_small);
-			if ((limiter > 0.0) || (div >= 0.0)) { viscosity[i + j * viscosity_sizex] = 0.0; }
+			if ((limiter > 0.0) || (div >= 0.0)) { viscosity[i + j * base_stride] = 0.0; }
 			else {
 				double dirx = 1.0;
 				if (pgradx < 0.0)dirx = -1.0;
@@ -80,7 +80,7 @@ void viscosity_kernel(
 				double ygrad = fabs(celldy[j] * pgrad / pgrady);
 				double grad = fmin(xgrad, ygrad);
 				double grad2 = grad * grad;
-				viscosity[i + j * viscosity_sizex] = 2.0 * density0[i + j * density0_sizex] * grad2 * limiter * limiter;
+				viscosity[i + j * base_stride] = 2.0 * density0[i + j * base_stride] * grad2 * limiter * limiter;
 			}
 		}
 	}

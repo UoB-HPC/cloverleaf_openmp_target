@@ -43,53 +43,47 @@ void accelerate_kernel(
 
 //for(int j = )
 
+	const int xarea_sizex = field.flux_x_stride;
+	const int yarea_sizex = field.flux_y_stride;
+	const int base_stride = field.base_stride;
+	const int vels_wk_stride = field.vels_wk_stride;
 
 	double *xarea = field.xarea.data;
-	const int xarea_sizex = field.xarea.sizeX;
 	double *yarea = field.yarea.data;
-	const int yarea_sizex = field.yarea.sizeX;
 	double *volume = field.volume.data;
-	const int volume_sizex = field.volume.sizeX;
 	double *density0 = field.density0.data;
-	const int density0_sizex = field.density0.sizeX;
 	double *pressure = field.pressure.data;
-	const int pressure_sizex = field.pressure.sizeX;
 	double *viscosity = field.viscosity.data;
-	const int viscosity_sizex = field.viscosity.sizeX;
 	double *xvel0 = field.xvel0.data;
-	const int xvel0_sizex = field.xvel0.sizeX;
 	double *yvel0 = field.yvel0.data;
-	const int yvel0_sizex = field.yvel0.sizeX;
 	double *xvel1 = field.xvel1.data;
-	const int xvel1_sizex = field.xvel1.sizeX;
 	double *yvel1 = field.yvel1.data;
-	const int yvel1_sizex = field.yvel1.sizeX;
 
 	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			double stepbymass_s = halfdt / ((density0[(i - 1) + (j - 1) * density0_sizex] * volume[(i - 1) + (j - 1) * volume_sizex] +
-			                                 density0[(i - 1) + (j + 0) * density0_sizex] * volume[(i - 1) + (j + 0) * volume_sizex] +
-			                                 density0[i + j * density0_sizex] * volume[i + j * volume_sizex] +
-			                                 density0[(i + 0) + (j - 1) * density0_sizex] * volume[(i + 0) + (j - 1) * volume_sizex]) * 0.25);
-			xvel1[i + j * xvel1_sizex] = xvel0[i + j * xvel0_sizex] -
-			                             stepbymass_s * (xarea[i + j * xarea_sizex] * (pressure[i + j * pressure_sizex] - pressure[(i - 1) + (j + 0) * pressure_sizex]) +
-			                                             xarea[(i + 0) + (j - 1) * xarea_sizex] * (pressure[(i + 0) + (j - 1) * pressure_sizex] - pressure[(i - 1) + (j - 1) * pressure_sizex]));
-			yvel1[i + j * yvel1_sizex] = yvel0[i + j * yvel0_sizex] -
-			                             stepbymass_s * (yarea[i + j * yarea_sizex] *
-			                                             (pressure[i + j * pressure_sizex] - pressure[(i + 0) + (j - 1) * pressure_sizex]) +
-			                                             yarea[(i - 1) + (j + 0) * yarea_sizex] * (pressure[(i - 1) + (j + 0) * pressure_sizex] - pressure[(i - 1) + (j - 1) * pressure_sizex]));
-			xvel1[i + j * xvel1_sizex] = xvel1[i + j * xvel1_sizex] -
-			                             stepbymass_s * (xarea[i + j * xarea_sizex] *
-			                                             (viscosity[i + j * viscosity_sizex] -
-			                                              viscosity[(i - 1) + (j + 0) * viscosity_sizex]) +
-			                                             xarea[(i + 0) + (j - 1) * xarea_sizex] *
-			                                             (viscosity[(i + 0) + (j - 1) * viscosity_sizex] - viscosity[(i - 1) + (j - 1) * viscosity_sizex]));
-			yvel1[i + j * yvel1_sizex] = yvel1[i + j * yvel1_sizex] -
-			                             stepbymass_s * (yarea[i + j * yarea_sizex] *
-			                                             (viscosity[i + j * viscosity_sizex] - viscosity[(i + 0) + (j - 1) * viscosity_sizex]) +
-			                                             yarea[(i - 1) + (j + 0) * yarea_sizex] *
-			                                             (viscosity[(i - 1) + (j + 0) * viscosity_sizex] - viscosity[(i - 1) + (j - 1) * viscosity_sizex]));
+			double stepbymass_s = halfdt / ((density0[(i - 1) + (j - 1) * base_stride] * volume[(i - 1) + (j - 1) * base_stride] +
+			                                 density0[(i - 1) + (j + 0) * base_stride] * volume[(i - 1) + (j + 0) * base_stride] +
+			                                 density0[i + j * base_stride] * volume[i + j * base_stride] +
+			                                 density0[(i + 0) + (j - 1) * base_stride] * volume[(i + 0) + (j - 1) * base_stride]) * 0.25);
+			xvel1[i + j * vels_wk_stride] = xvel0[i + j * vels_wk_stride] -
+			                                stepbymass_s * (xarea[i + j * xarea_sizex] * (pressure[i + j * base_stride] - pressure[(i - 1) + (j + 0) * base_stride]) +
+			                                                xarea[(i + 0) + (j - 1) * xarea_sizex] * (pressure[(i + 0) + (j - 1) * base_stride] - pressure[(i - 1) + (j - 1) * base_stride]));
+			yvel1[i + j * vels_wk_stride] = yvel0[i + j * vels_wk_stride] -
+			                                stepbymass_s * (yarea[i + j * yarea_sizex] *
+			                                                (pressure[i + j * base_stride] - pressure[(i + 0) + (j - 1) * base_stride]) +
+			                                                yarea[(i - 1) + (j + 0) * yarea_sizex] * (pressure[(i - 1) + (j + 0) * base_stride] - pressure[(i - 1) + (j - 1) * base_stride]));
+			xvel1[i + j * vels_wk_stride] = xvel1[i + j * vels_wk_stride] -
+			                                stepbymass_s * (xarea[i + j * xarea_sizex] *
+			                                                (viscosity[i + j * base_stride] -
+			                                                 viscosity[(i - 1) + (j + 0) * base_stride]) +
+			                                                xarea[(i + 0) + (j - 1) * xarea_sizex] *
+			                                                (viscosity[(i + 0) + (j - 1) * base_stride] - viscosity[(i - 1) + (j - 1) * base_stride]));
+			yvel1[i + j * vels_wk_stride] = yvel1[i + j * vels_wk_stride] -
+			                                stepbymass_s * (yarea[i + j * yarea_sizex] *
+			                                                (viscosity[i + j * base_stride] - viscosity[(i + 0) + (j - 1) * base_stride]) +
+			                                                yarea[(i - 1) + (j + 0) * yarea_sizex] *
+			                                                (viscosity[(i - 1) + (j + 0) * base_stride] - viscosity[(i - 1) + (j - 1) * base_stride]));
 		}
 	}
 }

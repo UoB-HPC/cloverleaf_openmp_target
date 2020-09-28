@@ -41,6 +41,11 @@ void advec_cell_kernel(
 
 	const double one_by_six = 1.0 / 6.0;
 
+	const int base_stride = field.base_stride;
+	const int vels_wk_stride = field.vels_wk_stride;
+	const int flux_x_stride = field.flux_x_stride;
+	const int flux_y_stride = field.flux_y_stride;
+
 	if (dir == g_xdir) {
 
 		// DO k=y_min-2,y_max+2
@@ -50,24 +55,19 @@ void advec_cell_kernel(
 
 
 			double *volume = field.volume.data;
-			const int volume_sizex = field.volume.sizeX;
 			double *vol_flux_x = field.vol_flux_x.data;
-			const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
 			double *vol_flux_y = field.vol_flux_y.data;
-			const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
 			double *pre_vol = field.work_array1.data;
-			const int pre_vol_sizex = field.work_array1.sizeX;
 			double *post_vol = field.work_array2.data;
-			const int post_vol_sizex = field.work_array2.sizeX;
 
 			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					pre_vol[i + j * pre_vol_sizex] = volume[i + j * volume_sizex] +
-					                                 (vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] - vol_flux_x[i + j * vol_flux_x_sizex] +
-					                                  vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] -
-					                                  vol_flux_y[i + j * vol_flux_y_sizex]);
-					post_vol[i + j * post_vol_sizex] = pre_vol[i + j * pre_vol_sizex] - (vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] - vol_flux_x[i + j * vol_flux_x_sizex]);
+					pre_vol[i + j * vels_wk_stride] = volume[i + j * base_stride] +
+					                                  (vol_flux_x[(i + 1) + (j + 0) * flux_x_stride] - vol_flux_x[i + j * flux_x_stride] +
+					                                   vol_flux_y[(i + 0) + (j + 1) * flux_y_stride] -
+					                                   vol_flux_y[i + j * flux_y_stride]);
+					post_vol[i + j * vels_wk_stride] = pre_vol[i + j * vels_wk_stride] - (vol_flux_x[(i + 1) + (j + 0) * flux_x_stride] - vol_flux_x[i + j * flux_x_stride]);
 				}
 			}
 
@@ -76,19 +76,15 @@ void advec_cell_kernel(
 
 
 			double *volume = field.volume.data;
-			const int volume_sizex = field.volume.sizeX;
 			double *vol_flux_x = field.vol_flux_x.data;
-			const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
 			double *pre_vol = field.work_array1.data;
-			const int pre_vol_sizex = field.work_array1.sizeX;
 			double *post_vol = field.work_array2.data;
-			const int post_vol_sizex = field.work_array2.sizeX;
 
 			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					pre_vol[i + j * pre_vol_sizex] = volume[i + j * volume_sizex] + vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] - vol_flux_x[i + j * vol_flux_x_sizex];
-					post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex];
+					pre_vol[i + j * vels_wk_stride] = volume[i + j * base_stride] + vol_flux_x[(i + 1) + (j + 0) * flux_x_stride] - vol_flux_x[i + j * flux_x_stride];
+					post_vol[i + j * vels_wk_stride] = volume[i + j * base_stride];
 				}
 			}
 
@@ -98,17 +94,11 @@ void advec_cell_kernel(
 		//   DO j=x_min,x_max+2
 		double *vertexdx = field.vertexdx.data;
 		double *density1 = field.density1.data;
-		const int density1_sizex = field.density1.sizeX;
 		double *energy1 = field.energy1.data;
-		const int energy1_sizex = field.energy1.sizeX;
 		double *mass_flux_x = field.mass_flux_x.data;
-		const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
 		double *vol_flux_x = field.vol_flux_x.data;
-		const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
 		double *pre_vol = field.work_array1.data;
-		const int pre_vol_sizex = field.work_array1.sizeX;
 		double *ener_flux = field.work_array7.data;
-		const int ener_flux_sizex = field.work_array7.sizeX;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
@@ -116,7 +106,7 @@ void advec_cell_kernel(
 				({
 					int upwind, donor, downwind, dif;
 					double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
-					if (vol_flux_x[i + j * vol_flux_x_sizex] > 0.0) {
+					if (vol_flux_x[i + j * flux_x_stride] > 0.0) {
 						upwind = i - 2;
 						donor = i - 1;
 						downwind = i;
@@ -127,13 +117,13 @@ void advec_cell_kernel(
 						downwind = i - 1;
 						dif = upwind;
 					}
-					sigmat = fabs(vol_flux_x[i + j * vol_flux_x_sizex]) / pre_vol[donor + j * pre_vol_sizex];
+					sigmat = fabs(vol_flux_x[i + j * flux_x_stride]) / pre_vol[donor + j * vels_wk_stride];
 					sigma3 = (1.0 + sigmat) * (vertexdx[i] / vertexdx[dif]);
 					sigma4 = 2.0 - sigmat;
 //					sigma = sigmat;
 					sigmav = sigmat;
-					diffuw = density1[donor + j * density1_sizex] - density1[upwind + j * density1_sizex];
-					diffdw = density1[downwind + j * density1_sizex] - density1[donor + j * density1_sizex];
+					diffuw = density1[donor + j * base_stride] - density1[upwind + j * base_stride];
+					diffdw = density1[downwind + j * base_stride] - density1[donor + j * base_stride];
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
@@ -145,10 +135,10 @@ void advec_cell_kernel(
 					} else {
 						limiter = 0.0;
 					}
-					mass_flux_x[i + j * mass_flux_x_sizex] = vol_flux_x[i + j * vol_flux_x_sizex] * (density1[donor + j * density1_sizex] + limiter);
-					sigmam = fabs(mass_flux_x[i + j * mass_flux_x_sizex]) / (density1[donor + j * density1_sizex] * pre_vol[donor + j * pre_vol_sizex]);
-					diffuw = energy1[donor + j * energy1_sizex] - energy1[upwind + j * energy1_sizex];
-					diffdw = energy1[downwind + j * energy1_sizex] - energy1[donor + j * energy1_sizex];
+					mass_flux_x[i + j * flux_x_stride] = vol_flux_x[i + j * flux_x_stride] * (density1[donor + j * base_stride] + limiter);
+					sigmam = fabs(mass_flux_x[i + j * flux_x_stride]) / (density1[donor + j * base_stride] * pre_vol[donor + j * vels_wk_stride]);
+					diffuw = energy1[donor + j * base_stride] - energy1[upwind + j * base_stride];
+					diffdw = energy1[downwind + j * base_stride] - energy1[donor + j * base_stride];
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
@@ -161,7 +151,7 @@ void advec_cell_kernel(
 					} else {
 						limiter = 0.0;
 					}
-					ener_flux[i + j * ener_flux_sizex] = mass_flux_x[i + j * mass_flux_x_sizex] * (energy1[donor + j * energy1_sizex] + limiter);
+					ener_flux[i + j * vels_wk_stride] = mass_flux_x[i + j * flux_x_stride] * (energy1[donor + j * base_stride] + limiter);
 				});
 		}
 
@@ -175,12 +165,12 @@ void advec_cell_kernel(
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double pre_mass_s = density1[i + j * density1_sizex] * pre_vol[i + j * pre_vol_sizex];
-				double post_mass_s = pre_mass_s + mass_flux_x[i + j * mass_flux_x_sizex] - mass_flux_x[(i + 1) + (j + 0) * mass_flux_x_sizex];
-				double post_ener_s = (energy1[i + j * energy1_sizex] * pre_mass_s + ener_flux[i + j * ener_flux_sizex] - ener_flux[(i + 1) + (j + 0) * ener_flux_sizex]) / post_mass_s;
-				double advec_vol_s = pre_vol[i + j * pre_vol_sizex] + vol_flux_x[i + j * vol_flux_x_sizex] - vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex];
-				density1[i + j * density1_sizex] = post_mass_s / advec_vol_s;
-				energy1[i + j * energy1_sizex] = post_ener_s;
+				double pre_mass_s = density1[i + j * base_stride] * pre_vol[i + j * vels_wk_stride];
+				double post_mass_s = pre_mass_s + mass_flux_x[i + j * flux_x_stride] - mass_flux_x[(i + 1) + (j + 0) * flux_x_stride];
+				double post_ener_s = (energy1[i + j * base_stride] * pre_mass_s + ener_flux[i + j * vels_wk_stride] - ener_flux[(i + 1) + (j + 0) * vels_wk_stride]) / post_mass_s;
+				double advec_vol_s = pre_vol[i + j * vels_wk_stride] + vol_flux_x[i + j * flux_x_stride] - vol_flux_x[(i + 1) + (j + 0) * flux_x_stride];
+				density1[i + j * base_stride] = post_mass_s / advec_vol_s;
+				energy1[i + j * base_stride] = post_ener_s;
 			}
 		}
 
@@ -193,24 +183,19 @@ void advec_cell_kernel(
 
 
 			double *volume = field.volume.data;
-			const int volume_sizex = field.volume.sizeX;
 			double *vol_flux_x = field.vol_flux_x.data;
-			const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
 			double *vol_flux_y = field.vol_flux_y.data;
-			const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
 			double *pre_vol = field.work_array1.data;
-			const int pre_vol_sizex = field.work_array1.sizeX;
 			double *post_vol = field.work_array2.data;
-			const int post_vol_sizex = field.work_array2.sizeX;
 
 			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					pre_vol[i + j * pre_vol_sizex] = volume[i + j * volume_sizex] +
-					                                 (vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] - vol_flux_y[i + j * vol_flux_y_sizex] +
-					                                  vol_flux_x[(i + 1) + (j + 0) * vol_flux_x_sizex] -
-					                                  vol_flux_x[i + j * vol_flux_x_sizex]);
-					post_vol[i + j * post_vol_sizex] = pre_vol[i + j * pre_vol_sizex] - (vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] - vol_flux_y[i + j * vol_flux_y_sizex]);
+					pre_vol[i + j * vels_wk_stride] = volume[i + j * base_stride] +
+					                                  (vol_flux_y[(i + 0) + (j + 1) * flux_y_stride] - vol_flux_y[i + j * flux_y_stride] +
+					                                   vol_flux_x[(i + 1) + (j + 0) * flux_x_stride] -
+					                                   vol_flux_x[i + j * flux_x_stride]);
+					post_vol[i + j * vels_wk_stride] = pre_vol[i + j * vels_wk_stride] - (vol_flux_y[(i + 0) + (j + 1) * flux_y_stride] - vol_flux_y[i + j * flux_y_stride]);
 				}
 			}
 
@@ -219,19 +204,15 @@ void advec_cell_kernel(
 
 
 			double *volume = field.volume.data;
-			const int volume_sizex = field.volume.sizeX;
 			double *vol_flux_y = field.vol_flux_y.data;
-			const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
 			double *pre_vol = field.work_array1.data;
-			const int pre_vol_sizex = field.work_array1.sizeX;
 			double *post_vol = field.work_array2.data;
-			const int post_vol_sizex = field.work_array2.sizeX;
 
 			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
-					pre_vol[i + j * pre_vol_sizex] = volume[i + j * volume_sizex] + vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex] - vol_flux_y[i + j * vol_flux_y_sizex];
-					post_vol[i + j * post_vol_sizex] = volume[i + j * volume_sizex];
+					pre_vol[i + j * vels_wk_stride] = volume[i + j * base_stride] + vol_flux_y[(i + 0) + (j + 1) * flux_y_stride] - vol_flux_y[i + j * flux_y_stride];
+					post_vol[i + j * vels_wk_stride] = volume[i + j * base_stride];
 				}
 			}
 
@@ -243,24 +224,18 @@ void advec_cell_kernel(
 		//   DO j=x_min,x_max
 		double *vertexdy = field.vertexdy.data;
 		double *density1 = field.density1.data;
-		const int density1_sizex = field.density1.sizeX;
 		double *energy1 = field.energy1.data;
-		const int energy1_sizex = field.energy1.sizeX;
 		double *mass_flux_y = field.mass_flux_y.data;
-		const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
 		double *vol_flux_y = field.vol_flux_y.data;
-		const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
 		double *pre_vol = field.work_array1.data;
-		const int pre_vol_sizex = field.work_array1.sizeX;
 		double *ener_flux = field.work_array7.data;
-		const int ener_flux_sizex = field.work_array7.sizeX;
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++)
 				({
 					int upwind, donor, downwind, dif;
 					double sigmat, sigma3, sigma4, sigmav, sigma, sigmam, diffuw, diffdw, limiter, wind;
-					if (vol_flux_y[i + j * vol_flux_y_sizex] > 0.0) {
+					if (vol_flux_y[i + j * flux_y_stride] > 0.0) {
 						upwind = j - 2;
 						donor = j - 1;
 						downwind = j;
@@ -271,13 +246,13 @@ void advec_cell_kernel(
 						downwind = j - 1;
 						dif = upwind;
 					}
-					sigmat = fabs(vol_flux_y[i + j * vol_flux_y_sizex]) / pre_vol[i + donor * pre_vol_sizex];
+					sigmat = fabs(vol_flux_y[i + j * flux_y_stride]) / pre_vol[i + donor * vels_wk_stride];
 					sigma3 = (1.0 + sigmat) * (vertexdy[j] / vertexdy[dif]);
 					sigma4 = 2.0 - sigmat;
 //					sigma = sigmat;
 					sigmav = sigmat;
-					diffuw = density1[i + donor * density1_sizex] - density1[i + upwind * density1_sizex];
-					diffdw = density1[i + downwind * density1_sizex] - density1[i + donor * density1_sizex];
+					diffuw = density1[i + donor * base_stride] - density1[i + upwind * base_stride];
+					diffdw = density1[i + downwind * base_stride] - density1[i + donor * base_stride];
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
@@ -289,10 +264,10 @@ void advec_cell_kernel(
 					} else {
 						limiter = 0.0;
 					}
-					mass_flux_y[i + j * mass_flux_y_sizex] = vol_flux_y[i + j * vol_flux_y_sizex] * (density1[i + donor * density1_sizex] + limiter);
-					sigmam = fabs(mass_flux_y[i + j * mass_flux_y_sizex]) / (density1[i + donor * density1_sizex] * pre_vol[i + donor * pre_vol_sizex]);
-					diffuw = energy1[i + donor * energy1_sizex] - energy1[i + upwind * energy1_sizex];
-					diffdw = energy1[i + downwind * energy1_sizex] - energy1[i + donor * energy1_sizex];
+					mass_flux_y[i + j * flux_y_stride] = vol_flux_y[i + j * flux_y_stride] * (density1[i + donor * base_stride] + limiter);
+					sigmam = fabs(mass_flux_y[i + j * flux_y_stride]) / (density1[i + donor * base_stride] * pre_vol[i + donor * vels_wk_stride]);
+					diffuw = energy1[i + donor * base_stride] - energy1[i + upwind * base_stride];
+					diffdw = energy1[i + downwind * base_stride] - energy1[i + donor * base_stride];
 					wind = 1.0;
 					if (diffdw <= 0.0)wind = -1.0;
 					if (diffuw * diffdw > 0.0) {
@@ -304,7 +279,7 @@ void advec_cell_kernel(
 					} else {
 						limiter = 0.0;
 					}
-					ener_flux[i + j * ener_flux_sizex] = mass_flux_y[i + j * mass_flux_y_sizex] * (energy1[i + donor * energy1_sizex] + limiter);
+					ener_flux[i + j * vels_wk_stride] = mass_flux_y[i + j * flux_y_stride] * (energy1[i + donor * base_stride] + limiter);
 				});
 		}
 
@@ -316,12 +291,12 @@ void advec_cell_kernel(
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double pre_mass_s = density1[i + j * density1_sizex] * pre_vol[i + j * pre_vol_sizex];
-				double post_mass_s = pre_mass_s + mass_flux_y[i + j * mass_flux_y_sizex] - mass_flux_y[(i + 0) + (j + 1) * mass_flux_y_sizex];
-				double post_ener_s = (energy1[i + j * energy1_sizex] * pre_mass_s + ener_flux[i + j * ener_flux_sizex] - ener_flux[(i + 0) + (j + 1) * ener_flux_sizex]) / post_mass_s;
-				double advec_vol_s = pre_vol[i + j * pre_vol_sizex] + vol_flux_y[i + j * vol_flux_y_sizex] - vol_flux_y[(i + 0) + (j + 1) * vol_flux_y_sizex];
-				density1[i + j * density1_sizex] = post_mass_s / advec_vol_s;
-				energy1[i + j * energy1_sizex] = post_ener_s;
+				double pre_mass_s = density1[i + j * base_stride] * pre_vol[i + j * vels_wk_stride];
+				double post_mass_s = pre_mass_s + mass_flux_y[i + j * flux_y_stride] - mass_flux_y[(i + 0) + (j + 1) * flux_y_stride];
+				double post_ener_s = (energy1[i + j * base_stride] * pre_mass_s + ener_flux[i + j * vels_wk_stride] - ener_flux[(i + 0) + (j + 1) * vels_wk_stride]) / post_mass_s;
+				double advec_vol_s = pre_vol[i + j * vels_wk_stride] + vol_flux_y[i + j * flux_y_stride] - vol_flux_y[(i + 0) + (j + 1) * flux_y_stride];
+				density1[i + j * base_stride] = post_mass_s / advec_vol_s;
+				energy1[i + j * base_stride] = post_ener_s;
 			}
 		}
 

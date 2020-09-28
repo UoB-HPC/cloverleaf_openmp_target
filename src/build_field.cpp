@@ -178,84 +178,63 @@ void build_field(global_variables &globals) {
 
 
 
-		const int work_array1_sizex = field.work_array1.sizeX;
-		const int work_array2_sizex = field.work_array2.sizeX;
-		const int work_array3_sizex = field.work_array3.sizeX;
-		const int work_array4_sizex = field.work_array4.sizeX;
-		const int work_array5_sizex = field.work_array5.sizeX;
-		const int work_array6_sizex = field.work_array6.sizeX;
-		const int work_array7_sizex = field.work_array7.sizeX;
-		const int xvel0_sizex = field.xvel0.sizeX;
-		const int xvel1_sizex = field.xvel1.sizeX;
-		const int yvel0_sizex = field.yvel0.sizeX;
-		const int yvel1_sizex = field.yvel1.sizeX;
+		const int vels_wk_stride = field.vels_wk_stride;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 		for (int j = 0; j < (yrange + 1); j++) {
 			for (int i = 0; i < (xrange + 1); i++) {
-				work_array1[i + j * work_array1_sizex] = 0.0;
-				work_array2[i + j * work_array2_sizex] = 0.0;
-				work_array3[i + j * work_array3_sizex] = 0.0;
-				work_array4[i + j * work_array4_sizex] = 0.0;
-				work_array5[i + j * work_array5_sizex] = 0.0;
-				work_array6[i + j * work_array6_sizex] = 0.0;
-				work_array7[i + j * work_array7_sizex] = 0.0;
-				xvel0[i + j * xvel0_sizex] = 0.0;
-				xvel1[i + j * xvel1_sizex] = 0.0;
-				yvel0[i + j * yvel0_sizex] = 0.0;
-				yvel1[i + j * yvel1_sizex] = 0.0;
+				work_array1[i + j * vels_wk_stride] = 0.0;
+				work_array2[i + j * vels_wk_stride] = 0.0;
+				work_array3[i + j * vels_wk_stride] = 0.0;
+				work_array4[i + j * vels_wk_stride] = 0.0;
+				work_array5[i + j * vels_wk_stride] = 0.0;
+				work_array6[i + j * vels_wk_stride] = 0.0;
+				work_array7[i + j * vels_wk_stride] = 0.0;
+				xvel0[i + j * vels_wk_stride] = 0.0;
+				xvel1[i + j * vels_wk_stride] = 0.0;
+				yvel0[i + j * vels_wk_stride] = 0.0;
+				yvel1[i + j * vels_wk_stride] = 0.0;
 			}
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
-		const int density0_sizex = field.density0.sizeX;
-		const int density1_sizex = field.density1.sizeX;
-		const int energy0_sizex = field.energy0.sizeX;
-		const int energy1_sizex = field.energy1.sizeX;
-		const int pressure_sizex = field.pressure.sizeX;
-		const int viscosity_sizex = field.viscosity.sizeX;
-		const int soundspeed_sizex = field.soundspeed.sizeX;
-		const int volume_sizex = field.volume.sizeX;
+		const int base_stride = field.base_stride;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 		for (int j = 0; j < (yrange); j++) {
 			for (int i = 0; i < (xrange); i++) {
-				density0[i + j * density0_sizex] = 0.0;
-				density1[i + j * density1_sizex] = 0.0;
-				energy0[i + j * energy0_sizex] = 0.0;
-				energy1[i + j * energy1_sizex] = 0.0;
-				pressure[i + j * pressure_sizex] = 0.0;
-				viscosity[i + j * viscosity_sizex] = 0.0;
-				soundspeed[i + j * soundspeed_sizex] = 0.0;
-				volume[i + j * volume_sizex] = 0.0;
+				density0[i + j * base_stride] = 0.0;
+				density1[i + j * base_stride] = 0.0;
+				energy0[i + j * base_stride] = 0.0;
+				energy1[i + j * base_stride] = 0.0;
+				pressure[i + j * base_stride] = 0.0;
+				viscosity[i + j * base_stride] = 0.0;
+				soundspeed[i + j * base_stride] = 0.0;
+				volume[i + j * base_stride] = 0.0;
 			}
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
-		const int vol_flux_x_sizex = field.vol_flux_x.sizeX;
-		const int mass_flux_x_sizex = field.mass_flux_x.sizeX;
-		const int xarea_sizex = field.xarea.sizeX;
+		const int flux_x_stride = field.flux_x_stride;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 		for (int j = 0; j < (yrange); j++) {
 			for (int i = 0; i < (xrange); i++) {
-				vol_flux_x[i + j * vol_flux_x_sizex] = 0.0;
-				mass_flux_x[i + j * mass_flux_x_sizex] = 0.0;
-				xarea[i + j * xarea_sizex] = 0.0;
+				vol_flux_x[i + j * flux_x_stride] = 0.0;
+				mass_flux_x[i + j * flux_x_stride] = 0.0;
+				xarea[i + j * flux_x_stride] = 0.0;
 			}
 		}
 
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
-		const int vol_flux_y_sizex = field.vol_flux_y.sizeX;
-		const int mass_flux_y_sizex = field.mass_flux_y.sizeX;
-		const int yarea_sizex = field.yarea.sizeX;
+		const int flux_y_stride = field.flux_y_stride;
 
 		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 		for (int j = 0; j < (yrange + 1); j++) {
 			for (int i = 0; i < (xrange); i++) {
-				vol_flux_y[i + j * vol_flux_y_sizex] = 0.0;
-				mass_flux_y[i + j * mass_flux_y_sizex] = 0.0;
-				yarea[i + j * yarea_sizex] = 0.0;
+				vol_flux_y[i + j * flux_y_stride] = 0.0;
+				mass_flux_y[i + j * flux_y_stride] = 0.0;
+				yarea[i + j * flux_y_stride] = 0.0;
 			}
 		}
 

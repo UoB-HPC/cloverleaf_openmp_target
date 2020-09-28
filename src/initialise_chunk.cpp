@@ -96,20 +96,20 @@ void initialise_chunk(const int tile, global_variables &globals) {
 		celldy[k] = dy;
 	}
 
+	const int base_stride = field.base_stride;
+	const int flux_x_stride = field.flux_x_stride;
+	const int flux_y_stride = field.flux_y_stride;
 
 	double *volume = field.volume.data;
-	const int volume_sizex = field.volume.sizeX;
 	double *xarea = field.xarea.data;
-	const int xarea_sizex = field.xarea.sizeX;
 	double *yarea = field.yarea.data;
-	const int yarea_sizex = field.yarea.sizeX;
 
 	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
 	for (int j = 0; j < (yrange1); j++) {
 		for (int i = 0; i < (xrange1); i++) {
-			volume[i + j * volume_sizex] = dx * dy;
-			xarea[i + j * xarea_sizex] = celldy[j];
-			yarea[i + j * yarea_sizex] = celldx[i];
+			volume[i + j * base_stride] = dx * dy;
+			xarea[i + j * flux_x_stride] = celldy[j];
+			yarea[i + j * flux_y_stride] = celldx[i];
 		}
 	}
 
