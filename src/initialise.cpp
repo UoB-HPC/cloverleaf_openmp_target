@@ -137,18 +137,27 @@ global_variables initialise(parallel_ &parallel, const std::vector<std::string> 
 
 
 	auto num_devices = omp_get_num_devices();
-	if (num_devices == 0) {
-		std::cout << "No OMP target devices available" << std::endl;
-	} else {
-		std::cout << "Detected OMP devices:" << std::endl;
-		printSimple(num_devices);
+	if (parallel.boss) {
+
+		if (num_devices == 0) {
+			std::cout << "No OMP target devices available" << std::endl;
+		} else {
+			std::cout << "Detected OMP devices:" << std::endl;
+			printSimple(num_devices);
+		}
+		std::cout << "\n" << std::endl;
 	}
-	std::cout << "\n" << std::endl;
 
 	auto runConfig = parseArgs(num_devices, args);
 	auto file = runConfig.file;
 	auto selectedDevice = runConfig.deviceIdx;
 	auto useTarget = selectedDevice != -1;
+
+	if (parallel.boss) {
+		(!useTarget ?
+		 std::cout << "Using OMP device: (host fallback))" :
+		 std::cout << "Using OMP device: #" << selectedDevice) << std::endl;
+	}
 
 	if (!useTarget) {
 		std::cout << "Using OMP device: (host fallback))" << std::endl;
@@ -160,7 +169,6 @@ global_variables initialise(parallel_ &parallel, const std::vector<std::string> 
 
 
 	} else {
-		std::cout << "Using OMP device: #" << selectedDevice << std::endl;
 		omp_set_default_device(selectedDevice);
 	}
 

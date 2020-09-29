@@ -706,21 +706,30 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 
 void clover_send_recv_message_left(
 		global_variables &globals,
-		clover::Buffer1D<double> &left_snd,
-		clover::Buffer1D<double> &left_rcv,
+		clover::Buffer1D<double> &left_snd_buffer,
+		clover::Buffer1D<double> &left_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
 	// First copy send buffer from device to host
 //	Kokkos::deep_copy(globals.chunk.hm_left_snd, left_snd);
 
+
 	int left_task = globals.chunk.chunk_neighbours[chunk_left] - 1;
 
-	MPI_Isend(globals.chunk.left_snd.data, total_size, MPI_DOUBLE, left_task, tag_send,
+
+	double *left_snd = left_snd_buffer.data;
+	double *left_rcv = left_rcv_buffer.data;
+	#pragma omp target update from(left_snd[:left_snd_buffer.N()])
+
+	MPI_Isend(left_snd, total_size, MPI_DOUBLE, left_task, tag_send,
 	          MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.left_rcv.data, total_size, MPI_DOUBLE, left_task, tag_recv,
+	MPI_Irecv(left_rcv, total_size, MPI_DOUBLE, left_task, tag_recv,
 	          MPI_COMM_WORLD, &req_recv);
+	#pragma omp target update to(left_rcv[:left_rcv_buffer.N()])
+
+
 }
 
 void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -1145,8 +1154,8 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 
 void clover_send_recv_message_right(
 		global_variables &globals,
-		clover::Buffer1D<double> &right_snd,
-		clover::Buffer1D<double> &right_rcv,
+		clover::Buffer1D<double> &right_snd_buffer,
+		clover::Buffer1D<double> &right_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -1155,11 +1164,16 @@ void clover_send_recv_message_right(
 
 	int right_task = globals.chunk.chunk_neighbours[chunk_right] - 1;
 
-	MPI_Isend(globals.chunk.right_snd.data, total_size, MPI_DOUBLE, right_task,
+	double *right_snd = right_snd_buffer.data;
+	double *right_rcv = right_rcv_buffer.data;
+	#pragma omp target update from(right_snd[:right_snd_buffer.N()])
+
+	MPI_Isend(right_snd, total_size, MPI_DOUBLE, right_task,
 	          tag_send, MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.right_rcv.data, total_size, MPI_DOUBLE, right_task,
+	MPI_Irecv(right_rcv, total_size, MPI_DOUBLE, right_task,
 	          tag_recv, MPI_COMM_WORLD, &req_recv);
+	#pragma omp target update to(right_rcv[:right_rcv_buffer.N()])
 }
 
 void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -1584,8 +1598,8 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 
 void clover_send_recv_message_top(
 		global_variables &globals,
-		clover::Buffer1D<double> &top_snd,
-		clover::Buffer1D<double> &top_rcv,
+		clover::Buffer1D<double> &top_snd_buffer,
+		clover::Buffer1D<double> &top_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -1594,11 +1608,16 @@ void clover_send_recv_message_top(
 
 	int top_task = globals.chunk.chunk_neighbours[chunk_top] - 1;
 
-	MPI_Isend(globals.chunk.top_snd.data, total_size, MPI_DOUBLE, top_task, tag_send,
+	double *top_snd = top_snd_buffer.data;
+	double *top_rcv = top_rcv_buffer.data;
+	#pragma omp target update from(top_snd[:top_snd_buffer.N()])
+
+	MPI_Isend(top_snd, total_size, MPI_DOUBLE, top_task, tag_send,
 	          MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.top_rcv.data, total_size, MPI_DOUBLE, top_task, tag_recv,
+	MPI_Irecv(top_rcv, total_size, MPI_DOUBLE, top_task, tag_recv,
 	          MPI_COMM_WORLD, &req_recv);
+	#pragma omp target update to(top_rcv[:top_rcv_buffer.N()])
 }
 
 void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -2022,8 +2041,8 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 
 void clover_send_recv_message_bottom(
 		global_variables &globals,
-		clover::Buffer1D<double> &bottom_snd,
-		clover::Buffer1D<double> &bottom_rcv,
+		clover::Buffer1D<double> &bottom_snd_buffer,
+		clover::Buffer1D<double> &bottom_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -2032,11 +2051,16 @@ void clover_send_recv_message_bottom(
 
 	int bottom_task = globals.chunk.chunk_neighbours[chunk_bottom] - 1;
 
-	MPI_Isend(globals.chunk.bottom_snd.data, total_size, MPI_DOUBLE, bottom_task,
+	double *bottom_snd = bottom_snd_buffer.data;
+	double *bottom_rcv = bottom_rcv_buffer.data;
+	#pragma omp target update from(bottom_snd[:bottom_snd_buffer.N()])
+
+	MPI_Isend(bottom_snd, total_size, MPI_DOUBLE, bottom_task,
 	          tag_send, MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.bottom_rcv.data, total_size, MPI_DOUBLE, bottom_task,
+	MPI_Irecv(bottom_rcv, total_size, MPI_DOUBLE, bottom_task,
 	          tag_recv, MPI_COMM_WORLD, &req_recv);
+	#pragma omp target update to(bottom_rcv[:bottom_rcv_buffer.N()])
 }
 
 void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
