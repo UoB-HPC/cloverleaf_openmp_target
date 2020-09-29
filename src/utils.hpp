@@ -34,10 +34,10 @@ namespace clover {
 
 		explicit Buffer1D(size_t size) : data(size) {}
 
-		constexpr inline T operator[](size_t i) const { return data[i]; }
-		constexpr inline T &operator[](size_t i) { return data[i]; }
+		inline T operator[](size_t i) const { return data[i]; }
+		inline T &operator[](size_t i) { return data[i]; }
 
-		constexpr inline T *actual() { return data.data(); }
+		inline T *actual() { return data.data(); }
 
 		[[nodiscard]] constexpr inline size_t size() const { return data.size(); }
 
@@ -56,8 +56,8 @@ namespace clover {
 
 		Buffer2D(size_t sizeX, size_t sizeY) : sizeX(sizeX), sizeY(sizeY), data(sizeX * sizeY) {}
 
-		constexpr inline T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
-		constexpr inline T const &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
+		inline T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
+		inline T const &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
 
 		T *actual() { return data.data(); }
 

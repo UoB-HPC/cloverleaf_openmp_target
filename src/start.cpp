@@ -37,13 +37,13 @@
 #include "cxx14_compat.hpp"
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 extern std::ostream g_out;
 
 
 std::unique_ptr<global_variables> start(parallel_ &parallel,
-                                        const global_config &config,
-                                        size_t omp_device) {
+                                        const global_config &config) {
 
 	if (parallel.boss) {
 		g_out << "Setting up initial geometry" << std::endl
@@ -66,7 +66,6 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 
 
 	global_variables globals(config,
-	                         omp_device,
 	                         chunk_type(
 			                         chunkNeighbours,
 			                         parallel.task, 1, 1, x_cells, y_cells,

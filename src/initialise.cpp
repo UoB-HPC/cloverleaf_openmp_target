@@ -41,7 +41,6 @@ std::ofstream of;
 
 struct RunConfig {
 	std::string file;
-	size_t deviceIdx;
 };
 
 
@@ -56,9 +55,6 @@ void printHelp(const std::string &name) {
 	std::cout << "Usage: " << name << " [OPTIONS]\n\n"
 	          << "Options:\n"
 	          << "  -h  --help               Print the message\n"
-	          << "      --list               List available devices\n"
-	          << "      --no-target          Use OMP fallback\n"
-	          << "      --device <INDEX>     Select device at INDEX from output of --list\n"
 	          << "      --file               Custom clover.in file (defaults to clover.in if unspecified)\n"
 	          << std::endl;
 }
@@ -66,7 +62,9 @@ void printHelp(const std::string &name) {
 RunConfig parseArgs(const size_t num_devices,
                     const std::vector<std::string> &args) {
 
-	const auto readParam = [&args](size_t current, const std::string &emptyMessage, auto map) {
+	const auto readParam = [&args](size_t current,
+	                               const std::string &emptyMessage,
+	                               const std::function<void(std::string)> &map) {
 		if (current + 1 < args.size()) {
 			return map(args[current + 1]);
 		} else {
@@ -76,29 +74,15 @@ RunConfig parseArgs(const size_t num_devices,
 		}
 	};
 
-	auto config = RunConfig{"clover.in", 0};
+	auto config = RunConfig{"clover.in"};
 	for (size_t i = 0; i < args.size(); ++i) {
 		const auto arg = args[i];
 
 		if (arg == "--help" || arg == "-h") {
 			printHelp(args[0]);
 			std::exit(EXIT_SUCCESS);
-		} else if (arg == "--list") {
-			printSimple(num_devices);
-			std::exit(EXIT_SUCCESS);
-		} else if (arg == "--no-target") {
-			config.deviceIdx = -1;
-		} else if (arg == "--device") {
-			readParam(i, "--device specified but no index was given", [&](const auto &param) {
-				auto selected = std::stoul(param);
-				if (selected < 0 || selected >= num_devices) {
-					std::cerr << "bad device index `" << param << "`" << std::endl;
-					std::exit(EXIT_FAILURE);
-				}
-				config.deviceIdx = selected;
-			});
 		} else if (arg == "--file") {
-			readParam(i, "--file specified but no file was given", [&config](const auto &param) {
+			readParam(i, "--file specified but no file was given", [&config](const std::string &param) {
 				config.file = param;
 			});
 		}
@@ -139,17 +123,20 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 //	x = x + 1;
 
 	auto num_devices = omp_get_num_devices();
-	if (num_devices == 0) {
-		std::cout << "No OMP target devices available" << std::endl;
-	} else {
-		std::cout << "Detected OMP devices:" << std::endl;
-		printSimple(num_devices);
+	if (parallel.boss) {
+
+		if (num_devices == 0) {
+			std::cout << "No OMP target devices available" << std::endl;
+		} else {
+			std::cout << "Detected OMP devices:" << std::endl;
+			printSimple(num_devices);
+		}
+		std::cout << "\n" << std::endl;
 	}
 
 	auto runConfig = parseArgs(num_devices, args);
 	auto file = runConfig.file;
-	auto selectedDevice = runConfig.deviceIdx;
-	std::cout << "Using OMP device: " << selectedDevice << std::endl;
+
 
 	std::ifstream g_in;
 	if (parallel.boss) {
@@ -207,7 +194,7 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 	config.number_of_chunks = parallel.max_task;
 
 
-	auto globals = start(parallel, config, selectedDevice);
+	auto globals = start(parallel, config);
 
 	clover_barrier(*globals);
 

@@ -1,12 +1,14 @@
-cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 project(cloverleaf_sycl)
 
-set(CMAKE_CXX_STANDARD 17)
+
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_VERBOSE_MAKEFILE NO)
 
 find_package(OpenMP REQUIRED)
+
+set(CMAKE_VERBOSE_MAKEFILE YES)
 
 
 if (MPI_AS_LIBRARY)
@@ -82,25 +84,36 @@ target_compile_options(clover_leaf
         ${EXTRA_FLAGS}
         )
 
-set(OMP_OFFLOAD_FLAGS)
+separate_arguments(CXX_EXTRA_FLAGS)
+separate_arguments(CXX_EXTRA_LINKER_FLAGS)
 
-set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -fsanitize=address ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
-set(RELEASE_OPTIONS -Ofast -march=native -mtune=native ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
+
+
+set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -Ofast -march=native -mtune=native ${CXX_EXTRA_FLAGS})
 
 target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 target_link_libraries(clover_leaf PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_C)
 
-# remove when using omp target
-#target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:RelWithDebInfo>:-Wl,-lasan>)
-#target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:Release>:-Wl,-lasan>)
-target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:Debug>:-Wl,-lasan>)
 
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
 
-target_link_options(clover_leaf PUBLIC ${OpenMP_CXX_FLAGS} ${OMP_OFFLOAD_FLAGS})
+if (${CMAKE_VERSION} VERSION_LESS "3.13.0")
+    message(WARNING "target_link_options is only available in CMake >= 3.13.0, using fallback target_link_libraries, this may cause issues with some compilers")
 
-#target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+    set(EXTRA_LINK_FLAGS ${OpenMP_CXX_FLAGS})
+
+    if (DEFINED CXX_EXTRA_LINKER_FLAGS)
+        list(APPEND EXTRA_LINK_FLAGS "-Wl,${CXX_EXTRA_LINKER_FLAGS}")
+    endif ()
+
+    target_link_libraries(clover_leaf PUBLIC ${EXTRA_LINK_FLAGS})
+
+else ()
+    target_link_options(clover_leaf PUBLIC ${OpenMP_CXX_FLAGS})
+    target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+endif ()
 

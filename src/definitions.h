@@ -367,7 +367,6 @@ struct global_variables {
 
 	const global_config config;
 
-	const size_t omp_device;
 	chunk_type chunk;
 
 	int error_condition;
@@ -391,9 +390,8 @@ struct global_variables {
 
 	explicit global_variables(
 			const global_config &config,
-			size_t omp_device,
 			chunk_type chunk) :
-			config(config), omp_device(omp_device), chunk(std::move(chunk)),
+			config(config), chunk(std::move(chunk)),
 			dt(config.dtinit),
 			dtold(config.dtinit),
 			profiler_on(config.profiler_on) {}
