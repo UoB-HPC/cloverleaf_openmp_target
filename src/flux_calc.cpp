@@ -51,7 +51,7 @@ void flux_calc_kernel(
 	double *vol_flux_x = field.vol_flux_x.data;
 	double *vol_flux_y = field.vol_flux_y.data;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 			vol_flux_x[i + j * flux_x_stride] = 0.25 * dt * xarea[i + j * flux_x_stride] *
@@ -73,7 +73,7 @@ void flux_calc(global_variables &globals) {
 	if (globals.profiler_on) kernel_time = timer();
 
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -90,7 +90,7 @@ void flux_calc(global_variables &globals) {
 				t.field);
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

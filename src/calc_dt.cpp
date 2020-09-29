@@ -76,7 +76,7 @@ void calc_dt_kernel(
 	double *yvel0 = field.yvel0.data;
 
 
-	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target) map(tofrom:dt_min_val) reduction(min:dt_min_val)
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target) map(tofrom:dt_min_val) reduction(min:dt_min_val)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			double dsx = celldx[i];
@@ -159,7 +159,7 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 	int l_control;
 	int small = 0;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -185,7 +185,7 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 			small
 	);
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

@@ -124,14 +124,14 @@ global_variables start(parallel_ &parallel,
 	globals.profiler_on = false;
 
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 
 	for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 		ideal_gas(globals, tile, false);
 	}
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 	if (DEBUG) globals.dump("dump_0_after_ideal_gas.txt");
@@ -152,7 +152,7 @@ global_variables start(parallel_ &parallel,
 	fields[field_xvel1] = 1;
 	fields[field_yvel1] = 1;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 	update_halo(globals, fields, 2);

@@ -79,9 +79,8 @@ int main(int argc, char *argv[]) {
 	std::cout << "Launching hydro" << std::endl;
 	hydro(config, parallel);
 
+	// calls the appropriate omp target exit data for all buffers, see build_field.cpp for the enter data half
 	finalise_field(config);
-
-
 
 	// Finilise programming models
 //	Kokkos::finalize();

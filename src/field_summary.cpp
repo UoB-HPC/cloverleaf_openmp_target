@@ -75,7 +75,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 	double ke = 0.0;
 	double press = 0.0;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -100,7 +100,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		double *yvel0 = field.yvel0.data;
 
 
-		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target) \
+		#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target) \
         map(tofrom:vol) \
         map(tofrom:mass) \
         map(tofrom:ie) \
@@ -128,7 +128,7 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

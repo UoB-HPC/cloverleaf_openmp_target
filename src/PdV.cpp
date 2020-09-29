@@ -69,7 +69,7 @@ void PdV_kernel(
 		double *volume_change = field.work_array1.data;
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
 				double left_flux = (xarea[i + j * flux_x_stride] * (xvel0[i + j * vels_wk_stride] +
@@ -118,7 +118,7 @@ void PdV_kernel(
 		double *yvel1 = field.yvel1.data;
 		double *volume_change = field.work_array1.data;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
 				double left_flux = (xarea[i + j * flux_x_stride] * (xvel0[i + j * vels_wk_stride] +
@@ -164,7 +164,7 @@ void PdV(global_variables &globals, bool predict) {
 
 	globals.error_condition = 0;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -180,7 +180,7 @@ void PdV(global_variables &globals, bool predict) {
 		           t.field);
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

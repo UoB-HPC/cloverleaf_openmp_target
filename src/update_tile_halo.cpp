@@ -30,7 +30,7 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 
 	// Update Top Bottom - Real to Real
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -235,7 +235,7 @@ void update_tile_halo(global_variables &globals, int fields[NUM_FIELDS], int dep
 		}
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

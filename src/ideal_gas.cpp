@@ -54,7 +54,7 @@ void ideal_gas_kernel(
 	double *pressure = field.pressure.data;
 	double *soundspeed = field.soundspeed.data;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			double v = 1.0 / density[i + j * base_stride];
@@ -78,7 +78,7 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 
 	tile_type &t = globals.chunk.tiles[tile];
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -106,7 +106,7 @@ void ideal_gas(global_variables &globals, const int tile, bool predict) {
 		);
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

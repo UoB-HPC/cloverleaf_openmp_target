@@ -41,7 +41,7 @@ void reset_field_kernel(
 	double *energy0 = field.energy0.data;
 	double *energy1 = field.energy1.data;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			density0[i + j * base_stride] = density1[i + j * base_stride];
@@ -60,7 +60,7 @@ void reset_field_kernel(
 	double *yvel0 = field.yvel0.data;
 	double *yvel1 = field.yvel1.data;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 			xvel0[i + j * vels_wk_stride] = xvel1[i + j * vels_wk_stride];
@@ -79,7 +79,7 @@ void reset_field(global_variables &globals) {
 	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -95,7 +95,7 @@ void reset_field(global_variables &globals) {
 				t.field);
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

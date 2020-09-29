@@ -20,8 +20,12 @@
 #ifndef GRID_H
 #define GRID_H
 
+// Enables dumping buffers at each iteration as text files, see hydro.cpp for actual implementation
 #define DEBUG false
-#define FLUSH_BUFFER 0
+// Enables buffer synchronisation between host and device before and after each kernel invocation.
+// This is useful for debugging individual kernels;
+// by synchronising buffer data, not all kernels have to be executed on the device or host
+#define SYNC_BUFFERS 0
 
 
 #include <iostream>
@@ -40,15 +44,15 @@
 #define NUM_FIELDS 15
 
 #ifdef OMP_ALLOW_HOST
-#define omp_use_target(cond) if(target: (cond))
+#define clover_use_target(cond) if(target: (cond))
 #else
-#define omp_use_target(cond) /*no-op*/
+#define clover_use_target(cond) /*no-op*/
 #endif
 
 namespace clover {
 
 	template<class T, class U = T>
-	static T cpp14_exchange(T& obj, U&& new_value) {
+	static T cpp14_exchange(T &obj, U &&new_value) {
 		T old_value = std::move(obj);
 		obj = std::forward<U>(new_value);
 		return old_value;
@@ -514,89 +518,159 @@ struct global_variables {
 			profiler_on(config.profiler_on) {}
 
 	void hostToDevice() {
-		#pragma omp flush
 
 		for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 			tile_type &t = chunk.tiles[tile];
 			field_type &field = t.field;
+
+
+			double *density0 = field.density0.data;
+			double *density1 = field.density1.data;
+			double *energy0 = field.energy0.data;
+			double *energy1 = field.energy1.data;
+			double *pressure = field.pressure.data;
+			double *viscosity = field.viscosity.data;
+			double *soundspeed = field.soundspeed.data;
+			double *yvel0 = field.yvel0.data;
+			double *yvel1 = field.yvel1.data;
+			double *xvel0 = field.xvel0.data;
+			double *xvel1 = field.xvel1.data;
+			double *vol_flux_x = field.vol_flux_x.data;
+			double *vol_flux_y = field.vol_flux_y.data;
+			double *mass_flux_x = field.mass_flux_x.data;
+			double *mass_flux_y = field.mass_flux_y.data;
+			double *work_array1 = field.work_array1.data;
+			double *work_array2 = field.work_array2.data;
+			double *work_array3 = field.work_array3.data;
+			double *work_array4 = field.work_array4.data;
+			double *work_array5 = field.work_array5.data;
+			double *work_array6 = field.work_array6.data;
+			double *work_array7 = field.work_array7.data;
+			double *cellx = field.cellx.data;
+			double *celldx = field.celldx.data;
+			double *celly = field.celly.data;
+			double *celldy = field.celldy.data;
+			double *vertexx = field.vertexx.data;
+			double *vertexdx = field.vertexdx.data;
+			double *vertexy = field.vertexy.data;
+			double *vertexdy = field.vertexdy.data;
+			double *volume = field.volume.data;
+			double *xarea = field.xarea.data;
+			double *yarea = field.yarea.data;
+
 			#pragma omp target update \
-                to(field.density0.data[:field.density0.N()]) \
-                to(field.density1.data[:field.density1.N()]) \
-                to(field.energy0.data[:field.energy0.N()]) \
-                to(field.energy1.data[:field.energy1.N()]) \
-                to(field.pressure.data[:field.pressure.N()]) \
-                to(field.viscosity.data[:field.viscosity.N()]) \
-                to(field.soundspeed.data[:field.soundspeed.N()]) \
-                to(field.yvel0.data[:field.yvel0.N()]) \
-                to(field.yvel1.data[:field.yvel1.N()]) \
-                to(field.xvel0.data[:field.xvel0.N()]) \
-                to(field.xvel1.data[:field.xvel1.N()]) \
-                to(field.vol_flux_x.data[:field.vol_flux_x.N()]) \
-                to(field.vol_flux_y.data[:field.vol_flux_y.N()]) \
-                to(field.mass_flux_x.data[:field.mass_flux_x.N()]) \
-                to(field.mass_flux_y.data[:field.mass_flux_y.N()]) \
-                to(field.work_array1.data[:field.work_array1.N()]) \
-                to(field.work_array2.data[:field.work_array2.N()]) \
-                to(field.work_array3.data[:field.work_array3.N()]) \
-                to(field.work_array4.data[:field.work_array4.N()]) \
-                to(field.work_array5.data[:field.work_array5.N()]) \
-                to(field.work_array6.data[:field.work_array6.N()]) \
-                to(field.work_array7.data[:field.work_array7.N()]) \
-                to(field.cellx.data[:field.cellx.N()]) \
-                to(field.celldx.data[:field.celldx.N()]) \
-                to(field.celly.data[:field.celly.N()]) \
-                to(field.celldy.data[:field.celldy.N()]) \
-                to(field.vertexx.data[:field.vertexx.N()]) \
-                to(field.vertexdx.data[:field.vertexdx.N()]) \
-                to(field.vertexy.data[:field.vertexy.N()]) \
-                to(field.vertexdy.data[:field.vertexdy.N()]) \
-                to(field.volume.data[:field.volume.N()]) \
-                to(field.xarea.data[:field.xarea.N()]) \
-                to(field.yarea.data[:field.yarea.N()])
+                to(density0[:field.density0.N()])    \
+                to(density1[:field.density1.N()])    \
+                to(energy0[:field.energy0.N()])    \
+                to(energy1[:field.energy1.N()])    \
+                to(pressure[:field.pressure.N()])    \
+                to(viscosity[:field.viscosity.N()])    \
+                to(soundspeed[:field.soundspeed.N()])    \
+                to(yvel0[:field.yvel0.N()])    \
+                to(yvel1[:field.yvel1.N()])    \
+                to(xvel0[:field.xvel0.N()])    \
+                to(xvel1[:field.xvel1.N()])    \
+                to(vol_flux_x[:field.vol_flux_x.N()])    \
+                to(vol_flux_y[:field.vol_flux_y.N()])    \
+                to(mass_flux_x[:field.mass_flux_x.N()])    \
+                to(mass_flux_y[:field.mass_flux_y.N()])    \
+                to(work_array1[:field.work_array1.N()])    \
+                to(work_array2[:field.work_array2.N()])    \
+                to(work_array3[:field.work_array3.N()])    \
+                to(work_array4[:field.work_array4.N()])    \
+                to(work_array5[:field.work_array5.N()])    \
+                to(work_array6[:field.work_array6.N()])    \
+                to(work_array7[:field.work_array7.N()])    \
+                to(cellx[:field.cellx.N()]) \
+                to(celldx[:field.celldx.N()]) \
+                to(celly[:field.celly.N()]) \
+                to(celldy[:field.celldy.N()]) \
+                to(vertexx[:field.vertexx.N()]) \
+                to(vertexdx[:field.vertexdx.N()]) \
+                to(vertexy[:field.vertexy.N()]) \
+                to(vertexdy[:field.vertexdy.N()]) \
+                to(volume[:field.volume.N()])    \
+                to(xarea[:field.xarea.N()])    \
+                to(yarea[:field.yarea.N()])
 		}
 
 	}
 
 	void deviceToHost() {
-		#pragma omp flush
 
 		for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 			tile_type &t = chunk.tiles[tile];
 			field_type &field = t.field;
+
+
+			double *density0 = field.density0.data;
+			double *density1 = field.density1.data;
+			double *energy0 = field.energy0.data;
+			double *energy1 = field.energy1.data;
+			double *pressure = field.pressure.data;
+			double *viscosity = field.viscosity.data;
+			double *soundspeed = field.soundspeed.data;
+			double *yvel0 = field.yvel0.data;
+			double *yvel1 = field.yvel1.data;
+			double *xvel0 = field.xvel0.data;
+			double *xvel1 = field.xvel1.data;
+			double *vol_flux_x = field.vol_flux_x.data;
+			double *vol_flux_y = field.vol_flux_y.data;
+			double *mass_flux_x = field.mass_flux_x.data;
+			double *mass_flux_y = field.mass_flux_y.data;
+			double *work_array1 = field.work_array1.data;
+			double *work_array2 = field.work_array2.data;
+			double *work_array3 = field.work_array3.data;
+			double *work_array4 = field.work_array4.data;
+			double *work_array5 = field.work_array5.data;
+			double *work_array6 = field.work_array6.data;
+			double *work_array7 = field.work_array7.data;
+			double *cellx = field.cellx.data;
+			double *celldx = field.celldx.data;
+			double *celly = field.celly.data;
+			double *celldy = field.celldy.data;
+			double *vertexx = field.vertexx.data;
+			double *vertexdx = field.vertexdx.data;
+			double *vertexy = field.vertexy.data;
+			double *vertexdy = field.vertexdy.data;
+			double *volume = field.volume.data;
+			double *xarea = field.xarea.data;
+			double *yarea = field.yarea.data;
+
 			#pragma omp target update \
-                from(field.density0.data[:field.density0.N()]) \
-                from(field.density1.data[:field.density1.N()]) \
-                from(field.energy0.data[:field.energy0.N()]) \
-                from(field.energy1.data[:field.energy1.N()]) \
-                from(field.pressure.data[:field.pressure.N()]) \
-                from(field.viscosity.data[:field.viscosity.N()]) \
-                from(field.soundspeed.data[:field.soundspeed.N()]) \
-                from(field.yvel0.data[:field.yvel0.N()]) \
-                from(field.yvel1.data[:field.yvel1.N()]) \
-                from(field.xvel0.data[:field.xvel0.N()]) \
-                from(field.xvel1.data[:field.xvel1.N()]) \
-                from(field.vol_flux_x.data[:field.vol_flux_x.N()]) \
-                from(field.vol_flux_y.data[:field.vol_flux_y.N()]) \
-                from(field.mass_flux_x.data[:field.mass_flux_x.N()]) \
-                from(field.mass_flux_y.data[:field.mass_flux_y.N()]) \
-                from(field.work_array1.data[:field.work_array1.N()]) \
-                from(field.work_array2.data[:field.work_array2.N()]) \
-                from(field.work_array3.data[:field.work_array3.N()]) \
-                from(field.work_array4.data[:field.work_array4.N()]) \
-                from(field.work_array5.data[:field.work_array5.N()]) \
-                from(field.work_array6.data[:field.work_array6.N()]) \
-                from(field.work_array7.data[:field.work_array7.N()]) \
-                from(field.cellx.data[:field.cellx.N()]) \
-                from(field.celldx.data[:field.celldx.N()]) \
-                from(field.celly.data[:field.celly.N()]) \
-                from(field.celldy.data[:field.celldy.N()]) \
-                from(field.vertexx.data[:field.vertexx.N()]) \
-                from(field.vertexdx.data[:field.vertexdx.N()]) \
-                from(field.vertexy.data[:field.vertexy.N()]) \
-                from(field.vertexdy.data[:field.vertexdy.N()]) \
-                from(field.volume.data[:field.volume.N()]) \
-                from(field.xarea.data[:field.xarea.N()]) \
-                from(field.yarea.data[:field.yarea.N()])
+                from(density0[:field.density0.N()])    \
+                from(density1[:field.density1.N()])    \
+                from(energy0[:field.energy0.N()])    \
+                from(energy1[:field.energy1.N()])    \
+                from(pressure[:field.pressure.N()])    \
+                from(viscosity[:field.viscosity.N()])    \
+                from(soundspeed[:field.soundspeed.N()])    \
+                from(yvel0[:field.yvel0.N()])    \
+                from(yvel1[:field.yvel1.N()])    \
+                from(xvel0[:field.xvel0.N()])    \
+                from(xvel1[:field.xvel1.N()])    \
+                from(vol_flux_x[:field.vol_flux_x.N()])    \
+                from(vol_flux_y[:field.vol_flux_y.N()])    \
+                from(mass_flux_x[:field.mass_flux_x.N()])    \
+                from(mass_flux_y[:field.mass_flux_y.N()])    \
+                from(work_array1[:field.work_array1.N()])    \
+                from(work_array2[:field.work_array2.N()])    \
+                from(work_array3[:field.work_array3.N()])    \
+                from(work_array4[:field.work_array4.N()])    \
+                from(work_array5[:field.work_array5.N()])    \
+                from(work_array6[:field.work_array6.N()])    \
+                from(work_array7[:field.work_array7.N()])    \
+                from(cellx[:field.cellx.N()]) \
+                from(celldx[:field.celldx.N()]) \
+                from(celly[:field.celly.N()]) \
+                from(celldy[:field.celldy.N()]) \
+                from(vertexx[:field.vertexx.N()]) \
+                from(vertexdx[:field.vertexdx.N()]) \
+                from(vertexy[:field.vertexy.N()]) \
+                from(vertexdy[:field.vertexdy.N()]) \
+                from(volume[:field.volume.N()])    \
+                from(xarea[:field.xarea.N()])    \
+                from(yarea[:field.yarea.N()])
 		}
 	}
 

@@ -59,7 +59,7 @@ void advec_mom_kernel(
 		double *post_vol = field.work_array6.data;
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol[i + j * vels_wk_stride] = volume[i + j * base_stride] + vol_flux_y[(i + 0) + (j + 1) * flux_y_stride] - vol_flux_y[i + j * flux_y_stride];
@@ -76,7 +76,7 @@ void advec_mom_kernel(
 		double *post_vol = field.work_array6.data;
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol[i + j * vels_wk_stride] = volume[i + j * base_stride] + vol_flux_x[(i + 1) + (j + 0) * flux_x_stride] - vol_flux_x[i + j * flux_x_stride];
@@ -92,7 +92,7 @@ void advec_mom_kernel(
 		double *post_vol = field.work_array6.data;
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol[i + j * vels_wk_stride] = volume[i + j * base_stride];
@@ -108,7 +108,7 @@ void advec_mom_kernel(
 		double *post_vol = field.work_array6.data;
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 			for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 				post_vol[i + j * vels_wk_stride] = volume[i + j * base_stride];
@@ -127,7 +127,7 @@ void advec_mom_kernel(
 			double *node_flux = field.work_array1.data;
 
 
-			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 				for (int i = (x_min - 2 + 1); i < (x_max + 2 + 2); i++) {
 					node_flux[i + j * vels_wk_stride] = 0.25 * (mass_flux_x[(i + 0) + (j - 1) * flux_x_stride] + mass_flux_x[i + j * flux_x_stride] +
@@ -144,7 +144,7 @@ void advec_mom_kernel(
 			double *post_vol = field.work_array6.data;
 
 
-			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 			for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 				for (int i = (x_min - 1 + 1); i < (x_max + 2 + 2); i++) {
 					node_mass_post[i + j * vels_wk_stride] = 0.25 * (density1[(i + 0) + (j - 1) * base_stride] *
@@ -172,7 +172,7 @@ void advec_mom_kernel(
 		double *mom_flux = field.work_array4.data;
 		double *celldx = field.celldx.data;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min - 1 + 1); i < (x_max + 1 + 2); i++)
 				({
@@ -215,7 +215,7 @@ void advec_mom_kernel(
 		double *node_mass_post = field.work_array2.data;
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 				vel1[i + j * vel1_sizex] =
@@ -232,7 +232,7 @@ void advec_mom_kernel(
 			double *node_flux = field.work_array1.data;
 			double *mass_flux_y = field.mass_flux_y.data;
 
-			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 			for (int j = (y_min - 2 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 					node_flux[i + j * vels_wk_stride] = 0.25 * (mass_flux_y[(i - 1) + (j + 0) * flux_y_stride] + mass_flux_y[i + j * flux_y_stride] +
@@ -249,7 +249,7 @@ void advec_mom_kernel(
 			double *post_vol = field.work_array6.data;
 
 
-			#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+			#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 			for (int j = (y_min - 1 + 1); j < (y_max + 2 + 2); j++) {
 				for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 					node_mass_post[i + j * vels_wk_stride] = 0.25 * (density1[(i + 0) + (j - 1) * base_stride] *
@@ -276,7 +276,7 @@ void advec_mom_kernel(
 		double *mom_flux = field.work_array4.data;
 		double *celldy = field.celldy.data;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min - 1 + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++)
 				({
@@ -320,7 +320,7 @@ void advec_mom_kernel(
 		double *node_mass_post = field.work_array2.data;
 
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 				vel1[i + j * vel1_sizex] =
@@ -339,7 +339,7 @@ void advec_mom_driver(global_variables &globals, int tile, int which_vel, int di
                       int sweep_number) {
 
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -371,7 +371,7 @@ void advec_mom_driver(global_variables &globals, int tile, int which_vel, int di
 				direction);
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

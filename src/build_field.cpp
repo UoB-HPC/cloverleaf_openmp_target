@@ -27,7 +27,7 @@
 #include "build_field.h"
 
 
-// Allocate Kokkos Views for the data arrays
+// Allocate device buffers for the data arrays
 void build_field(global_variables &globals) {
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
@@ -171,16 +171,12 @@ void build_field(global_variables &globals) {
 //		Kokkos::MDRangePolicy <Kokkos::Rank<2>> loop_bounds_1({0, 0}, {xrange + 1, yrange + 1});
 
 
-//		#pragma omp target enter data  map(alloc: field.work_array1.ptr[:field.work_array1.size()])
-
-
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+3) inclusive
-
 
 
 		const int vels_wk_stride = field.vels_wk_stride;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(globals.use_target)
 		for (int j = 0; j < (yrange + 1); j++) {
 			for (int i = 0; i < (xrange + 1); i++) {
 				work_array1[i + j * vels_wk_stride] = 0.0;
@@ -200,7 +196,7 @@ void build_field(global_variables &globals) {
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+2) inclusive
 		const int base_stride = field.base_stride;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(globals.use_target)
 		for (int j = 0; j < (yrange); j++) {
 			for (int i = 0; i < (xrange); i++) {
 				density0[i + j * base_stride] = 0.0;
@@ -217,7 +213,7 @@ void build_field(global_variables &globals) {
 		// Nested loop over (t_ymin-2:t_ymax+2) and (t_xmin-2:t_xmax+3) inclusive
 		const int flux_x_stride = field.flux_x_stride;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(globals.use_target)
 		for (int j = 0; j < (yrange); j++) {
 			for (int i = 0; i < (xrange); i++) {
 				vol_flux_x[i + j * flux_x_stride] = 0.0;
@@ -229,7 +225,7 @@ void build_field(global_variables &globals) {
 		// Nested loop over (t_ymin-2:t_ymax+3) and (t_xmin-2:t_xmax+2) inclusive
 		const int flux_y_stride = field.flux_y_stride;
 
-		#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(globals.use_target)
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(globals.use_target)
 		for (int j = 0; j < (yrange + 1); j++) {
 			for (int i = 0; i < (xrange); i++) {
 				vol_flux_y[i + j * flux_y_stride] = 0.0;
@@ -239,28 +235,28 @@ void build_field(global_variables &globals) {
 		}
 
 		// (t_xmin-2:t_xmax+2) inclusive
-		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
+		#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target)
 		for (int id = 0; id < (xrange); id++) {
 			cellx[id] = 0.0;
 			celldx[id] = 0.0;
 		}
 
 		// (t_ymin-2:t_ymax+2) inclusive
-		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
+		#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target)
 		for (int id = 0; id < (yrange); id++) {
 			celly[id] = 0.0;
 			celldy[id] = 0.0;
 		}
 
 		// (t_xmin-2:t_xmax+3) inclusive
-		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
+		#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target)
 		for (int id = 0; id < (xrange + 1); id++) {
 			vertexx[id] = 0.0;
 			vertexdx[id] = 0.0;
 		}
 
 		// (t_ymin-2:t_ymax+3) inclusive
-		#pragma omp target teams distribute parallel for simd omp_use_target(globals.use_target)
+		#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target)
 		for (int id = 0; id < (yrange + 1); id++) {
 			vertexy[id] = 0.0;
 			vertexdy[id] = 0.0;

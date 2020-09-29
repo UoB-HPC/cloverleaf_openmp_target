@@ -500,7 +500,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_bottom - globals.chunk.bottom) * depth;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -699,7 +699,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 				depth, y_face_data,
 				left_right_offset[field_mass_flux_y] + t_offset);
 	}
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 }
@@ -729,7 +729,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_bottom - globals.chunk.bottom) * depth;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -928,7 +928,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 				depth, y_face_data,
 				left_right_offset[field_mass_flux_y] + t_offset);
 	}
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 }
@@ -939,7 +939,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_bottom - globals.chunk.bottom) * depth;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -1138,7 +1138,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 				depth, y_face_data,
 				left_right_offset[field_mass_flux_y] + t_offset);
 	}
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 }
@@ -1168,7 +1168,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_bottom - globals.chunk.bottom) * depth;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -1367,7 +1367,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 				depth, y_face_data,
 				left_right_offset[field_mass_flux_y] + t_offset);
 	}
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 }
@@ -1378,7 +1378,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_left - globals.chunk.left) * depth;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -1577,7 +1577,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 				depth, y_face_data,
 				bottom_top_offset[field_mass_flux_y] + t_offset);
 	}
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 }
@@ -1607,7 +1607,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_left - globals.chunk.left) * depth;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -1816,7 +1816,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_left - globals.chunk.left) * depth;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -2015,7 +2015,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 				depth, y_face_data,
 				bottom_top_offset[field_mass_flux_y] + t_offset);
 	}
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 }
@@ -2046,7 +2046,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_left - globals.chunk.left) * depth;
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -2245,7 +2245,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 				depth, y_face_data,
 				bottom_top_offset[field_mass_flux_y] + t_offset);
 	}
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 }

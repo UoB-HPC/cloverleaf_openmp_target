@@ -46,7 +46,7 @@ void viscosity_kernel(
 	double *xvel0 = field.xvel0.data;
 	double *yvel0 = field.yvel0.data;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			double ugrad = (xvel0[(i + 1) + (j + 0) * vels_wk_stride] + xvel0[(i + 1) + (j + 1) * vels_wk_stride]) - (xvel0[i + j * vels_wk_stride] + xvel0[(i + 0) + (j + 1) * vels_wk_stride]);
@@ -92,7 +92,7 @@ void viscosity_kernel(
 //  viscosity.
 void viscosity(global_variables &globals) {
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -107,7 +107,7 @@ void viscosity(global_variables &globals) {
 		                 t.field);
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 

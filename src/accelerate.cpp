@@ -59,7 +59,7 @@ void accelerate_kernel(
 	double *xvel1 = field.xvel1.data;
 	double *yvel1 = field.yvel1.data;
 
-	#pragma omp target teams distribute parallel for simd collapse(2) omp_use_target(use_target)
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
 			double stepbymass_s = halfdt / ((density0[(i - 1) + (j - 1) * base_stride] * volume[(i - 1) + (j - 1) * base_stride] +
@@ -97,7 +97,7 @@ void accelerate(global_variables &globals) {
 	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.hostToDevice();
 	#endif
 
@@ -116,7 +116,7 @@ void accelerate(global_variables &globals) {
 
 	}
 
-	#if FLUSH_BUFFER
+	#if SYNC_BUFFERS
 	globals.deviceToHost();
 	#endif
 
