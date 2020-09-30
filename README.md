@@ -34,6 +34,7 @@ Flags:
     * GCC+Radeon - `"-foffload=amdgcn-amdhsa='-march=gfx906' -foffload=-lm  -fno-fast-math -fno-associative-math"`
     * LLVM+NVIDIA - `"-fopenmp-targets=nvptx64-nvidia-cuda -Xopenmp-target -march=sm_75"`
     * ICC - `"-qnextgen -fiopenmp -fopenmp-targets=spir64"`
+    * CCE+NVIDIA - `"-fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_60"`
  * `OMP_ALLOW_HOST` - `BOOL(ON|OFF)`, enabled by default, set to false if the compiler is unable to support dynamic selection of host/target devices. If disabled, running the binary with `--no-target` emits an error.
 
 
