@@ -49,7 +49,7 @@ If parts of your toolchain are installed at different places, you'll have to spe
     
 Proceed with compiling:
     
-    cmake3 --build build --target clover_leaf --config Release -j $(nproc)
+    cmake3 --build build --target cloverleaf --config Release -j $(nproc)
 
 ## Known issues
 
@@ -58,11 +58,11 @@ Proceed with compiling:
 
 ## Running
 
-The main `clover_leaf` executable takes a `clover.in` file as parameter and outputs `clover.out` at working directory.
+The main `cloverleaf` executable takes a `clover.in` file as parameter and outputs `clover.out` at working directory.
 
 For example, after successful compilation, at **project root**:
 
-    ./build/clover_leaf --file InputDecks/clover_bm16_short.in
+    ./build/cloverleaf --file InputDecks/clover_bm16_short.in
 
 See [Tested configurations](#tested-configurations) for tested platforms and drivers.  
 
