@@ -22,9 +22,10 @@
 #define UPDATE_TILE_HALO_KERNEL_H
 
 #include "definitions.h"
-#include "utils.hpp"
+
 
 void update_tile_halo_l_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		clover::Buffer2D<double> &density0,
 		clover::Buffer2D<double> &energy0,
@@ -62,6 +63,7 @@ void update_tile_halo_l_kernel(
 
 
 void update_tile_halo_r_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		clover::Buffer2D<double> &density0,
 		clover::Buffer2D<double> &energy0,
@@ -98,6 +100,7 @@ void update_tile_halo_r_kernel(
 		int depth);
 
 void update_tile_halo_t_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		clover::Buffer2D<double> &density0,
 		clover::Buffer2D<double> &energy0,
@@ -135,6 +138,7 @@ void update_tile_halo_t_kernel(
 
 
 void update_tile_halo_b_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		clover::Buffer2D<double> &density0,
 		clover::Buffer2D<double> &energy0,

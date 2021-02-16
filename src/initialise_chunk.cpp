@@ -27,7 +27,7 @@
 
 
 #include "initialise_chunk.h"
-#include "utils.hpp"
+
 
 
 void initialise_chunk(const int tile, global_variables &globals) {
@@ -56,43 +56,60 @@ void initialise_chunk(const int tile, global_variables &globals) {
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
-	_Pragma("kernel1d")
-	for (int j = (0); j < (xrange); j++) {
-		field.vertexx[j] = xmin + dx * (j - 1 - x_min);
-		field.vertexdx[j] = dx;
+	double *vertexx = field.vertexx.data;
+	double *vertexdx = field.vertexdx.data;
+
+	#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target)
+	for (int j = 0; j < (xrange); j++) {
+		vertexx[j] = xmin + dx * (j - 1 - x_min);
+		vertexdx[j] = dx;
 	}
 
 
-	_Pragma("kernel1d")
-	for (int k = (0); k < (yrange); k++) {
-		field.vertexy[k] = ymin + dy * (k - 1 - y_min);
-		field.vertexdy[k] = dy;
+	double *vertexy = field.vertexy.data;
+	double *vertexdy = field.vertexdy.data;
+
+	#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target)
+	for (int k = 0; k < (yrange); k++) {
+		vertexy[k] = ymin + dy * (k - 1 - y_min);
+		vertexdy[k] = dy;
 	}
 
 
 	const int xrange1 = (x_max + 2) - (x_min - 2) + 1;
 	const int yrange1 = (y_max + 2) - (y_min - 2) + 1;
 
-	_Pragma("kernel1d")
-	for (int j = (0); j < (xrange1); j++) {
-		field.cellx[j] = 0.5 * (field.vertexx[j] + field.vertexx[j + 1]);
-		field.celldx[j] = dx;
+	double *cellx = field.cellx.data;
+	double *celldx = field.celldx.data;
+	#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target)
+	for (int j = 0; j < (xrange1); j++) {
+		cellx[j] = 0.5 * (vertexx[j] + vertexx[j + 1]);
+		celldx[j] = dx;
 	}
 
 
-	_Pragma("kernel1d")
-	for (int k = (0); k < (yrange1); k++) {
-		field.celly[k] = 0.5 * (field.vertexy[k] + field.vertexy[k + 1]);
-		field.celldy[k] = dy;
+	double *celly = field.celly.data;
+	double *celldy = field.celldy.data;
+	#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target)
+	for (int k = 0; k < (yrange1); k++) {
+		celly[k] = 0.5 * (vertexy[k] + vertexy[k + 1]);
+		celldy[k] = dy;
 	}
 
+	const int base_stride = field.base_stride;
+	const int flux_x_stride = field.flux_x_stride;
+	const int flux_y_stride = field.flux_y_stride;
 
-	_Pragma("kernel2d")
-	for (int j = (0); j < (yrange1); j++) {
-		for (int i = (0); i < (xrange1); i++) {
-			field.volume(i, j) = dx * dy;
-			field.xarea(i, j) = field.celldy[j];
-			field.yarea(i, j) = field.celldx[i];
+	double *volume = field.volume.data;
+	double *xarea = field.xarea.data;
+	double *yarea = field.yarea.data;
+
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(globals.use_target)
+	for (int j = 0; j < (yrange1); j++) {
+		for (int i = 0; i < (xrange1); i++) {
+			volume[i + j * base_stride] = dx * dy;
+			xarea[i + j * flux_x_stride] = celldy[j];
+			yarea[i + j * flux_y_stride] = celldx[i];
 		}
 	}
 
