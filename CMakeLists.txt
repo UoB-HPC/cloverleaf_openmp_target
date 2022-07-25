@@ -90,7 +90,7 @@ separate_arguments(CXX_EXTRA_LINKER_FLAGS)
 
 
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${CXX_EXTRA_FLAGS})
-set(RELEASE_OPTIONS -O3 -march=native -mtune=native ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -O3 ${CXX_EXTRA_FLAGS})
 
 target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 target_link_libraries(clover_leaf PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_C)
