@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 project(cloverleaf_openmp_plain)
 
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenMP REQUIRED)
@@ -75,11 +75,11 @@ target_compile_options(clover_leaf
         -Wall
         -Wextra
         -Wcast-align
-        -Wfatal-errors
+#        -Wfatal-errors
         -Werror=return-type
         -Wno-unused-parameter
         -Wno-unused-variable
-        -Wno-ignored-attributes
+#        -Wno-ignored-attributes
 
         ${EXTRA_FLAGS}
         )
@@ -90,7 +90,7 @@ separate_arguments(CXX_EXTRA_LINKER_FLAGS)
 
 
 set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${CXX_EXTRA_FLAGS})
-set(RELEASE_OPTIONS -Ofast -march=native -mtune=native ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -O3 -march=native -mtune=native ${CXX_EXTRA_FLAGS})
 
 target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 target_link_libraries(clover_leaf PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_C)
