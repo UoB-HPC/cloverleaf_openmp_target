@@ -23,6 +23,7 @@
 #define DEBUG false
 
 
+#include <array>
 #include <iostream>
 #include <utility>
 #include <fstream>
