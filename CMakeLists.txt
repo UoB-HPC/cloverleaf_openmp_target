@@ -95,6 +95,10 @@ set(RELEASE_OPTIONS -O3 ${CXX_EXTRA_FLAGS})
 target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 target_link_libraries(clover_leaf PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_C)
 
+if (USE_VECTOR)
+    target_compile_definitions(clover_leaf PUBLIC USE_VECTOR)
+endif ()
+
 
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
