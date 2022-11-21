@@ -18,18 +18,18 @@
  */
 
 
+#include "accelerate.h"
 #include "hydro.h"
 #include "timer.h"
 #include "field_summary.h"
 #include "visit.h"
 #include "timestep.h"
 #include "PdV.h"
-#include "accelerate.h"
 #include "flux_calc.h"
 #include "advection.h"
 #include "reset_field.h"
+#include "finalise_field.h"
 
-#include <algorithm>
 
 extern std::ostream g_out;
 
@@ -220,6 +220,7 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 				}
 			}
 
+
 			//clover_finalize(); Skipped as just closes the file and calls MPI_Finalize (which is done back in main).
 
 			break;
@@ -229,16 +230,16 @@ void hydro(global_variables &globals, parallel_ &parallel) {
 		if (parallel.boss) {
 			wall_clock = timer() - timerstart;
 			double step_clock = timer() - step_time;
-			g_out << "Wall clock " << wall_clock << std::endl;
-			std::cout << "Wall clock " << wall_clock << std::endl;
+			g_out << "Wall clock " << wall_clock << "\n";
+			std::cout << "Wall clock " << wall_clock << "\n";
 			double cells = globals.config.grid.x_cells * globals.config.grid.y_cells;
 			double rstep = globals.step;
 			double grind_time = wall_clock / (rstep * cells);
 			double step_grind = step_clock / cells;
-			std::cout << "Average time per cell " << grind_time << std::endl;
-			g_out << "Average time per cell " << grind_time << std::endl;
-			std::cout << "Step time per cell    " << step_grind << std::endl;
-			g_out << "Step time per cell    " << step_grind << std::endl;
+			std::cout << "Average time per cell " << grind_time << "\n";
+			g_out << "Average time per cell " << grind_time << "\n";
+			std::cout << "Step time per cell    " << step_grind << "\n";
+			g_out << "Step time per cell    " << step_grind << "\n";
 		}
 
 	}

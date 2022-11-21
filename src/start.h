@@ -25,9 +25,10 @@
 #include "comms.h"
 #include "definitions.h"
 
-std::unique_ptr<global_variables> start(parallel_ &parallel,
-                                        const global_config &config,
-                                        size_t omp_device);
+global_variables start(parallel_ &parallel,
+                       const global_config &config,
+                       size_t omp_device,
+                       bool use_target);
 
 #endif
 

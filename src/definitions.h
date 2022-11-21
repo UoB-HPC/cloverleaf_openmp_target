@@ -20,7 +20,12 @@
 #ifndef GRID_H
 #define GRID_H
 
+// Enables dumping buffers at each iteration as text files, see hydro.cpp for actual implementation
 #define DEBUG false
+// Enables buffer synchronisation between host and device before and after each kernel invocation.
+// This is useful for debugging individual kernels;
+// by synchronising buffer data, not all kernels have to be executed on the device or host
+#define SYNC_BUFFERS 0
 
 
 #include <iostream>
@@ -29,7 +34,8 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
-#include "utils.hpp"
+#include <cassert>
+#include <vector>
 
 
 #define g_ibig 640000
@@ -37,7 +43,110 @@
 #define g_big   (1.0e+21)
 #define NUM_FIELDS 15
 
+#ifdef OMP_ALLOW_HOST
+#define clover_use_target(cond) if(target: (cond))
+#else
+#define clover_use_target(cond) /*no-op*/
+#endif
 
+namespace clover {
+
+	template<class T, class U = T>
+	static T cpp14_exchange(T &obj, U &&new_value) {
+		T old_value = std::move(obj);
+		obj = std::forward<U>(new_value);
+		return old_value;
+	}
+
+	template<typename T>
+	struct Buffer1D {
+
+	private:
+		const size_t size;
+
+	public:
+		T *data;
+
+		explicit Buffer1D(size_t size) : size(size), data(new T[size]) {
+			assert(size > 0);
+		}
+
+		Buffer1D(const Buffer1D<T> &that) : size(that.size), data(new T[size]) {
+			std::copy(that.data, that.data + size, data);
+		}
+
+		Buffer1D(Buffer1D &&other) noexcept: size(other.size), data(cpp14_exchange(other.data, nullptr)) {}
+
+		Buffer1D &operator=(Buffer1D &&other) noexcept {
+			size = other.size;
+			std::swap(data, other.data);
+			return *this;
+		}
+
+		[[nodiscard]]   T &operator[](size_t i) { return data[i]; }
+		[[nodiscard]] T operator[](size_t i) const { return data[i]; }
+
+		[[nodiscard]] constexpr size_t N() const { return size; }
+
+
+		Buffer1D<T> &operator=(const Buffer1D<T> &other) {
+			if (this != &other) {
+				delete[] data;
+				std::copy(other.data, other.data + size, data);
+				size = other.size;
+			}
+			return *this;
+		}
+
+		~Buffer1D() { delete[] data; }
+	};
+
+
+	template<typename T>
+	struct Buffer2D {
+	private:
+		const size_t sizeX, sizeY;
+	public:
+
+		T *data;
+
+		Buffer2D(size_t sizeX, size_t sizeY) : sizeX(sizeX), sizeY(sizeY), data(new T[sizeX * sizeY]) {
+			assert(sizeX > 0);
+			assert(sizeY > 0);
+		}
+		Buffer2D(const Buffer2D<T> &that) : sizeX(that.sizeX), sizeY(that.sizeY), data(new T[sizeX * sizeY]) {
+			std::copy(that.data, that.data + (sizeX * sizeY), data);
+		}
+
+		Buffer2D(Buffer2D &&other) noexcept: sizeX(other.sizeX), sizeY(other.sizeY), data(cpp14_exchange(other.data, nullptr)) {}
+
+
+		[[nodiscard]] const T &operator()(size_t i, size_t j) { return data[i + j * sizeX]; }
+		[[nodiscard]] T &operator()(size_t i, size_t j) const { return data[i + j * sizeX]; }
+		[[nodiscard]] constexpr size_t N() const { return sizeX * sizeY; }
+		[[nodiscard]] constexpr size_t nX() const { return sizeX; }
+		[[nodiscard]] constexpr size_t nY() const { return sizeY; }
+
+
+		Buffer2D<T> &operator=(const Buffer2D<T> &other) {
+			if (this != &other) {
+				return *this = Buffer2D(other);
+			}
+		}
+
+		Buffer2D &operator=(Buffer2D &&other) noexcept {
+			sizeX = other.sizeX;
+			sizeY = other.sizeY;
+			std::swap(data, other.data);
+			return *this;
+		}
+
+
+		~Buffer2D() { delete[] data; }
+
+	};
+
+}
 
 
 typedef std::chrono::time_point<std::chrono::system_clock> timepoint;
@@ -63,10 +172,10 @@ static inline void record(const std::string &name, const std::function<void(std:
 
 // formats and then dumps content of 1d double buffer to stream
 static inline void
-show(std::ostream &out, const std::string &name, clover::Buffer1D<double> &buffer) {
-	out << name << "(" << 1 << ") [" << buffer.size() << "]" << std::endl;
+show(std::ostream &out, const std::string &name, const clover::Buffer1D<double> &buffer) {
+	out << name << "(" << 1 << ") [" << buffer.N() << "]" << std::endl;
 	out << "\t";
-	for (size_t i = 0; i < buffer.size(); ++i) {
+	for (size_t i = 0; i < buffer.N(); ++i) {
 		out << buffer[i] << ", ";
 	}
 	out << std::endl;
@@ -74,11 +183,11 @@ show(std::ostream &out, const std::string &name, clover::Buffer1D<double> &buffe
 // formats and then dumps content of 2d double buffer to stream
 static inline void
 show(std::ostream &out, const std::string &name, clover::Buffer2D<double> &buffer) {
-	out << name << "(" << 2 << ") [" << buffer.sizeX << "x" << buffer.sizeY << "]"
+	out << name << "(" << 2 << ") [" << buffer.nX() << "x" << buffer.nY() << "]"
 	    << std::endl;
-	for (size_t i = 0; i < buffer.sizeX; ++i) {
+	for (size_t i = 0; i < buffer.nX(); ++i) {
 		out << "\t";
-		for (size_t j = 0; j < buffer.sizeY; ++j) {
+		for (size_t j = 0; j < buffer.nY(); ++j) {
 			out << buffer(i, j) << ", ";
 		}
 		out << std::endl;
@@ -180,17 +289,24 @@ struct profiler_type {
 
 struct field_type {
 
-	clover::Buffer2D<double> density0;
-	clover::Buffer2D<double> density1;
-	clover::Buffer2D<double> energy0;
-	clover::Buffer2D<double> energy1;
+	clover::Buffer2D<double> density0, density1;
+	clover::Buffer2D<double> energy0, energy1;
 	clover::Buffer2D<double> pressure;
 	clover::Buffer2D<double> viscosity;
+	clover::Buffer2D<double> volume;
 	clover::Buffer2D<double> soundspeed;
+
+
+	int density0_stride, density1_stride;
+	int energy0_stride, energy1_stride;
+	int pressure_stride;
+	int viscosity_stride;
+	int volume_stride;
+	int soundspeed_stride;
+
+
 	clover::Buffer2D<double> xvel0, xvel1;
 	clover::Buffer2D<double> yvel0, yvel1;
-	clover::Buffer2D<double> vol_flux_x, mass_flux_x;
-	clover::Buffer2D<double> vol_flux_y, mass_flux_y;
 
 	clover::Buffer2D<double> work_array1; // node_flux, stepbymass, volume_change, pre_vol
 	clover::Buffer2D<double> work_array2; // node_mass_post, post_vol
@@ -200,36 +316,33 @@ struct field_type {
 	clover::Buffer2D<double> work_array6; // pre_vol, post_ener
 	clover::Buffer2D<double> work_array7; // post_vol, ener_flux
 
-	clover::Buffer1D<double> cellx;
-	clover::Buffer1D<double> celldx;
-	clover::Buffer1D<double> celly;
-	clover::Buffer1D<double> celldy;
-	clover::Buffer1D<double> vertexx;
-	clover::Buffer1D<double> vertexdx;
-	clover::Buffer1D<double> vertexy;
-	clover::Buffer1D<double> vertexdy;
+	clover::Buffer2D<double> vol_flux_x, mass_flux_x;
+	clover::Buffer2D<double> vol_flux_y, mass_flux_y;
+	clover::Buffer2D<double> xarea, yarea;
 
-	clover::Buffer2D<double> volume;
-	clover::Buffer2D<double> xarea;
-	clover::Buffer2D<double> yarea;
+	clover::Buffer1D<double> cellx, celldx;
+	clover::Buffer1D<double> celly, celldy;
+
+	clover::Buffer1D<double> vertexx, vertexdx;
+	clover::Buffer1D<double> vertexy, vertexdy;
 
 
-	explicit field_type(const size_t xrange, const size_t yrange) :
-			density0(xrange, yrange),
-			density1(xrange, yrange),
-			energy0(xrange, yrange),
-			energy1(xrange, yrange),
+	int base_stride;
+	int vels_wk_stride;
+	int flux_x_stride, flux_y_stride;
+
+
+	explicit field_type(const int xrange, const int yrange) :
+
+			density0(xrange, yrange), density1(xrange, yrange),
+			energy0(xrange, yrange), energy1(xrange, yrange),
 			pressure(xrange, yrange),
 			viscosity(xrange, yrange),
+			volume(xrange, yrange),
 			soundspeed(xrange, yrange),
-			xvel0(xrange + 1, yrange + 1),
-			xvel1(xrange + 1, yrange + 1),
-			yvel0(xrange + 1, yrange + 1),
-			yvel1(xrange + 1, yrange + 1),
-			vol_flux_x(xrange + 1, yrange),
-			mass_flux_x(xrange + 1, yrange),
-			vol_flux_y(xrange, yrange + 1),
-			mass_flux_y(xrange, yrange + 1),
+
+			xvel0(xrange + 1, yrange + 1), xvel1(xrange + 1, yrange + 1),
+			yvel0(xrange + 1, yrange + 1), yvel1(xrange + 1, yrange + 1),
 			work_array1(xrange + 1, yrange + 1),
 			work_array2(xrange + 1, yrange + 1),
 			work_array3(xrange + 1, yrange + 1),
@@ -237,19 +350,22 @@ struct field_type {
 			work_array5(xrange + 1, yrange + 1),
 			work_array6(xrange + 1, yrange + 1),
 			work_array7(xrange + 1, yrange + 1),
-			cellx(xrange),
-			celldx(xrange),
-			celly(yrange),
-			celldy(yrange),
+
+			vol_flux_x(xrange + 1, yrange), mass_flux_x(xrange + 1, yrange),
+			vol_flux_y(xrange, yrange + 1), mass_flux_y(xrange, yrange + 1),
+			xarea(xrange + 1, yrange), yarea(xrange, yrange + 1),
+
+			cellx(xrange), celldx(xrange),
+			celly(yrange), celldy(yrange),
+
 			vertexx(xrange + 1),
 			vertexdx(xrange + 1),
 			vertexy(yrange + 1),
 			vertexdy(yrange + 1),
-			volume(xrange, yrange),
-			xarea(xrange + 1, yrange),
-			yarea(xrange, yrange + 1) {}
 
-
+			base_stride(xrange),
+			vels_wk_stride(xrange + 1),
+			flux_x_stride(xrange + 1), flux_y_stride(xrange) {}
 };
 
 
@@ -368,6 +484,8 @@ struct global_variables {
 	const global_config config;
 
 	const size_t omp_device;
+	bool use_target;
+
 	chunk_type chunk;
 
 	int error_condition;
@@ -392,14 +510,174 @@ struct global_variables {
 	explicit global_variables(
 			const global_config &config,
 			size_t omp_device,
+			bool use_target,
 			chunk_type chunk) :
-			config(config), omp_device(omp_device), chunk(std::move(chunk)),
+			config(config), omp_device(omp_device), use_target(use_target), chunk(std::move(chunk)),
 			dt(config.dtinit),
 			dtold(config.dtinit),
 			profiler_on(config.profiler_on) {}
 
+	void hostToDevice() {
+
+		for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
+			tile_type &t = chunk.tiles[tile];
+			field_type &field = t.field;
+
+
+			double *density0 = field.density0.data;
+			double *density1 = field.density1.data;
+			double *energy0 = field.energy0.data;
+			double *energy1 = field.energy1.data;
+			double *pressure = field.pressure.data;
+			double *viscosity = field.viscosity.data;
+			double *soundspeed = field.soundspeed.data;
+			double *yvel0 = field.yvel0.data;
+			double *yvel1 = field.yvel1.data;
+			double *xvel0 = field.xvel0.data;
+			double *xvel1 = field.xvel1.data;
+			double *vol_flux_x = field.vol_flux_x.data;
+			double *vol_flux_y = field.vol_flux_y.data;
+			double *mass_flux_x = field.mass_flux_x.data;
+			double *mass_flux_y = field.mass_flux_y.data;
+			double *work_array1 = field.work_array1.data;
+			double *work_array2 = field.work_array2.data;
+			double *work_array3 = field.work_array3.data;
+			double *work_array4 = field.work_array4.data;
+			double *work_array5 = field.work_array5.data;
+			double *work_array6 = field.work_array6.data;
+			double *work_array7 = field.work_array7.data;
+			double *cellx = field.cellx.data;
+			double *celldx = field.celldx.data;
+			double *celly = field.celly.data;
+			double *celldy = field.celldy.data;
+			double *vertexx = field.vertexx.data;
+			double *vertexdx = field.vertexdx.data;
+			double *vertexy = field.vertexy.data;
+			double *vertexdy = field.vertexdy.data;
+			double *volume = field.volume.data;
+			double *xarea = field.xarea.data;
+			double *yarea = field.yarea.data;
+
+			#pragma omp target update \
+                to(density0[:field.density0.N()])    \
+                to(density1[:field.density1.N()])    \
+                to(energy0[:field.energy0.N()])    \
+                to(energy1[:field.energy1.N()])    \
+                to(pressure[:field.pressure.N()])    \
+                to(viscosity[:field.viscosity.N()])    \
+                to(soundspeed[:field.soundspeed.N()])    \
+                to(yvel0[:field.yvel0.N()])    \
+                to(yvel1[:field.yvel1.N()])    \
+                to(xvel0[:field.xvel0.N()])    \
+                to(xvel1[:field.xvel1.N()])    \
+                to(vol_flux_x[:field.vol_flux_x.N()])    \
+                to(vol_flux_y[:field.vol_flux_y.N()])    \
+                to(mass_flux_x[:field.mass_flux_x.N()])    \
+                to(mass_flux_y[:field.mass_flux_y.N()])    \
+                to(work_array1[:field.work_array1.N()])    \
+                to(work_array2[:field.work_array2.N()])    \
+                to(work_array3[:field.work_array3.N()])    \
+                to(work_array4[:field.work_array4.N()])    \
+                to(work_array5[:field.work_array5.N()])    \
+                to(work_array6[:field.work_array6.N()])    \
+                to(work_array7[:field.work_array7.N()])    \
+                to(cellx[:field.cellx.N()]) \
+                to(celldx[:field.celldx.N()]) \
+                to(celly[:field.celly.N()]) \
+                to(celldy[:field.celldy.N()]) \
+                to(vertexx[:field.vertexx.N()]) \
+                to(vertexdx[:field.vertexdx.N()]) \
+                to(vertexy[:field.vertexy.N()]) \
+                to(vertexdy[:field.vertexdy.N()]) \
+                to(volume[:field.volume.N()])    \
+                to(xarea[:field.xarea.N()])    \
+                to(yarea[:field.yarea.N()])
+		}
+
+	}
+
+	void deviceToHost() {
+
+		for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
+			tile_type &t = chunk.tiles[tile];
+			field_type &field = t.field;
+
+
+			double *density0 = field.density0.data;
+			double *density1 = field.density1.data;
+			double *energy0 = field.energy0.data;
+			double *energy1 = field.energy1.data;
+			double *pressure = field.pressure.data;
+			double *viscosity = field.viscosity.data;
+			double *soundspeed = field.soundspeed.data;
+			double *yvel0 = field.yvel0.data;
+			double *yvel1 = field.yvel1.data;
+			double *xvel0 = field.xvel0.data;
+			double *xvel1 = field.xvel1.data;
+			double *vol_flux_x = field.vol_flux_x.data;
+			double *vol_flux_y = field.vol_flux_y.data;
+			double *mass_flux_x = field.mass_flux_x.data;
+			double *mass_flux_y = field.mass_flux_y.data;
+			double *work_array1 = field.work_array1.data;
+			double *work_array2 = field.work_array2.data;
+			double *work_array3 = field.work_array3.data;
+			double *work_array4 = field.work_array4.data;
+			double *work_array5 = field.work_array5.data;
+			double *work_array6 = field.work_array6.data;
+			double *work_array7 = field.work_array7.data;
+			double *cellx = field.cellx.data;
+			double *celldx = field.celldx.data;
+			double *celly = field.celly.data;
+			double *celldy = field.celldy.data;
+			double *vertexx = field.vertexx.data;
+			double *vertexdx = field.vertexdx.data;
+			double *vertexy = field.vertexy.data;
+			double *vertexdy = field.vertexdy.data;
+			double *volume = field.volume.data;
+			double *xarea = field.xarea.data;
+			double *yarea = field.yarea.data;
+
+			#pragma omp target update \
+                from(density0[:field.density0.N()])    \
+                from(density1[:field.density1.N()])    \
+                from(energy0[:field.energy0.N()])    \
+                from(energy1[:field.energy1.N()])    \
+                from(pressure[:field.pressure.N()])    \
+                from(viscosity[:field.viscosity.N()])    \
+                from(soundspeed[:field.soundspeed.N()])    \
+                from(yvel0[:field.yvel0.N()])    \
+                from(yvel1[:field.yvel1.N()])    \
+                from(xvel0[:field.xvel0.N()])    \
+                from(xvel1[:field.xvel1.N()])    \
+                from(vol_flux_x[:field.vol_flux_x.N()])    \
+                from(vol_flux_y[:field.vol_flux_y.N()])    \
+                from(mass_flux_x[:field.mass_flux_x.N()])    \
+                from(mass_flux_y[:field.mass_flux_y.N()])    \
+                from(work_array1[:field.work_array1.N()])    \
+                from(work_array2[:field.work_array2.N()])    \
+                from(work_array3[:field.work_array3.N()])    \
+                from(work_array4[:field.work_array4.N()])    \
+                from(work_array5[:field.work_array5.N()])    \
+                from(work_array6[:field.work_array6.N()])    \
+                from(work_array7[:field.work_array7.N()])    \
+                from(cellx[:field.cellx.N()]) \
+                from(celldx[:field.celldx.N()]) \
+                from(celly[:field.celly.N()]) \
+                from(celldy[:field.celldy.N()]) \
+                from(vertexx[:field.vertexx.N()]) \
+                from(vertexdx[:field.vertexdx.N()]) \
+                from(vertexy[:field.vertexy.N()]) \
+                from(vertexdy[:field.vertexdy.N()]) \
+                from(volume[:field.volume.N()])    \
+                from(xarea[:field.xarea.N()])    \
+                from(yarea[:field.yarea.N()])
+		}
+	}
+
 	// dumps all content to file; for debugging only
 	void dump(const std::string &filename) {
+
+		deviceToHost();
 
 		std::cout << "Dumping globals to " << filename << std::endl;
 
@@ -499,6 +777,7 @@ struct global_variables {
 		});
 
 	}
+
 
 };
 

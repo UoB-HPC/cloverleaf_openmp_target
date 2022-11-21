@@ -21,33 +21,45 @@
 
 #include "flux_calc.h"
 #include "timer.h"
-#include "utils.hpp"
+
 
 
 //  @brief Fortran flux kernel.
 //  @author Wayne Gaudin
 //  @details The edge volume fluxes are calculated based on the velocity fields.
 void flux_calc_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		clover::Buffer2D<double> &xarea,
-		clover::Buffer2D<double> &yarea,
-		clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0,
-		clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel1,
-		clover::Buffer2D<double> &vol_flux_x,
-		clover::Buffer2D<double> &vol_flux_y) {
+		field_type &field) {
 
 	// DO k=y_min,y_max+1
 	//   DO j=x_min,x_max+1
-// Note that the loops calculate one extra flux than required, but this
+	// Note that the loops calculate one extra flux than required, but this
 	// allows loop fusion that improves performance
-	_Pragma("kernel2d")
+
+	const int flux_x_stride = field.flux_x_stride;
+	const int flux_y_stride = field.flux_y_stride;
+	const int vels_wk_stride = field.vels_wk_stride;
+
+	double *xarea = field.xarea.data;
+	double *yarea = field.yarea.data;
+	double *xvel0 = field.xvel0.data;
+	double *yvel0 = field.yvel0.data;
+	double *xvel1 = field.xvel1.data;
+	double *yvel1 = field.yvel1.data;
+	double *vol_flux_x = field.vol_flux_x.data;
+	double *vol_flux_y = field.vol_flux_y.data;
+
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			vol_flux_x(i, j) = 0.25 * dt * xarea(i, j) * (xvel0(i, j) + xvel0(i + 0, j + 1) + xvel1(i, j) + xvel1(i + 0, j + 1));
-			vol_flux_y(i, j) = 0.25 * dt * yarea(i, j) * (yvel0(i, j) + yvel0(i + 1, j + 0) + yvel1(i, j) + yvel1(i + 1, j + 0));
+			vol_flux_x[i + j * flux_x_stride] = 0.25 * dt * xarea[i + j * flux_x_stride] *
+			                                    (xvel0[i + j * vels_wk_stride] + xvel0[(i + 0) + (j + 1) * vels_wk_stride] + xvel1[i + j * vels_wk_stride] +
+			                                     xvel1[(i + 0) + (j + 1) * vels_wk_stride]);
+			vol_flux_y[i + j * flux_y_stride] = 0.25 * dt * yarea[i + j * flux_y_stride] *
+			                                    (yvel0[i + j * vels_wk_stride] + yvel0[(i + 1) + (j + 0) * vels_wk_stride] + yvel1[i + j * vels_wk_stride] +
+			                                     yvel1[(i + 1) + (j + 0) * vels_wk_stride]);
 		}
 	}
 }
@@ -61,24 +73,26 @@ void flux_calc(global_variables &globals) {
 	if (globals.profiler_on) kernel_time = timer();
 
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 
 		tile_type &t = globals.chunk.tiles[tile];
 		flux_calc_kernel(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
 				t.info.t_ymax,
 				globals.dt,
-				t.field.xarea,
-				t.field.yarea,
-				t.field.xvel0,
-				t.field.yvel0,
-				t.field.xvel1,
-				t.field.yvel1,
-				t.field.vol_flux_x,
-				t.field.vol_flux_y);
+				t.field);
 	}
+
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 
 	if (globals.profiler_on) globals.profiler.flux += timer() - kernel_time;
 

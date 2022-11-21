@@ -34,7 +34,7 @@
 
 #include "comms.h"
 #include "pack_kernel.h"
-#include "utils.hpp"
+
 
 #include <mpi.h>
 
@@ -61,6 +61,8 @@ void clover_barrier() {
 }
 
 void clover_barrier(global_variables &globals) {
+	#pragma omp flush
+//	globals.deviceToHost();;
 	clover_barrier();
 }
 
@@ -498,8 +500,13 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_bottom - globals.chunk.bottom) * depth;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	if (fields[field_density0] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -512,6 +519,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_density1] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -524,6 +532,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_energy0] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -536,6 +545,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_energy1] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -548,6 +558,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_pressure] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -560,6 +571,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_viscosity] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -572,6 +584,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_soundspeed] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -584,6 +597,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_xvel0] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -596,6 +610,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_xvel1] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -608,6 +623,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_yvel0] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -620,6 +636,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_yvel1] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -632,6 +649,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_vol_flux_x] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -644,6 +662,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_vol_flux_y] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -656,6 +675,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_mass_flux_x] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -668,6 +688,7 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 	}
 	if (fields[field_mass_flux_y] == 1) {
 		clover_pack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -678,26 +699,37 @@ void clover_pack_left(global_variables &globals, int tile, const int fields[NUM_
 				depth, y_face_data,
 				left_right_offset[field_mass_flux_y] + t_offset);
 	}
-
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 }
 
 void clover_send_recv_message_left(
 		global_variables &globals,
-		clover::Buffer1D<double> &left_snd,
-		clover::Buffer1D<double> &left_rcv,
+		clover::Buffer1D<double> &left_snd_buffer,
+		clover::Buffer1D<double> &left_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
 	// First copy send buffer from device to host
 //	Kokkos::deep_copy(globals.chunk.hm_left_snd, left_snd);
 
+
 	int left_task = globals.chunk.chunk_neighbours[chunk_left] - 1;
 
-	MPI_Isend(globals.chunk.left_snd.actual(), total_size, MPI_DOUBLE, left_task, tag_send,
+
+	double *left_snd = left_snd_buffer.data;
+	double *left_rcv = left_rcv_buffer.data;
+	#pragma omp target update from(left_snd[:left_snd_buffer.N()])
+
+	MPI_Isend(left_snd, total_size, MPI_DOUBLE, left_task, tag_send,
 	          MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.left_rcv.actual(), total_size, MPI_DOUBLE, left_task, tag_recv,
+	MPI_Irecv(left_rcv, total_size, MPI_DOUBLE, left_task, tag_recv,
 	          MPI_COMM_WORLD, &req_recv);
+	#pragma omp target update to(left_rcv[:left_rcv_buffer.N()])
+
+
 }
 
 void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -706,8 +738,13 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_bottom - globals.chunk.bottom) * depth;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	if (fields[field_density0] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -720,6 +757,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_density1] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -732,6 +770,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_energy0] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -744,6 +783,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_energy1] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -756,6 +796,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_pressure] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -768,6 +809,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_viscosity] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -780,6 +822,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_soundspeed] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -792,6 +835,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_xvel0] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -804,6 +848,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_xvel1] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -816,6 +861,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_yvel0] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -828,6 +874,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_yvel1] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -840,6 +887,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_vol_flux_x] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -852,6 +900,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_vol_flux_y] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -864,6 +913,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_mass_flux_x] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -876,6 +926,7 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 	}
 	if (fields[field_mass_flux_y] == 1) {
 		clover_unpack_message_left(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -886,7 +937,9 @@ void clover_unpack_left(global_variables &globals, const int fields[NUM_FIELDS],
 				depth, y_face_data,
 				left_right_offset[field_mass_flux_y] + t_offset);
 	}
-
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 }
 
 void clover_pack_right(global_variables &globals, int tile, const int fields[NUM_FIELDS], int depth,
@@ -895,8 +948,13 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_bottom - globals.chunk.bottom) * depth;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	if (fields[field_density0] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -909,6 +967,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_density1] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -921,6 +980,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_energy0] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -933,6 +993,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_energy1] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -945,6 +1006,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_pressure] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -957,6 +1019,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_viscosity] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -969,6 +1032,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_soundspeed] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -981,6 +1045,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_xvel0] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -993,6 +1058,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_xvel1] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1005,6 +1071,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_yvel0] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1017,6 +1084,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_yvel1] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1029,6 +1097,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_vol_flux_x] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1041,6 +1110,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_vol_flux_y] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1053,6 +1123,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_mass_flux_x] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1065,6 +1136,7 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 	}
 	if (fields[field_mass_flux_y] == 1) {
 		clover_pack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1075,13 +1147,15 @@ void clover_pack_right(global_variables &globals, int tile, const int fields[NUM
 				depth, y_face_data,
 				left_right_offset[field_mass_flux_y] + t_offset);
 	}
-
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 }
 
 void clover_send_recv_message_right(
 		global_variables &globals,
-		clover::Buffer1D<double> &right_snd,
-		clover::Buffer1D<double> &right_rcv,
+		clover::Buffer1D<double> &right_snd_buffer,
+		clover::Buffer1D<double> &right_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -1090,11 +1164,16 @@ void clover_send_recv_message_right(
 
 	int right_task = globals.chunk.chunk_neighbours[chunk_right] - 1;
 
-	MPI_Isend(globals.chunk.right_snd.actual(), total_size, MPI_DOUBLE, right_task,
+	double *right_snd = right_snd_buffer.data;
+	double *right_rcv = right_rcv_buffer.data;
+	#pragma omp target update from(right_snd[:right_snd_buffer.N()])
+
+	MPI_Isend(right_snd, total_size, MPI_DOUBLE, right_task,
 	          tag_send, MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.right_rcv.actual(), total_size, MPI_DOUBLE, right_task,
+	MPI_Irecv(right_rcv, total_size, MPI_DOUBLE, right_task,
 	          tag_recv, MPI_COMM_WORLD, &req_recv);
+	#pragma omp target update to(right_rcv[:right_rcv_buffer.N()])
 }
 
 void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -1103,8 +1182,13 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_bottom - globals.chunk.bottom) * depth;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	if (fields[field_density0] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1117,6 +1201,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_density1] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1129,6 +1214,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_energy0] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1141,6 +1227,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_energy1] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1153,6 +1240,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_pressure] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1165,6 +1253,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_viscosity] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1177,6 +1266,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_soundspeed] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1189,6 +1279,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_xvel0] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1201,6 +1292,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_xvel1] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1213,6 +1305,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_yvel0] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1225,6 +1318,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_yvel1] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1237,6 +1331,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_vol_flux_x] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1249,6 +1344,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_vol_flux_y] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1261,6 +1357,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_mass_flux_x] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1273,6 +1370,7 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 	}
 	if (fields[field_mass_flux_y] == 1) {
 		clover_unpack_message_right(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1283,7 +1381,9 @@ void clover_unpack_right(global_variables &globals, const int fields[NUM_FIELDS]
 				depth, y_face_data,
 				left_right_offset[field_mass_flux_y] + t_offset);
 	}
-
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 }
 
 void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_FIELDS], int depth,
@@ -1292,8 +1392,13 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_left - globals.chunk.left) * depth;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	if (fields[field_density0] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1306,6 +1411,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_density1] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1318,6 +1424,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_energy0] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1330,6 +1437,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_energy1] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1342,6 +1450,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_pressure] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1354,6 +1463,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_viscosity] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1366,6 +1476,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_soundspeed] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1378,6 +1489,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_xvel0] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1390,6 +1502,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_xvel1] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1402,6 +1515,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_yvel0] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1414,6 +1528,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_yvel1] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1426,6 +1541,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_vol_flux_x] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1438,6 +1554,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_vol_flux_y] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1450,6 +1567,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_mass_flux_x] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1462,6 +1580,7 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 	}
 	if (fields[field_mass_flux_y] == 1) {
 		clover_pack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1472,13 +1591,15 @@ void clover_pack_top(global_variables &globals, int tile, const int fields[NUM_F
 				depth, y_face_data,
 				bottom_top_offset[field_mass_flux_y] + t_offset);
 	}
-
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 }
 
 void clover_send_recv_message_top(
 		global_variables &globals,
-		clover::Buffer1D<double> &top_snd,
-		clover::Buffer1D<double> &top_rcv,
+		clover::Buffer1D<double> &top_snd_buffer,
+		clover::Buffer1D<double> &top_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -1487,11 +1608,16 @@ void clover_send_recv_message_top(
 
 	int top_task = globals.chunk.chunk_neighbours[chunk_top] - 1;
 
-	MPI_Isend(globals.chunk.top_snd.actual(), total_size, MPI_DOUBLE, top_task, tag_send,
+	double *top_snd = top_snd_buffer.data;
+	double *top_rcv = top_rcv_buffer.data;
+	#pragma omp target update from(top_snd[:top_snd_buffer.N()])
+
+	MPI_Isend(top_snd, total_size, MPI_DOUBLE, top_task, tag_send,
 	          MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.top_rcv.actual(), total_size, MPI_DOUBLE, top_task, tag_recv,
+	MPI_Irecv(top_rcv, total_size, MPI_DOUBLE, top_task, tag_recv,
 	          MPI_COMM_WORLD, &req_recv);
+	#pragma omp target update to(top_rcv[:top_rcv_buffer.N()])
 }
 
 void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -1500,8 +1626,13 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_left - globals.chunk.left) * depth;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	if (fields[field_density0] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1514,6 +1645,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_density1] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1526,6 +1658,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_energy0] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1538,6 +1671,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_energy1] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1550,6 +1684,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_pressure] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1562,6 +1697,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_viscosity] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1574,6 +1710,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_soundspeed] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1586,6 +1723,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_xvel0] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1598,6 +1736,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_xvel1] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1610,6 +1749,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_yvel0] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1622,6 +1762,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_yvel1] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1634,6 +1775,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_vol_flux_x] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1646,6 +1788,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_vol_flux_y] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1658,6 +1801,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_mass_flux_x] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1670,6 +1814,7 @@ void clover_unpack_top(global_variables &globals, const int fields[NUM_FIELDS], 
 	}
 	if (fields[field_mass_flux_y] == 1) {
 		clover_unpack_message_top(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1690,8 +1835,13 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_left - globals.chunk.left) * depth;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	if (fields[field_density0] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1704,6 +1854,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_density1] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1716,6 +1867,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_energy0] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1728,6 +1880,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_energy1] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1740,6 +1893,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_pressure] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1752,6 +1906,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_viscosity] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1764,6 +1919,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_soundspeed] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1776,6 +1932,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_xvel0] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1788,6 +1945,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_xvel1] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1800,6 +1958,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_yvel0] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1812,6 +1971,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_yvel1] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1824,6 +1984,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_vol_flux_x] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1836,6 +1997,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_vol_flux_y] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1848,6 +2010,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_mass_flux_x] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1860,6 +2023,7 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 	}
 	if (fields[field_mass_flux_y] == 1) {
 		clover_pack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1870,13 +2034,15 @@ void clover_pack_bottom(global_variables &globals, int tile, const int fields[NU
 				depth, y_face_data,
 				bottom_top_offset[field_mass_flux_y] + t_offset);
 	}
-
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 }
 
 void clover_send_recv_message_bottom(
 		global_variables &globals,
-		clover::Buffer1D<double> &bottom_snd,
-		clover::Buffer1D<double> &bottom_rcv,
+		clover::Buffer1D<double> &bottom_snd_buffer,
+		clover::Buffer1D<double> &bottom_rcv_buffer,
 		int total_size, int tag_send, int tag_recv,
 		MPI_Request &req_send, MPI_Request &req_recv) {
 
@@ -1885,11 +2051,16 @@ void clover_send_recv_message_bottom(
 
 	int bottom_task = globals.chunk.chunk_neighbours[chunk_bottom] - 1;
 
-	MPI_Isend(globals.chunk.bottom_snd.actual(), total_size, MPI_DOUBLE, bottom_task,
+	double *bottom_snd = bottom_snd_buffer.data;
+	double *bottom_rcv = bottom_rcv_buffer.data;
+	#pragma omp target update from(bottom_snd[:bottom_snd_buffer.N()])
+
+	MPI_Isend(bottom_snd, total_size, MPI_DOUBLE, bottom_task,
 	          tag_send, MPI_COMM_WORLD, &req_send);
 
-	MPI_Irecv(globals.chunk.bottom_rcv.actual(), total_size, MPI_DOUBLE, bottom_task,
+	MPI_Irecv(bottom_rcv, total_size, MPI_DOUBLE, bottom_task,
 	          tag_recv, MPI_COMM_WORLD, &req_recv);
+	#pragma omp target update to(bottom_rcv[:bottom_rcv_buffer.N()])
 }
 
 void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS], int tile, int depth,
@@ -1899,8 +2070,13 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	tile_type &t = globals.chunk.tiles[tile];
 	int t_offset = (t.info.t_left - globals.chunk.left) * depth;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	if (fields[field_density0] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1913,6 +2089,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_density1] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1925,6 +2102,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_energy0] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1937,6 +2115,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_energy1] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1949,6 +2128,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_pressure] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1961,6 +2141,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_viscosity] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1973,6 +2154,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_soundspeed] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1985,6 +2167,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_xvel0] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -1997,6 +2180,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_xvel1] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -2009,6 +2193,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_yvel0] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -2021,6 +2206,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_yvel1] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -2033,6 +2219,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_vol_flux_x] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -2045,6 +2232,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_vol_flux_y] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -2057,6 +2245,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_mass_flux_x] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -2069,6 +2258,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 	}
 	if (fields[field_mass_flux_y] == 1) {
 		clover_unpack_message_bottom(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
@@ -2079,5 +2269,7 @@ void clover_unpack_bottom(global_variables &globals, const int fields[NUM_FIELDS
 				depth, y_face_data,
 				bottom_top_offset[field_mass_flux_y] + t_offset);
 	}
-
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 }

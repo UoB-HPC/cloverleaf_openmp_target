@@ -97,10 +97,10 @@ void timestep(global_variables &globals, parallel_ &parallel) {
 	if (parallel.boss) {
 		g_out << " Step " << globals.step << " time " << globals.time << " control " << dt_control
 		      << " timestep  " << globals.dt << " " << globals.jdt << "," << globals.kdt << " x "
-		      << x_pos << " y " << y_pos << std::endl;
+		      << x_pos << " y " << y_pos  << "\n";
 		std::cout << " Step " << globals.step << " time " << globals.time << " control "
 		          << dt_control << " timestep  " << globals.dt << " " << globals.jdt << ","
-		          << globals.kdt << " x " << x_pos << " y " << y_pos << std::endl;
+		          << globals.kdt << " x " << x_pos << " y " << y_pos  << "\n";
 	}
 
 	if (small == 1) {
