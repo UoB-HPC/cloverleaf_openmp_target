@@ -34,7 +34,7 @@ void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
 
 	// Pack
 
-	int x_inc, y_inc;
+	int x_inc = 0, y_inc = 0;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
@@ -61,7 +61,7 @@ void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			left_snd[index] = field(x_min + x_inc - 1 + j, k);
+			left_snd[index] = field(x_min + x_inc - 1 + j + 2, k);
 		}
 	}
 
@@ -77,7 +77,7 @@ void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
 
 	// Upnack
 
-	int y_inc;
+	int y_inc = 0;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
@@ -118,7 +118,7 @@ void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
 
 	// Pack
 
-	int y_inc;
+	int y_inc = 0;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
@@ -139,7 +139,7 @@ void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			right_snd[index] = field(x_min + 1 + j, k);
+			right_snd[index] = field(x_max + 1 - j, k);
 		}
 	}
 
@@ -155,7 +155,7 @@ void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
 
 	// Upnack
 
-	int x_inc, y_inc;
+	int x_inc = 0, y_inc = 0;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
@@ -180,7 +180,7 @@ void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			right_rcv[index] = field(x_max + x_inc + j, k);
+            field(x_max + x_inc + j + 2, k)  = right_rcv[index];
 		}
 	}
 
@@ -195,7 +195,7 @@ void clover_pack_message_top(int x_min, int x_max, int y_min, int y_max,
 
 	// Pack
 
-	int x_inc;
+	int x_inc = 0;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
@@ -230,7 +230,7 @@ void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
 
 	// Unpack
 
-	int x_inc, y_inc;
+	int x_inc = 0, y_inc = 0;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
@@ -257,7 +257,7 @@ void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
 		#pragma omp parallel for simd
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			field(j, y_max + y_inc + k) = top_rcv[index];
+			field(j, y_max + y_inc + k + 2) = top_rcv[index];
 		}
 	}
 }
@@ -271,7 +271,7 @@ void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 
 	// Pack
 
-	int x_inc, y_inc;
+	int x_inc = 0, y_inc = 0;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {
@@ -297,7 +297,7 @@ void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 		#pragma omp parallel for simd
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			bottom_snd[index] = field(j, y_min + y_inc - 1 + k);
+			bottom_snd[index] = field(j, y_min + y_inc - 1 + k + 2);
 		}
 	}
 }
@@ -310,7 +310,7 @@ void clover_unpack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 
 	// Unpack
 
-	int x_inc;
+	int x_inc = 0;
 
 	// These array modifications still need to be added on, plus the donor data location changes as in update_halo
 	if (field_type == cell_data) {

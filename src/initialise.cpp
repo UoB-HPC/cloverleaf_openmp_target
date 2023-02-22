@@ -139,7 +139,7 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 
 	std::ifstream g_in;
-	if (parallel.boss) {
+//	if (parallel.boss) {
 		g_out << "Clover will run from the following input:-" << std::endl
 		      << std::endl;
 
@@ -176,7 +176,7 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 			out_unit.close();
 			g_in.open("clover.in");
 		}
-	}
+//	}
 
 	clover_barrier();
 
