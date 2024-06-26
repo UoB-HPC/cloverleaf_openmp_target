@@ -22,7 +22,7 @@
 #include "field_summary.h"
 #include "timer.h"
 #include "ideal_gas.h"
-#include "utils.hpp"
+
 
 #include <iomanip>
 
@@ -75,6 +75,9 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 	double ke = 0.0;
 	double press = 0.0;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
@@ -85,27 +88,49 @@ void field_summary(global_variables &globals, parallel_ &parallel) {
 		int xmin = t.info.t_xmin;
 		field_type &field = t.field;
 
-		_Pragma("kernel1d")
-		for (int idx = (0); idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
+
+		const int base_stride = field.base_stride;
+		const int vels_wk_stride = field.vels_wk_stride;
+
+		double *volume = field.volume.data;
+		double *density0 = field.density0.data;
+		double *energy0 = field.energy0.data;
+		double *pressure = field.pressure.data;
+		double *xvel0 = field.xvel0.data;
+		double *yvel0 = field.yvel0.data;
+
+
+		#pragma omp target teams distribute parallel for simd clover_use_target(globals.use_target) \
+        map(tofrom:vol) \
+        map(tofrom:mass) \
+        map(tofrom:ie) \
+        map(tofrom:ke) \
+        map(tofrom:press) \
+        reduction(+:vol, mass, ie, ke, press)
+		for (int idx = 0; idx < ((ymax - ymin + 1) * (xmax - xmin + 1)); idx++) {
 			const int j = xmin + 1 + idx % (xmax - xmin + 1);
 			const int k = ymin + 1 + idx / (xmax - xmin + 1);
 			double vsqrd = 0.0;
 			for (int kv = k; kv <= k + 1; ++kv) {
 				for (int jv = j; jv <= j + 1; ++jv) {
-					vsqrd += 0.25 * (field.xvel0(jv, kv) * field.xvel0(jv, kv) + field.yvel0(jv, kv) * field.yvel0(jv, kv));
+					vsqrd += 0.25 * (xvel0[(jv) + (kv) * vels_wk_stride] * xvel0[(jv) + (kv) * vels_wk_stride] + yvel0[(jv) + (kv) * vels_wk_stride] * yvel0[(jv) + (kv) * vels_wk_stride]);
 				}
 			}
-			double cell_vol = field.volume(j, k);
-			double cell_mass = cell_vol * field.density0(j, k);
+			double cell_vol = volume[j + (k) * base_stride];
+			double cell_mass = cell_vol * density0[j + (k) * base_stride];
 			vol += cell_vol;
 			mass += cell_mass;
-			ie += cell_mass * field.energy0(j, k);
+			ie += cell_mass * energy0[j + (k) * base_stride];
 			ke += cell_mass * 0.5 * vsqrd;
-			press += cell_vol * field.pressure(j, k);
+			press += cell_vol * pressure[j + (k) * base_stride];
 		}
 
 
 	}
+
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 
 	clover_sum(vol);
 	clover_sum(mass);

@@ -19,7 +19,7 @@
 
 
 #include "revert.h"
-#include "utils.hpp"
+
 
 //  @brief Fortran revert kernel.
 //  @author Wayne Gaudin
@@ -27,19 +27,24 @@
 //  it to the start of step data, ready for the corrector.
 //  Note that this does not seem necessary in this proxy-app but should be
 //  left in to remain relevant to the full method.
-void revert_kernel(int x_min, int x_max, int y_min, int y_max,
-                   clover::Buffer2D<double> &density0,
-                   clover::Buffer2D<double> &density1,
-                   clover::Buffer2D<double> &energy0,
-                   clover::Buffer2D<double> &energy1) {
+void revert_kernel(
+		bool use_target,
+		int x_min, int x_max, int y_min, int y_max,
+		field_type &field) {
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
-	_Pragma("kernel2d")
+	const int base_stride = field.base_stride;
+	double *density0 = field.density0.data;
+	double *density1 = field.density1.data;
+	double *energy0 = field.energy0.data;
+	double *energy1 = field.energy1.data;
+
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
-			density1(i, j) = density0(i, j);
-			energy1(i, j) = energy0(i, j);
+			density1[i + j * base_stride] = density0[i + j * base_stride];
+			energy1[i + j * base_stride] = energy0[i + j * base_stride];
 		}
 	}
 
@@ -51,19 +56,25 @@ void revert_kernel(int x_min, int x_max, int y_min, int y_max,
 //  @details Invokes the user specified revert kernel.
 void revert(global_variables &globals) {
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
 		revert_kernel(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
 				t.info.t_ymax,
-				t.field.density0,
-				t.field.density1,
-				t.field.energy0,
-				t.field.energy1);
+				t.field);
 	}
+
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
+
 
 }
 

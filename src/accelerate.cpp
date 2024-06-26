@@ -21,7 +21,7 @@
 
 #include "accelerate.h"
 #include "timer.h"
-#include "utils.hpp"
+
 
 
 // @brief Fortran acceleration kernel
@@ -29,18 +29,10 @@
 // @details The pressure and viscosity gradients are used to update the 
 // velocity field.
 void accelerate_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		clover::Buffer2D<double> &xarea,
-		clover::Buffer2D<double> &yarea,
-		clover::Buffer2D<double> &volume,
-		clover::Buffer2D<double> &density0,
-		clover::Buffer2D<double> &pressure,
-		clover::Buffer2D<double> &viscosity,
-		clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0,
-		clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel1) {
+		field_type &field) {
 
 	double halfdt = 0.5 * dt;
 
@@ -51,29 +43,47 @@ void accelerate_kernel(
 
 //for(int j = )
 
+	const int xarea_sizex = field.flux_x_stride;
+	const int yarea_sizex = field.flux_y_stride;
+	const int base_stride = field.base_stride;
+	const int vels_wk_stride = field.vels_wk_stride;
 
-	_Pragma("kernel2d")
+	double *xarea = field.xarea.data;
+	double *yarea = field.yarea.data;
+	double *volume = field.volume.data;
+	double *density0 = field.density0.data;
+	double *pressure = field.pressure.data;
+	double *viscosity = field.viscosity.data;
+	double *xvel0 = field.xvel0.data;
+	double *yvel0 = field.yvel0.data;
+	double *xvel1 = field.xvel1.data;
+	double *yvel1 = field.yvel1.data;
+
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 	for (int j = (y_min + 1); j < (y_max + 1 + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 1 + 2); i++) {
-			double stepbymass_s = halfdt / ((density0(i - 1, j - 1) * volume(i - 1, j - 1) +
-			                                 density0(i - 1, j + 0) * volume(i - 1, j + 0) + density0(i, j) * volume(i, j) +
-			                                 density0(i + 0, j - 1) * volume(i + 0, j - 1)) * 0.25);
-			xvel1(i, j) = xvel0(i, j) -
-			              stepbymass_s * (xarea(i, j) * (pressure(i, j) - pressure(i - 1, j + 0)) +
-			                              xarea(i + 0, j - 1) * (pressure(i + 0, j - 1) - pressure(i - 1, j - 1)));
-			yvel1(i, j) = yvel0(i, j) -
-			              stepbymass_s * (yarea(i, j) *
-			                              (pressure(i, j) - pressure(i + 0, j - 1)) +
-			                              yarea(i - 1, j + 0) * (pressure(i - 1, j + 0) - pressure(i - 1, j - 1)));
-			xvel1(i, j) = xvel1(i, j) -
-			              stepbymass_s * (xarea(i, j) *
-			                              (viscosity(i, j) -
-			                               viscosity(i - 1, j + 0)) +
-			                              xarea(i + 0, j - 1) * (viscosity(i + 0, j - 1) - viscosity(i - 1, j - 1)));
-			yvel1(i, j) = yvel1(i, j) -
-			              stepbymass_s * (yarea(i, j) *
-			                              (viscosity(i, j) - viscosity(i + 0, j - 1)) +
-			                              yarea(i - 1, j + 0) * (viscosity(i - 1, j + 0) - viscosity(i - 1, j - 1)));
+			double stepbymass_s = halfdt / ((density0[(i - 1) + (j - 1) * base_stride] * volume[(i - 1) + (j - 1) * base_stride] +
+			                                 density0[(i - 1) + (j + 0) * base_stride] * volume[(i - 1) + (j + 0) * base_stride] +
+			                                 density0[i + j * base_stride] * volume[i + j * base_stride] +
+			                                 density0[(i + 0) + (j - 1) * base_stride] * volume[(i + 0) + (j - 1) * base_stride]) * 0.25);
+			xvel1[i + j * vels_wk_stride] = xvel0[i + j * vels_wk_stride] -
+			                                stepbymass_s * (xarea[i + j * xarea_sizex] * (pressure[i + j * base_stride] - pressure[(i - 1) + (j + 0) * base_stride]) +
+			                                                xarea[(i + 0) + (j - 1) * xarea_sizex] * (pressure[(i + 0) + (j - 1) * base_stride] - pressure[(i - 1) + (j - 1) * base_stride]));
+			yvel1[i + j * vels_wk_stride] = yvel0[i + j * vels_wk_stride] -
+			                                stepbymass_s * (yarea[i + j * yarea_sizex] *
+			                                                (pressure[i + j * base_stride] - pressure[(i + 0) + (j - 1) * base_stride]) +
+			                                                yarea[(i - 1) + (j + 0) * yarea_sizex] * (pressure[(i - 1) + (j + 0) * base_stride] - pressure[(i - 1) + (j - 1) * base_stride]));
+			xvel1[i + j * vels_wk_stride] = xvel1[i + j * vels_wk_stride] -
+			                                stepbymass_s * (xarea[i + j * xarea_sizex] *
+			                                                (viscosity[i + j * base_stride] -
+			                                                 viscosity[(i - 1) + (j + 0) * base_stride]) +
+			                                                xarea[(i + 0) + (j - 1) * xarea_sizex] *
+			                                                (viscosity[(i + 0) + (j - 1) * base_stride] - viscosity[(i - 1) + (j - 1) * base_stride]));
+			yvel1[i + j * vels_wk_stride] = yvel1[i + j * vels_wk_stride] -
+			                                stepbymass_s * (yarea[i + j * yarea_sizex] *
+			                                                (viscosity[i + j * base_stride] - viscosity[(i + 0) + (j - 1) * base_stride]) +
+			                                                yarea[(i - 1) + (j + 0) * yarea_sizex] *
+			                                                (viscosity[(i - 1) + (j + 0) * base_stride] - viscosity[(i - 1) + (j - 1) * base_stride]));
 		}
 	}
 }
@@ -87,29 +97,28 @@ void accelerate(global_variables &globals) {
 	double kernel_time = 0;
 	if (globals.profiler_on) kernel_time = timer();
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
 
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
 
 		accelerate_kernel(
+				globals.use_target,
 				t.info.t_xmin,
 				t.info.t_xmax,
 				t.info.t_ymin,
 				t.info.t_ymax,
 				globals.dt,
-				t.field.xarea,
-				t.field.yarea,
-				t.field.volume,
-				t.field.density0,
-				t.field.pressure,
-				t.field.viscosity,
-				t.field.xvel0,
-				t.field.yvel0,
-				t.field.xvel1,
-				t.field.yvel1);
+				t.field);
 
 
 	}
+
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 
 	if (globals.profiler_on) globals.profiler.acceleration += timer() - kernel_time;
 

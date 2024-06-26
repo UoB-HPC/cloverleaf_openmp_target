@@ -21,7 +21,7 @@
 
 #include <string>
 #include "calc_dt.h"
-#include "utils.hpp"
+
 #include <cmath>
 
 //  @brief Fortran timestep kernel
@@ -32,26 +32,14 @@
 
 
 void calc_dt_kernel(
+		bool use_target,
 		int x_min, int x_max, int y_min, int y_max,
 		double dtmin,
 		double dtc_safe,
 		double dtu_safe,
 		double dtv_safe,
 		double dtdiv_safe,
-		clover::Buffer2D<double> &xarea,
-		clover::Buffer2D<double> &yarea,
-		clover::Buffer1D<double> &cellx,
-		clover::Buffer1D<double> &celly,
-		clover::Buffer1D<double> &celldx,
-		clover::Buffer1D<double> &celldy,
-		clover::Buffer2D<double> &volume,
-		clover::Buffer2D<double> &density0,
-		clover::Buffer2D<double> &energy0,
-		clover::Buffer2D<double> &pressure,
-		clover::Buffer2D<double> &viscosity_a,
-		clover::Buffer2D<double> &soundspeed,
-		clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &yvel0,
+		field_type &field,
 		double &dt_min_val,
 		int &dtl_control,
 		double &xl_pos,
@@ -70,35 +58,56 @@ void calc_dt_kernel(
 //	Kokkos::MDRangePolicy <Kokkos::Rank<2>> policy({x_min + 1, y_min + 1}, {x_max + 2, y_max + 2});
 
 
-	_Pragma("kernel2d")
+	const int flux_x_stride = field.flux_x_stride;
+	const int flux_y_stride = field.flux_y_stride;
+
+	const int base_stride = field.base_stride;
+	const int vels_wk_stride = field.vels_wk_stride;
+
+	double *xarea = field.xarea.data;
+	double *yarea = field.yarea.data;
+	double *celldx = field.celldx.data;
+	double *celldy = field.celldy.data;
+	double *volume = field.volume.data;
+	double *density0 = field.density0.data;
+	double *viscosity = field.viscosity.data;
+	double *soundspeed = field.soundspeed.data;
+	double *xvel0 = field.xvel0.data;
+	double *yvel0 = field.yvel0.data;
+
+
+    // XXX See https://forums.developer.nvidia.com/t/nvc-f-0000-internal-compiler-error-unhandled-size-for-preparing-max-constant/221740
+    double dt_min_val0 = dt_min_val;
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target) map(tofrom:dt_min_val) reduction(min:dt_min_val0)
 	for (int j = (y_min + 1); j < (y_max + 2); j++) {
 		for (int i = (x_min + 1); i < (x_max + 2); i++) {
 			double dsx = celldx[i];
 			double dsy = celldy[j];
-			double cc = soundspeed(i, j) * soundspeed(i, j);
-			cc = cc + 2.0 * viscosity_a(i, j) / density0(i, j);
-			cc = std::fmax(std::sqrt(cc), g_small);
-			double dtct = dtc_safe * std::fmin(dsx, dsy) / cc;
+			double cc = soundspeed[i + j * base_stride] * soundspeed[i + j * base_stride];
+			cc = cc + 2.0 * viscosity[i + j * base_stride] / density0[i + j * base_stride];
+			cc = fmax(sqrt(cc), g_small);
+			double dtct = dtc_safe * fmin(dsx, dsy) / cc;
 			double div = 0.0;
-			double dv1 = (xvel0(i, j) + xvel0(i + 0, j + 1)) * xarea(i, j);
-			double dv2 = (xvel0(i + 1, j + 0) + xvel0(i + 1, j + 1)) * xarea(i + 1, j + 0);
+			double dv1 = (xvel0[i + j * vels_wk_stride] + xvel0[(i + 0) + (j + 1) * vels_wk_stride]) * xarea[i + j * flux_x_stride];
+			double dv2 = (xvel0[(i + 1) + (j + 0) * vels_wk_stride] + xvel0[(i + 1) + (j + 1) * vels_wk_stride]) * xarea[(i + 1) + (j + 0) * flux_x_stride];
 			div = div + dv2 - dv1;
-			double dtut = dtu_safe * 2.0 * volume(i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * volume(i, j));
-			dv1 = (yvel0(i, j) + yvel0(i + 1, j + 0)) * yarea(i, j);
-			dv2 = (yvel0(i + 0, j + 1) + yvel0(i + 1, j + 1)) * yarea(i + 0, j + 1);
+			double dtut = dtu_safe * 2.0 * volume[i + j * base_stride] / fmax(fmax(fabs(dv1), fabs(dv2)), g_small * volume[i + j * base_stride]);
+			dv1 = (yvel0[i + j * vels_wk_stride] + yvel0[(i + 1) + (j + 0) * vels_wk_stride]) * yarea[i + j * flux_y_stride];
+			dv2 = (yvel0[(i + 0) + (j + 1) * vels_wk_stride] + yvel0[(i + 1) + (j + 1) * vels_wk_stride]) * yarea[(i + 0) + (j + 1) * flux_y_stride];
 			div = div + dv2 - dv1;
-			double dtvt = dtv_safe * 2.0 * volume(i, j) / std::fmax(std::fmax(std::fabs(dv1), std::fabs(dv2)), g_small * volume(i, j));
-			div = div / (2.0 * volume(i, j));
+			double dtvt = dtv_safe * 2.0 * volume[i + j * base_stride] / fmax(fmax(fabs(dv1), fabs(dv2)), g_small * volume[i + j * base_stride]);
+			div = div / (2.0 * volume[i + j * base_stride]);
 			double dtdivt;
 			if (div < -g_small) {
 				dtdivt = dtdiv_safe * (-1.0 / div);
 			} else {
 				dtdivt = g_big;
 			}
-			double mins = std::fmin(dtct, std::fmin(dtut, std::fmin(dtvt, std::fmin(dtdivt, g_big))));
-			dt_min_val = std::fmin(mins, dt_min_val);
+			double mins = fmin(dtct, fmin(dtut, fmin(dtvt, fmin(dtdivt, g_big))));
+			dt_min_val0 = fmin(mins, dt_min_val0);
 		}
 	}
+    dt_min_val = dt_min_val0;
 
 
 	dtl_control = static_cast<int>(10.01 * (jk_control - static_cast<int>(jk_control)));
@@ -111,14 +120,14 @@ void calc_dt_kernel(
 
 	if (small != 0) {
 
-		auto cellx_acc = cellx;
-		auto celly_acc = celly;
-		auto density0_acc = density0;
-		auto energy0_acc = energy0;
-		auto pressure_acc = pressure;
-		auto soundspeed_acc = soundspeed;
-		auto xvel0_acc = xvel0;
-		auto yvel0_acc = yvel0;
+		auto &cellx_acc = field.cellx;
+		auto &celly_acc = field.celly;
+		auto &density0_acc = field.density0;
+		auto &energy0_acc = field.energy0;
+		auto &pressure_acc = field.pressure;
+		auto &soundspeed_acc = field.soundspeed;
+		auto &xvel0_acc = field.xvel0;
+		auto &yvel0_acc = field.yvel0;
 
 		std::cout
 				<< "Timestep information:" << std::endl
@@ -153,9 +162,13 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 	int l_control;
 	int small = 0;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
 
 	tile_type &t = globals.chunk.tiles[tile];
 	calc_dt_kernel(
+			globals.use_target,
 			t.info.t_xmin,
 			t.info.t_xmax,
 			t.info.t_ymin,
@@ -165,20 +178,7 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 			globals.config.dtu_safe,
 			globals.config.dtv_safe,
 			globals.config.dtdiv_safe,
-			t.field.xarea,
-			t.field.yarea,
-			t.field.cellx,
-			t.field.celly,
-			t.field.celldx,
-			t.field.celldy,
-			t.field.volume,
-			t.field.density0,
-			t.field.energy0,
-			t.field.pressure,
-			t.field.viscosity,
-			t.field.soundspeed,
-			t.field.xvel0,
-			t.field.yvel0,
+			t.field,
 			local_dt,
 			l_control,
 			xl_pos,
@@ -187,6 +187,10 @@ void calc_dt(global_variables &globals, int tile, double &local_dt, std::string 
 			kldt,
 			small
 	);
+
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 
 
 	if (l_control == 1) local_control = "sound";

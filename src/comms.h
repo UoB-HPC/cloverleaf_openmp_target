@@ -22,8 +22,6 @@
 #define COMMS_H
 
 #include "definitions.h"
-#include "utils.hpp"
-
 #include <mpi.h>
 
 // Structure to hold MPI rank information

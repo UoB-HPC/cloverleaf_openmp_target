@@ -27,36 +27,35 @@
 
 #include <cmath>
 #include "generate_chunk.h"
-#include "utils.hpp"
 
 void generate_chunk(const int tile, global_variables &globals) {
 
 
 	// Need to copy the host array of state input data into a device array
-	Buffer1D<double> state_density(globals.config.number_of_states);
-	Buffer1D<double> state_energy(globals.config.number_of_states);
-	Buffer1D<double> state_xvel(globals.config.number_of_states);
-	Buffer1D<double> state_yvel(globals.config.number_of_states);
-	Buffer1D<double> state_xmin(globals.config.number_of_states);
-	Buffer1D<double> state_xmax(globals.config.number_of_states);
-	Buffer1D<double> state_ymin(globals.config.number_of_states);
-	Buffer1D<double> state_ymax(globals.config.number_of_states);
-	Buffer1D<double> state_radius(globals.config.number_of_states);
-	Buffer1D<int> state_geometry(globals.config.number_of_states);
+	clover::Buffer1D<double> state_density_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_energy_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xvel_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_yvel_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xmin_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_xmax_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_ymin_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_ymax_buffer(globals.config.number_of_states);
+	clover::Buffer1D<double> state_radius_buffer(globals.config.number_of_states);
+	clover::Buffer1D<int> state_geometry_buffer(globals.config.number_of_states);
 
 
 	// Copy the data to the new views
 	for (int state = 0; state < globals.config.number_of_states; ++state) {
-		state_density[state] = globals.config.states[state].density;
-		state_energy[state] = globals.config.states[state].energy;
-		state_xvel[state] = globals.config.states[state].xvel;
-		state_yvel[state] = globals.config.states[state].yvel;
-		state_xmin[state] = globals.config.states[state].xmin;
-		state_xmax[state] = globals.config.states[state].xmax;
-		state_ymin[state] = globals.config.states[state].ymin;
-		state_ymax[state] = globals.config.states[state].ymax;
-		state_radius[state] = globals.config.states[state].radius;
-		state_geometry[state] = globals.config.states[state].geometry;
+		state_density_buffer[state] = globals.config.states[state].density;
+		state_energy_buffer[state] = globals.config.states[state].energy;
+		state_xvel_buffer[state] = globals.config.states[state].xvel;
+		state_yvel_buffer[state] = globals.config.states[state].yvel;
+		state_xmin_buffer[state] = globals.config.states[state].xmin;
+		state_xmax_buffer[state] = globals.config.states[state].xmax;
+		state_ymin_buffer[state] = globals.config.states[state].ymin;
+		state_ymax_buffer[state] = globals.config.states[state].ymax;
+		state_radius_buffer[state] = globals.config.states[state].radius;
+		state_geometry_buffer[state] = globals.config.states[state].geometry;
 	}
 
 	// Kokkos::deep_copy (TO, FROM)
@@ -76,58 +75,99 @@ void generate_chunk(const int tile, global_variables &globals) {
 	field_type &field = globals.chunk.tiles[tile].field;
 
 
+	const double state_energy_0 = state_energy_buffer[0];
+	const double state_density_0 = state_density_buffer[0];
+	const double state_xvel_0 = state_xvel_buffer[0];
+	const double state_yvel_0 = state_yvel_buffer[0];
+
+	const int base_stride = field.base_stride;
+	const int vels_wk_stride = field.vels_wk_stride;
+
 	// State 1 is always the background state
-	_Pragma("kernel2d")
-	for (int j = (0); j < (yrange); j++) {
-		for (int i = (0); i < (xrange); i++) {
-			field.energy0(i, j) = state_energy[0];
-			field.density0(i, j) = state_density[0];
-			field.xvel0(i, j) = state_xvel[0];
-			field.yvel0(i, j) = state_yvel[0];
+	double *energy0 = field.energy0.data;
+	double *density0 = field.density0.data;
+	double *xvel0 = field.xvel0.data;
+	double *yvel0 = field.yvel0.data;
+
+	#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(globals.use_target)
+	for (int j = 0; j < (yrange); j++) {
+		for (int i = 0; i < (xrange); i++) {
+			energy0[i + j * base_stride] = state_energy_0;
+			density0[i + j * base_stride] = state_density_0;
+			xvel0[i + j * vels_wk_stride] = state_xvel_0;
+			yvel0[i + j * vels_wk_stride] = state_yvel_0;
 		}
 	}
 
 
 	for (int state = 1; state < globals.config.number_of_states; ++state) {
-		_Pragma("kernel2d")
-		for (int j = (0); j < (yrange); j++) {
-			for (int i = (0); i < (xrange); i++) {
+
+		double *cellx = field.cellx.data;
+		double *celly = field.celly.data;
+
+		double *vertexx = field.vertexx.data;
+		double *vertexy = field.vertexy.data;
+
+		const double *state_density = state_density_buffer.data;
+		const double *state_energy = state_energy_buffer.data;
+		const double *state_xvel = state_xvel_buffer.data;
+		const double *state_yvel = state_yvel_buffer.data;
+		const double *state_xmin = state_xmin_buffer.data;
+		const double *state_xmax = state_xmax_buffer.data;
+		const double *state_ymin = state_ymin_buffer.data;
+		const double *state_ymax = state_ymax_buffer.data;
+		const double *state_radius = state_radius_buffer.data;
+		const int *state_geometry = state_geometry_buffer.data;
+
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(globals.use_target) \
+        map(to : state_density[:state_density_buffer.N()]) \
+        map(to : state_energy[:state_energy_buffer.N()]) \
+        map(to : state_xvel[:state_xvel_buffer.N()]) \
+        map(to : state_yvel[:state_yvel_buffer.N()]) \
+        map(to : state_xmin[:state_xmin_buffer.N()]) \
+        map(to : state_xmax[:state_xmax_buffer.N()]) \
+        map(to : state_ymin[:state_ymin_buffer.N()]) \
+        map(to : state_ymax[:state_ymax_buffer.N()]) \
+        map(to : state_radius[:state_radius_buffer.N()]) \
+        map(to : state_geometry[:state_geometry_buffer.N()])
+		for (int j = 0; j < (yrange); j++) {
+			for (int i = 0; i < (xrange); i++) {
 				double x_cent = state_xmin[state];
 				double y_cent = state_ymin[state];
 				if (state_geometry[state] == g_rect) {
-					if (field.vertexx[i + 1] >= state_xmin[state] && field.vertexx[i] < state_xmax[state]) {
-						if (field.vertexy[j + 1] >= state_ymin[state] && field.vertexy[j] < state_ymax[state]) {
-							field.energy0(i, j) = state_energy[state];
-							field.density0(i, j) = state_density[state];
+					if (vertexx[i + 1] >= state_xmin[state] && vertexx[i] < state_xmax[state]) {
+						if (vertexy[j + 1] >= state_ymin[state] && vertexy[j] < state_ymax[state]) {
+							energy0[i + j * base_stride] = state_energy[state];
+							density0[i + j * base_stride] = state_density[state];
 							for (int kt = j; kt <= j + 1; ++kt) {
 								for (int jt = i; jt <= i + 1; ++jt) {
-									field.xvel0(jt, kt) = state_xvel[state];
-									field.yvel0(jt, kt) = state_yvel[state];
+									xvel0[jt + kt * vels_wk_stride] = state_xvel[state];
+									yvel0[jt + kt * vels_wk_stride] = state_yvel[state];
 								}
 							}
 						}
 					}
 				} else if (state_geometry[state] == g_circ) {
-					double radius = std::sqrt((field.cellx[i] - x_cent) *
-					                          (field.cellx[i] - x_cent) + (field.celly[j] - y_cent) * (field.celly[j] - y_cent));
+					double radius = sqrt((cellx[i] - x_cent) *
+					                     (cellx[i] - x_cent) + (celly[j] - y_cent) * (celly[j] - y_cent));
 					if (radius <= state_radius[state]) {
-						field.energy0(i, j) = state_energy[state];
-						field.density0(i, j) = state_density[state];
+						energy0[i + j * base_stride] = state_energy[state];
+						density0[i + j * base_stride] = state_density[state];
 						for (int kt = j; kt <= j + 1; ++kt) {
 							for (int jt = i; jt <= i + 1; ++jt) {
-								field.xvel0(jt, kt) = state_xvel[state];
-								field.yvel0(jt, kt) = state_yvel[state];
+								xvel0[jt + kt * vels_wk_stride] = state_xvel[state];
+								yvel0[jt + kt * vels_wk_stride] = state_yvel[state];
 							}
 						}
 					}
 				} else if (state_geometry[state] == g_point) {
-					if (field.vertexx[i] == x_cent && field.vertexy[j] == y_cent) {
-						field.energy0(i, j) = state_energy[state];
-						field.density0(i, j) = state_density[state];
+					if (vertexx[i] == x_cent && vertexy[j] == y_cent) {
+						energy0[i + j * base_stride] = state_energy[state];
+						density0[i + j * base_stride] = state_density[state];
 						for (int kt = j; kt <= j + 1; ++kt) {
 							for (int jt = i; jt <= i + 1; ++jt) {
-								field.xvel0(jt, kt) = state_xvel[state];
-								field.yvel0(jt, kt) = state_yvel[state];
+								xvel0[jt + kt * vels_wk_stride] = state_xvel[state];
+								yvel0[jt + kt * vels_wk_stride] = state_yvel[state];
 							}
 						}
 					}

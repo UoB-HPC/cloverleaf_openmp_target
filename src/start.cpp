@@ -34,16 +34,17 @@
 #include "field_summary.h"
 #include "update_halo.h"
 #include "visit.h"
-#include "cxx14_compat.hpp"
+#include "flux_calc.h"
 #include <string>
 #include <sstream>
 
 extern std::ostream g_out;
 
 
-std::unique_ptr<global_variables> start(parallel_ &parallel,
-                                        const global_config &config,
-                                        size_t omp_device) {
+global_variables start(parallel_ &parallel,
+                       const global_config &config,
+                       size_t omp_device,
+                       bool use_target) {
 
 	if (parallel.boss) {
 		g_out << "Setting up initial geometry" << std::endl
@@ -67,6 +68,7 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 
 	global_variables globals(config,
 	                         omp_device,
+	                         use_target,
 	                         chunk_type(
 			                         chunkNeighbours,
 			                         parallel.task, 1, 1, x_cells, y_cells,
@@ -80,8 +82,15 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 
 	auto infos = clover_tile_decompose(globals, x_cells, y_cells);
 
-	std::transform(infos.begin(), infos.end(), std::back_inserter(globals.chunk.tiles),
-	               [](const tile_info &ti) { return tile_type(ti); });
+	for (auto &ti : infos) {
+		globals.chunk.tiles.emplace_back(ti);
+	}
+
+//	std::transform(infos.begin(), infos.end(), std::back_inserter(globals.chunk.tiles),
+//	               [](const tile_info &ti) { return tile_type(ti); });
+
+
+//	#pragma omp target enter data map(alloc: globals.chunk.tiles[0:N])
 
 
 
@@ -99,7 +108,10 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 
 	for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 		initialise_chunk(tile, globals);
+		if (DEBUG) std::cout << "Field initialised2" << std::endl;
+
 		generate_chunk(tile, globals);
+		if (DEBUG) std::cout << "Field initialised3" << std::endl;
 	}
 
 
@@ -111,9 +123,17 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 	bool profiler_off = globals.profiler_on;
 	globals.profiler_on = false;
 
+
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
+
 	for (int tile = 0; tile < config.tiles_per_chunk; ++tile) {
 		ideal_gas(globals, tile, false);
 	}
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
 	if (DEBUG) globals.dump("dump_0_after_ideal_gas.txt");
 
 	// Prime all halo data for the first step
@@ -132,7 +152,11 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 	fields[field_xvel1] = 1;
 	fields[field_yvel1] = 1;
 
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 	update_halo(globals, fields, 2);
+
 	if (DEBUG)globals.dump("dump_0_after_update_halo.txt");
 
 
@@ -149,6 +173,6 @@ std::unique_ptr<global_variables> start(parallel_ &parallel,
 
 	globals.profiler_on = profiler_off;
 
-	return make_unique<global_variables>(globals);
+	return globals;
 }
 

@@ -47,6 +47,7 @@
 #include "hydro.h"
 #include "initialise.h"
 #include "version.h"
+#include "finalise_field.h"
 #include <omp.h>
 #include <memory>
 
@@ -54,7 +55,6 @@
 std::ostream g_out(nullptr);
 
 int main(int argc, char *argv[]) {
-
 	// Initialise MPI first
 	MPI_Init(&argc, &argv);
 
@@ -74,11 +74,13 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	std::unique_ptr<global_variables> config = initialise(parallel,
-	                                                      std::vector<std::string>(argv + 1, argv + argc));
+	auto config = initialise(parallel, std::vector<std::string>(argv + 1, argv + argc));
 
 	std::cout << "Launching hydro" << std::endl;
-	hydro(*config, parallel);
+	hydro(config, parallel);
+
+	// calls the appropriate omp target exit data for all buffers, see build_field.cpp for the enter data half
+	finalise_field(config);
 
 	// Finilise programming models
 //	Kokkos::finalize();

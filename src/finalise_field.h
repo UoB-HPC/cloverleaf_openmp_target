@@ -17,15 +17,13 @@
  CloverLeaf. If not, see http://www.gnu.org/licenses/.
  */
 
-#ifndef INITIALISE_H
-#define INITIALISE_H
 
-#include <memory>
-#include "comms.h"
+#ifndef FINALISE_FIELD_H
+#define FINALISE_FIELD_H
+
 #include "definitions.h"
 
-global_variables initialise(parallel_ &parallel, const std::vector<std::string> &args);
+void finalise_field(global_variables &globals);
 
 #endif
-
 

@@ -24,11 +24,11 @@
 
 
 #include "pack_kernel.h"
-#include "utils.hpp"
 
-void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
-                              clover::Buffer2D<double> &field,
-                              clover::Buffer1D<double> &left_snd,
+
+void clover_pack_message_left(bool use_target, int x_min, int x_max, int y_min, int y_max,
+                              clover::Buffer2D<double> &field_buffer,
+                              clover::Buffer1D<double> &left_snd_buffer,
                               int cell_data, int vertex_data, int x_face_data, int y_face_data,
                               int depth, int field_type, int buffer_offset) {
 
@@ -54,14 +54,17 @@ void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
 		y_inc = 1;
 	}
 
-		// DO k=y_min-depth,y_max+y_inc+depth
+	// DO k=y_min-depth,y_max+y_inc+depth
 
 
-			_Pragma("kernel1d")
+	double *left_snd = left_snd_buffer.data;
+	double *field = field_buffer.data;
+	const int field_sizex = field_buffer.nX();
+	#pragma omp target teams distribute parallel for simd clover_use_target(use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			left_snd[index] = field(x_min + x_inc - 1 + j, k);
+			left_snd[index] = field[(x_min + x_inc - 1 + j) + (k) * field_sizex];
 		}
 	}
 
@@ -69,9 +72,9 @@ void clover_pack_message_left(int x_min, int x_max, int y_min, int y_max,
 }
 
 
-void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
-                                clover::Buffer2D<double> &field,
-                                clover::Buffer1D<double> &left_rcv,
+void clover_unpack_message_left(bool use_target, int x_min, int x_max, int y_min, int y_max,
+                                clover::Buffer2D<double> &field_buffer,
+                                clover::Buffer1D<double> &left_rcv_buffer,
                                 int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                 int depth, int field_type, int buffer_offset) {
 
@@ -93,16 +96,19 @@ void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
 		y_inc = 1;
 	}
 
-		// DO k=y_min-depth,y_max+y_inc+depth
+	// DO k=y_min-depth,y_max+y_inc+depth
 
 
 
 
-			_Pragma("kernel1d")
+	double *field = field_buffer.data;
+	const int field_sizex = field_buffer.nX();
+	double *left_rcv = left_rcv_buffer.data;
+	#pragma omp target teams distribute parallel for simd clover_use_target(use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			field(x_min - j, k) = left_rcv[index];
+			field[(x_min - j) + (k) * field_sizex] = left_rcv[index];
 		}
 	}
 
@@ -110,9 +116,9 @@ void clover_unpack_message_left(int x_min, int x_max, int y_min, int y_max,
 }
 
 
-void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
-                               clover::Buffer2D<double> &field,
-                               clover::Buffer1D<double> &right_snd,
+void clover_pack_message_right(bool use_target, int x_min, int x_max, int y_min, int y_max,
+                               clover::Buffer2D<double> &field_buffer,
+                               clover::Buffer1D<double> &right_snd_buffer,
                                int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                int depth, int field_type, int buffer_offset) {
 
@@ -134,12 +140,15 @@ void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
 		y_inc = 1;
 	}
 
-		// DO k=y_min-depth,y_max+y_inc+depth
-			_Pragma("kernel1d")
+	// DO k=y_min-depth,y_max+y_inc+depth
+	double *right_snd = right_snd_buffer.data;
+	double *field = field_buffer.data;
+	const int field_sizex = field_buffer.nX();
+	#pragma omp target teams distribute parallel for simd clover_use_target(use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			right_snd[index] = field(x_min + 1 + j, k);
+			right_snd[index] = field[(x_min + 1 + j) + (k) * field_sizex];
 		}
 	}
 
@@ -147,9 +156,9 @@ void clover_pack_message_right(int x_min, int x_max, int y_min, int y_max,
 }
 
 
-void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
-                                 clover::Buffer2D<double> &field,
-                                 clover::Buffer1D<double> &right_rcv,
+void clover_unpack_message_right(bool use_target, int x_min, int x_max, int y_min, int y_max,
+                                 clover::Buffer2D<double> &field_buffer,
+                                 clover::Buffer1D<double> &right_rcv_buffer,
                                  int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                  int depth, int field_type, int buffer_offset) {
 
@@ -175,21 +184,24 @@ void clover_unpack_message_right(int x_min, int x_max, int y_min, int y_max,
 		y_inc = 1;
 	}
 
-		// DO k=y_min-depth,y_max+y_inc+depth
-			_Pragma("kernel1d")
+	// DO k=y_min-depth,y_max+y_inc+depth
+	double *right_rcv = right_rcv_buffer.data;
+	double *field = field_buffer.data;
+	const int field_sizex = field_buffer.nX();
+	#pragma omp target teams distribute parallel for simd clover_use_target(use_target)
 	for (int k = (y_min - depth + 1); k < (y_max + y_inc + depth + 2); k++) {
 		for (int j = 0; j < depth; ++j) {
 			int index = buffer_offset + j + (k + depth - 1) * depth;
-			right_rcv[index] = field(x_max + x_inc + j, k);
+			right_rcv[index] = field[(x_max + x_inc + j) + (k) * field_sizex];
 		}
 	}
 
 
 }
 
-void clover_pack_message_top(int x_min, int x_max, int y_min, int y_max,
-                             clover::Buffer2D<double> &field,
-                             clover::Buffer1D<double> &top_snd,
+void clover_pack_message_top(bool use_target, int x_min, int x_max, int y_min, int y_max,
+                             clover::Buffer2D<double> &field_buffer,
+                             clover::Buffer1D<double> &top_snd_buffer,
                              int cell_data, int vertex_data, int x_face_data, int y_face_data,
                              int depth, int field_type, int buffer_offset) {
 
@@ -214,17 +226,20 @@ void clover_pack_message_top(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		double *top_snd = top_snd_buffer.data;
+		double *field = field_buffer.data;
+		const int field_sizex = field_buffer.nX();
+		#pragma omp target teams distribute parallel for simd clover_use_target(use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			top_snd[index] = field(j, y_max + 1 - k);
+			top_snd[index] = field[j + (y_max + 1 - k) * field_sizex];
 		}
 	}
 }
 
-void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
-                               clover::Buffer2D<double> &field,
-                               clover::Buffer1D<double> &top_rcv,
+void clover_unpack_message_top(bool use_target, int x_min, int x_max, int y_min, int y_max,
+                               clover::Buffer2D<double> &field_buffer,
+                               clover::Buffer1D<double> &top_rcv_buffer,
                                int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                int depth, int field_type, int buffer_offset) {
 
@@ -254,18 +269,21 @@ void clover_unpack_message_top(int x_min, int x_max, int y_min, int y_max,
 		// DO j=x_min-depth,x_max+x_inc+depth
 
 
-		_Pragma("kernel1d")
+		double *field = field_buffer.data;
+		const int field_sizex = field_buffer.nX();
+		double *top_rcv = top_rcv_buffer.data;
+		#pragma omp target teams distribute parallel for simd clover_use_target(use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			field(j, y_max + y_inc + k) = top_rcv[index];
+			field[j + (y_max + y_inc + k) * field_sizex] = top_rcv[index];
 		}
 	}
 }
 
 
-void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
-                                clover::Buffer2D<double> &field,
-                                clover::Buffer1D<double> &bottom_snd,
+void clover_pack_message_bottom(bool use_target, int x_min, int x_max, int y_min, int y_max,
+                                clover::Buffer2D<double> &field_buffer,
+                                clover::Buffer1D<double> &bottom_snd_buffer,
                                 int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                 int depth, int field_type, int buffer_offset) {
 
@@ -294,17 +312,20 @@ void clover_pack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		double *bottom_snd = bottom_snd_buffer.data;
+		double *field = field_buffer.data;
+		const int field_sizex = field_buffer.nX();
+		#pragma omp target teams distribute parallel for simd clover_use_target(use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			bottom_snd[index] = field(j, y_min + y_inc - 1 + k);
+			bottom_snd[index] = field[j + (y_min + y_inc - 1 + k) * field_sizex];
 		}
 	}
 }
 
-void clover_unpack_message_bottom(int x_min, int x_max, int y_min, int y_max,
-                                  clover::Buffer2D<double> &field,
-                                  clover::Buffer1D<double> &bottom_rcv,
+void clover_unpack_message_bottom(bool use_target, int x_min, int x_max, int y_min, int y_max,
+                                  clover::Buffer2D<double> &field_buffer,
+                                  clover::Buffer1D<double> &bottom_rcv_buffer,
                                   int cell_data, int vertex_data, int x_face_data, int y_face_data,
                                   int depth, int field_type, int buffer_offset) {
 
@@ -329,10 +350,13 @@ void clover_unpack_message_bottom(int x_min, int x_max, int y_min, int y_max,
 	for (int k = 0; k < depth; ++k) {
 		// DO j=x_min-depth,x_max+x_inc+depth
 
-		_Pragma("kernel1d")
+		double *field = field_buffer.data;
+		const int field_sizex = field_buffer.nX();
+		double *bottom_rcv = bottom_rcv_buffer.data;
+		#pragma omp target teams distribute parallel for simd clover_use_target(use_target)
 		for (int j = (x_min - depth + 1); j < (x_max + x_inc + depth + 2); j++) {
 			int index = buffer_offset + k + (j + depth - 1) * depth;
-			field(j, y_min - k) = bottom_rcv[index];
+			field[j + (y_min - k) * field_sizex] = bottom_rcv[index];
 		}
 	}
 }

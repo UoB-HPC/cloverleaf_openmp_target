@@ -26,7 +26,7 @@
 #include "ideal_gas.h"
 #include "update_halo.h"
 #include "revert.h"
-#include "utils.hpp"
+
 
 //  @brief Fortran PdV kernel.
 //  @author Wayne Gaudin
@@ -35,88 +35,118 @@
 //  level of the velocity data depends on whether it is invoked as the
 //  predictor or corrector.
 void PdV_kernel(
+		bool use_target,
 		bool predict,
 		int x_min, int x_max, int y_min, int y_max,
 		double dt,
-		clover::Buffer2D<double> &xarea,
-		clover::Buffer2D<double> &yarea,
-		clover::Buffer2D<double> &volume,
-		clover::Buffer2D<double> &density0,
-		clover::Buffer2D<double> &density1,
-		clover::Buffer2D<double> &energy0,
-		clover::Buffer2D<double> &energy1,
-		clover::Buffer2D<double> &pressure,
-		clover::Buffer2D<double> &viscosity,
-		clover::Buffer2D<double> &xvel0,
-		clover::Buffer2D<double> &xvel1,
-		clover::Buffer2D<double> &yvel0,
-		clover::Buffer2D<double> &yvel1,
-		clover::Buffer2D<double> &volume_change) {
+		field_type &field
+) {
 
+	const int base_stride = field.base_stride;
+	const int vels_wk_stride = field.vels_wk_stride;
+	const int flux_x_stride = field.flux_x_stride;
+	const int flux_y_stride = field.flux_y_stride;
 
 	// DO k=y_min,y_max
 	//   DO j=x_min,x_max
 
 	if (predict) {
 
-		_Pragma("kernel2d")
+		double *xarea = field.xarea.data;
+
+		double *yarea = field.yarea.data;
+		double *volume = field.volume.data;
+		double *density0 = field.density0.data;
+		double *density1 = field.density1.data;
+		double *energy0 = field.energy0.data;
+		double *energy1 = field.energy1.data;
+		double *pressure = field.pressure.data;
+		double *viscosity = field.viscosity.data;
+		double *xvel0 = field.xvel0.data;
+		double *xvel1 = field.xvel1.data;
+		double *yvel0 = field.yvel0.data;
+		double *yvel1 = field.yvel1.data;
+		double *volume_change = field.work_array1.data;
+
+
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double left_flux = (xarea(i, j) * (xvel0(i, j) +
-				                                   xvel0(i + 0, j + 1) +
-				                                   xvel0(i, j) +
-				                                   xvel0(i + 0, j + 1))) * 0.25 * dt * 0.5;
-				double right_flux = (xarea(i + 1, j + 0) * (xvel0(i + 1, j + 0) +
-				                                            xvel0(i + 1, j + 1) +
-				                                            xvel0(i + 1, j + 0) +
-				                                            xvel0(i + 1, j + 1))) * 0.25 * dt * 0.5;
-				double bottom_flux = (yarea(i, j) * (yvel0(i, j) +
-				                                     yvel0(i + 1, j + 0) +
-				                                     yvel0(i, j) +
-				                                     yvel0(i + 1, j + 0))) * 0.25 * dt * 0.5;
-				double top_flux = (yarea(i + 0, j + 1) * (yvel0(i + 0, j + 1) +
-				                                          yvel0(i + 1, j + 1) +
-				                                          yvel0(i + 0, j + 1) +
-				                                          yvel0(i + 1, j + 1))) * 0.25 * dt * 0.5;
+				double left_flux = (xarea[i + j * flux_x_stride] * (xvel0[i + j * vels_wk_stride] +
+				                                                    xvel0[(i + 0) + (j + 1) * vels_wk_stride] +
+				                                                    xvel0[i + j * vels_wk_stride] +
+				                                                    xvel0[(i + 0) + (j + 1) * vels_wk_stride])) * 0.25 * dt * 0.5;
+				double right_flux = (xarea[(i + 1) + (j + 0) * flux_x_stride] * (xvel0[(i + 1) + (j + 0) * vels_wk_stride] +
+				                                                                 xvel0[(i + 1) + (j + 1) * vels_wk_stride] +
+				                                                                 xvel0[(i + 1) + (j + 0) * vels_wk_stride] +
+				                                                                 xvel0[(i + 1) + (j + 1) * vels_wk_stride])) * 0.25 * dt * 0.5;
+				double bottom_flux = (yarea[i + j * flux_y_stride] * (yvel0[i + j * vels_wk_stride] +
+				                                                      yvel0[(i + 1) + (j + 0) * vels_wk_stride] +
+				                                                      yvel0[i + j * vels_wk_stride] +
+				                                                      yvel0[(i + 1) + (j + 0) * vels_wk_stride])) * 0.25 * dt * 0.5;
+				double top_flux = (yarea[(i + 0) + (j + 1) * flux_y_stride] * (yvel0[(i + 0) + (j + 1) * vels_wk_stride] +
+				                                                               yvel0[(i + 1) + (j + 1) * vels_wk_stride] +
+				                                                               yvel0[(i + 0) + (j + 1) * vels_wk_stride] +
+				                                                               yvel0[(i + 1) + (j + 1) * vels_wk_stride])) * 0.25 * dt * 0.5;
 				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
-				double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
-				double min_cell_volume = std::fmin(std::fmin(volume(i, j) + right_flux - left_flux + top_flux - bottom_flux, volume(i, j) + right_flux - left_flux), volume(i, j) + top_flux - bottom_flux);
-				double recip_volume = 1.0 / volume(i, j);
-				double energy_change = (pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) * total_flux * recip_volume;
-				energy1(i, j) = energy0(i, j) - energy_change;
-				density1(i, j) = density0(i, j) * volume_change_s;
+				double volume_change_s = volume[i + j * base_stride] / (volume[i + j * base_stride] + total_flux);
+				double min_cell_volume = fmin(fmin(volume[i + j * base_stride] + right_flux - left_flux + top_flux - bottom_flux, volume[i + j * base_stride] + right_flux - left_flux),
+				                              volume[i + j * base_stride] + top_flux - bottom_flux);
+				double recip_volume = 1.0 / volume[i + j * base_stride];
+				double energy_change =
+						(pressure[i + j * base_stride] / density0[i + j * base_stride] + viscosity[i + j * base_stride] / density0[i + j * base_stride]) * total_flux *
+						recip_volume;
+				energy1[i + j * base_stride] = energy0[i + j * base_stride] - energy_change;
+				density1[i + j * base_stride] = density0[i + j * base_stride] * volume_change_s;
 			}
 		}
 
 	} else {
 
-		_Pragma("kernel2d")
+		double *xarea = field.xarea.data;
+		double *yarea = field.yarea.data;
+		double *volume = field.volume.data;
+		double *density0 = field.density0.data;
+		double *density1 = field.density1.data;
+		double *energy0 = field.energy0.data;
+		double *energy1 = field.energy1.data;
+		double *pressure = field.pressure.data;
+		double *viscosity = field.viscosity.data;
+		double *xvel0 = field.xvel0.data;
+		double *xvel1 = field.xvel1.data;
+		double *yvel0 = field.yvel0.data;
+		double *yvel1 = field.yvel1.data;
+		double *volume_change = field.work_array1.data;
+
+		#pragma omp target teams distribute parallel for simd collapse(2) clover_use_target(use_target)
 		for (int j = (y_min + 1); j < (y_max + 2); j++) {
 			for (int i = (x_min + 1); i < (x_max + 2); i++) {
-				double left_flux = (xarea(i, j) * (xvel0(i, j) +
-				                                   xvel0(i + 0, j + 1) +
-				                                   xvel1(i, j) +
-				                                   xvel1(i + 0, j + 1))) * 0.25 * dt;
-				double right_flux = (xarea(i + 1, j + 0) * (xvel0(i + 1, j + 0) +
-				                                            xvel0(i + 1, j + 1) +
-				                                            xvel1(i + 1, j + 0) +
-				                                            xvel1(i + 1, j + 1))) * 0.25 * dt;
-				double bottom_flux = (yarea(i, j) * (yvel0(i, j) +
-				                                     yvel0(i + 1, j + 0) +
-				                                     yvel1(i, j) +
-				                                     yvel1(i + 1, j + 0))) * 0.25 * dt;
-				double top_flux = (yarea(i + 0, j + 1) * (yvel0(i + 0, j + 1) +
-				                                          yvel0(i + 1, j + 1) +
-				                                          yvel1(i + 0, j + 1) + yvel1(i + 1, j + 1))) * 0.25 * dt;
+				double left_flux = (xarea[i + j * flux_x_stride] * (xvel0[i + j * vels_wk_stride] +
+				                                                    xvel0[(i + 0) + (j + 1) * vels_wk_stride] +
+				                                                    xvel1[i + j * vels_wk_stride] +
+				                                                    xvel1[(i + 0) + (j + 1) * vels_wk_stride])) * 0.25 * dt;
+				double right_flux = (xarea[(i + 1) + (j + 0) * flux_x_stride] * (xvel0[(i + 1) + (j + 0) * vels_wk_stride] +
+				                                                                 xvel0[(i + 1) + (j + 1) * vels_wk_stride] +
+				                                                                 xvel1[(i + 1) + (j + 0) * vels_wk_stride] +
+				                                                                 xvel1[(i + 1) + (j + 1) * vels_wk_stride])) * 0.25 * dt;
+				double bottom_flux = (yarea[i + j * flux_y_stride] * (yvel0[i + j * vels_wk_stride] +
+				                                                      yvel0[(i + 1) + (j + 0) * vels_wk_stride] +
+				                                                      yvel1[i + j * vels_wk_stride] +
+				                                                      yvel1[(i + 1) + (j + 0) * vels_wk_stride])) * 0.25 * dt;
+				double top_flux = (yarea[(i + 0) + (j + 1) * flux_y_stride] * (yvel0[(i + 0) + (j + 1) * vels_wk_stride] +
+				                                                               yvel0[(i + 1) + (j + 1) * vels_wk_stride] +
+				                                                               yvel1[(i + 0) + (j + 1) * vels_wk_stride] + yvel1[(i + 1) + (j + 1) * vels_wk_stride])) * 0.25 * dt;
 				double total_flux = right_flux - left_flux + top_flux - bottom_flux;
-				double volume_change_s = volume(i, j) / (volume(i, j) + total_flux);
-				double min_cell_volume = std::fmin(std::fmin(
-						volume(i, j) + right_flux - left_flux + top_flux - bottom_flux, volume(i, j) + right_flux - left_flux),
-				                                   volume(i, j) + top_flux - bottom_flux);
-				double recip_volume = 1.0 / volume(i, j);
-				double energy_change = (pressure(i, j) / density0(i, j) + viscosity(i, j) / density0(i, j)) * total_flux * recip_volume;
-				energy1(i, j) = energy0(i, j) - energy_change;
-				density1(i, j) = density0(i, j) * volume_change_s;
+				double volume_change_s = volume[i + j * base_stride] / (volume[i + j * base_stride] + total_flux);
+				double min_cell_volume = fmin(fmin(
+						volume[i + j * base_stride] + right_flux - left_flux + top_flux - bottom_flux, volume[i + j * base_stride] + right_flux - left_flux),
+				                              volume[i + j * base_stride] + top_flux - bottom_flux);
+				double recip_volume = 1.0 / volume[i + j * base_stride];
+				double energy_change =
+						(pressure[i + j * base_stride] / density0[i + j * base_stride] + viscosity[i + j * base_stride] / density0[i + j * base_stride]) * total_flux *
+						recip_volume;
+				energy1[i + j * base_stride] = energy0[i + j * base_stride] - energy_change;
+				density1[i + j * base_stride] = density0[i + j * base_stride] * volume_change_s;
 			}
 		}
 	}
@@ -134,30 +164,25 @@ void PdV(global_variables &globals, bool predict) {
 
 	globals.error_condition = 0;
 
+	#if SYNC_BUFFERS
+	globals.hostToDevice();
+	#endif
+
 	for (int tile = 0; tile < globals.config.tiles_per_chunk; ++tile) {
 		tile_type &t = globals.chunk.tiles[tile];
-		PdV_kernel(predict,
+		PdV_kernel(globals.use_target,
+		           predict,
 		           t.info.t_xmin,
 		           t.info.t_xmax,
 		           t.info.t_ymin,
 		           t.info.t_ymax,
 		           globals.dt,
-		           t.field.xarea,
-		           t.field.yarea,
-		           t.field.volume,
-		           t.field.density0,
-		           t.field.density1,
-		           t.field.energy0,
-		           t.field.energy1,
-		           t.field.pressure,
-		           t.field.viscosity,
-		           t.field.xvel0,
-		           t.field.xvel1,
-		           t.field.yvel0,
-		           t.field.yvel1,
-		           t.field.work_array1);
+		           t.field);
 	}
 
+	#if SYNC_BUFFERS
+	globals.deviceToHost();
+	#endif
 
 	clover_check_error(globals.error_condition);
 	if (globals.profiler_on) globals.profiler.PdV += timer() - kernel_time;

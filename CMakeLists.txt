@@ -1,59 +1,14 @@
-cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
-project(cloverleaf_sycl)
+project(cloverleaf_openmp_target)
 
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-#
-#set (OpenMP_CXX_FLAGS "-fiopenmp -qnextgen")
-#set (OpenMP_CXX_LIB_NAMES "libiomp5")
-#set (OpenMP_libiomp5_LIBRARY
-#        /opt/intel/oneapi/compiler/2021.1-beta08/linux/compiler/lib/intel64_lin/libiomp5.so
-#        )
 find_package(OpenMP REQUIRED)
 
 set(CMAKE_VERBOSE_MAKEFILE YES)
-
-#set(SYCL_RUNTIME DPCPP)
-#set(HIPSYCL_INSTALL_DIR /home/tom/hypsycl_dist)
-
-
-#if (SYCL_RUNTIME)
-#
-#    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
-#
-#    if (${SYCL_RUNTIME} STREQUAL "HIPSYCL")
-#
-#        if (NOT HIPSYCL_INSTALL_DIR)
-#            message(FATAL_ERROR "HIPSYCL_INSTALL_DIR is undefined")
-#        endif ()
-#
-#        set(hipSYCL_DIR ${HIPSYCL_INSTALL_DIR}/lib/cmake)
-#        find_package(hipSYCL CONFIG REQUIRED)
-#        set(EXTRA_FLAGS -Wno-sign-compare -Wno-stringop-truncation)
-#    elseif (${SYCL_RUNTIME} STREQUAL "COMPUTECPP")
-#
-#        if (NOT ComputeCpp_DIR)
-#            message(FATAL_ERROR "ComputeCpp_DIR is undefined")
-#        endif ()
-#        add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
-#        set(COMPUTECPP_USER_FLAGS -O3 -fsycl-split-modules=20 -mllvm -inline-threshold=10000 -no-serial-memop)
-#        find_package(ComputeCpp REQUIRED)
-#        #        set(EXTRA_FLAGS  -pedantic)
-#    elseif (${SYCL_RUNTIME} STREQUAL "DPCPP")
-#
-#        set(CMAKE_CXX_STANDARD 17)
-#        set(CMAKE_CXX_COMPILER "dpcpp")
-#        set(EXTRA_FLAGS -pedantic)
-#        include_directories(/opt/intel/oneapi/compiler/2021.1-beta08/linux/compiler/include/)
-#    else ()
-#        message(FATAL_ERROR "SYCL_RUNTIME unsupported, must be one of HIPSYCL|COMPUTECPP|DPCPP, got ${SYCL_RUNTIME}")
-#    endif ()
-#else ()
-#    message(FATAL_ERROR "SYCL_RUNTIME not defined, must be one of HIPSYCL|COMPUTECPP|DPCPP")
-#endif ()
 
 
 if (MPI_AS_LIBRARY)
@@ -87,6 +42,7 @@ set(SOURCES
         src/advec_mom.cpp
         src/advection.cpp
         src/build_field.cpp
+        src/finalise_field.cpp
         src/calc_dt.cpp
         src/clover_leaf.cpp
         src/comms.cpp
@@ -120,34 +76,51 @@ target_compile_options(clover_leaf
         -Wall
         -Wextra
         -Wcast-align
-        -Wfatal-errors
+#        -Wfatal-errors
         -Werror=return-type
         -Wno-unused-parameter
         -Wno-unused-variable
-        -Wno-ignored-attributes
+#        -Wno-ignored-attributes
 
         ${EXTRA_FLAGS}
         )
 
-set(OMP_OFFLOAD_FLAGS -foffload=nvptx-none)
+separate_arguments(OMP_OFFLOAD_FLAGS)
+separate_arguments(CXX_EXTRA_FLAGS)
+separate_arguments(CXX_EXTRA_LINKER_FLAGS)
 
-set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer -fsanitize=address ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
-set(RELEASE_OPTIONS -Ofast -march=native -mtune=native ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
+
+option(OMP_ALLOW_HOST "Whether the OMP clause `if(target: <bool>)` is included at compile time, some compilers may not support this feature" ON)
+
+if (OMP_ALLOW_HOST)
+    add_definitions(-DOMP_ALLOW_HOST)
+endif()
+
+set(DEBUG_OPTIONS -O2 -fno-omit-frame-pointer ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
+set(RELEASE_OPTIONS -O3 ${OMP_OFFLOAD_FLAGS} ${CXX_EXTRA_FLAGS})
 
 target_link_libraries(clover_leaf PUBLIC ${MPI_C_LIB})
 target_link_libraries(clover_leaf PUBLIC OpenMP::OpenMP_CXX OpenMP::OpenMP_C)
 
-# remove when using omp target
-#target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:RelWithDebInfo>:-Wl,-lasan>)
-#target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:Release>:-Wl,-lasan>)
-target_link_libraries(clover_leaf PUBLIC $<$<CONFIG:Debug>:-Wl,-lasan>)
 
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
 target_compile_options(clover_leaf PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
 
 
-target_link_options(clover_leaf PUBLIC ${OpenMP_CXX_FLAGS} ${OMP_OFFLOAD_FLAGS})
+if (${CMAKE_VERSION} VERSION_LESS "3.13.0")
+    message(WARNING "target_link_options is only available in CMake >= 3.13.0, using fallback target_link_libraries, this may cause issues with some compilers")
 
-#target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+    set(EXTRA_LINK_FLAGS ${OpenMP_CXX_FLAGS} ${OMP_OFFLOAD_FLAGS})
+
+    if (DEFINED CXX_EXTRA_LINKER_FLAGS)
+        list(APPEND EXTRA_LINK_FLAGS "-Wl,${CXX_EXTRA_LINKER_FLAGS}")
+    endif ()
+
+    target_link_libraries(clover_leaf PUBLIC ${EXTRA_LINK_FLAGS})
+
+else ()
+    target_link_options(clover_leaf PUBLIC ${OpenMP_CXX_FLAGS} ${OMP_OFFLOAD_FLAGS})
+    target_link_options(clover_leaf PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
+endif ()
 

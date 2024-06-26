@@ -41,7 +41,7 @@ std::ofstream of;
 
 struct RunConfig {
 	std::string file;
-	size_t deviceIdx;
+	int deviceIdx;
 };
 
 
@@ -66,7 +66,9 @@ void printHelp(const std::string &name) {
 RunConfig parseArgs(const size_t num_devices,
                     const std::vector<std::string> &args) {
 
-	const auto readParam = [&args](size_t current, const std::string &emptyMessage, auto map) {
+	const auto readParam = [&args](size_t current,
+	                               const std::string &emptyMessage,
+	                               const std::function<void(std::string)> &map) {
 		if (current + 1 < args.size()) {
 			return map(args[current + 1]);
 		} else {
@@ -84,21 +86,22 @@ RunConfig parseArgs(const size_t num_devices,
 			printHelp(args[0]);
 			std::exit(EXIT_SUCCESS);
 		} else if (arg == "--list") {
+			std::cout << "OMP devices:" << std::endl;
 			printSimple(num_devices);
 			std::exit(EXIT_SUCCESS);
 		} else if (arg == "--no-target") {
 			config.deviceIdx = -1;
 		} else if (arg == "--device") {
-			readParam(i, "--device specified but no index was given", [&](const auto &param) {
+			readParam(i, "--device specified but no index was given", [&](const std::string &param) {
 				auto selected = std::stoul(param);
-				if (selected < 0 || selected >= num_devices) {
+				if (selected >= num_devices) {
 					std::cerr << "bad device index `" << param << "`" << std::endl;
 					std::exit(EXIT_FAILURE);
 				}
 				config.deviceIdx = selected;
 			});
 		} else if (arg == "--file") {
-			readParam(i, "--file specified but no file was given", [&config](const auto &param) {
+			readParam(i, "--file specified but no file was given", [&config](const std::string &param) {
 				config.file = param;
 			});
 		}
@@ -106,8 +109,7 @@ RunConfig parseArgs(const size_t num_devices,
 	return config;
 }
 
-std::unique_ptr<global_variables>
-initialise(parallel_ &parallel, const std::vector<std::string> &args) {
+global_variables initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 	global_config config;
 
@@ -133,23 +135,43 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 
 	clover_barrier();
 
-//
-//	int x = 1;
-//	#pragma omp target map(tofrom: x)
-//	x = x + 1;
 
 	auto num_devices = omp_get_num_devices();
-	if (num_devices == 0) {
-		std::cout << "No OMP target devices available" << std::endl;
-	} else {
-		std::cout << "Detected OMP devices:" << std::endl;
-		printSimple(num_devices);
+	if (parallel.boss) {
+
+		if (num_devices == 0) {
+			std::cout << "No OMP target devices available" << std::endl;
+		} else {
+			std::cout << "Detected OMP devices:" << std::endl;
+			printSimple(num_devices);
+		}
+		std::cout << "\n" << std::endl;
 	}
 
 	auto runConfig = parseArgs(num_devices, args);
 	auto file = runConfig.file;
 	auto selectedDevice = runConfig.deviceIdx;
-	std::cout << "Using OMP device: " << selectedDevice << std::endl;
+	auto useTarget = selectedDevice != -1;
+
+	if (parallel.boss) {
+		(!useTarget ?
+		 std::cout << "Using OMP device: (host fallback))" :
+		 std::cout << "Using OMP device: #" << selectedDevice) << std::endl;
+	}
+
+	if (!useTarget) {
+		std::cout << "Using OMP device: (host fallback))" << std::endl;
+
+		#ifndef OMP_ALLOW_HOST
+		std::cerr << "Error: host fallback mode selected but OMP_ALLOW_HOST not enabled at compile time" << std::endl;
+		std::exit(EXIT_FAILURE);
+		#endif
+
+
+	} else {
+		omp_set_default_device(selectedDevice);
+	}
+
 
 	std::ifstream g_in;
 	if (parallel.boss) {
@@ -207,9 +229,9 @@ initialise(parallel_ &parallel, const std::vector<std::string> &args) {
 	config.number_of_chunks = parallel.max_task;
 
 
-	auto globals = start(parallel, config, selectedDevice);
+	auto globals = start(parallel, config, selectedDevice, useTarget);
 
-	clover_barrier(*globals);
+	clover_barrier(globals);
 
 	if (parallel.boss) {
 		g_out << "Starting the calculation" << std::endl;
